@@ -33,7 +33,9 @@ services/scout/        coletor Python 3.12 + Scrapy (ujob)
   ujob_scout/sources/  um arquivo por tipo de fonte, classe com @register("tipo")
   catalog/*.json       acervo de fontes
   ujob_scout/panel.py  cliente da API /api/scout/* (conta "bots", só manda vagas)
-services/brain/        NOVO. Worker Python de IA: consome ai_tasks, chama provedores, grava resultado
+services/brain/        Worker Python: consome ai_tasks em 2 pistas (geral e chat), chama o Claude Code, raspa sites, SMTP, Whisper
+  brain/claude.py      única porta pra IA (claude -p); brain/chat.py = chat em streaming
+  brain/prompts/*.md   prompts versionados
 services/hands/        NOVO (F2). Playwright + IMAP/SMTP: formulários ATS, envio e leitura de e-mail
 services/mcp/          NOVO (F2). Servidor MCP expondo o Radar para o Claude
 desktop/               NOVO. Shell Tauri: janela do painel + sobe PocketBase, scout, brain, hands

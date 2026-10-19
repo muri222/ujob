@@ -3,15 +3,34 @@ import { h, header, icon } from "../core/dom.js";
 // fluxos do app em passos curtos, cada passo leva pra tela certa
 const FLOWS = [
   {
+    title: "Falar com o Claude",
+    lead: "Igual ao app do Claude, mas ele já conhece seu currículo, funil, vagas e leads.",
+    steps: [
+      ["Abra a aba Claude", "Pergunte o que quiser: que vaga priorizar, escrever proposta, responder cliente.", "#claude"],
+      ["Mande arquivos e áudio", "Anexe PDF, imagem ou texto (ele lê). O microfone grava e transcreve no seu PC, sem custo.", "#claude"],
+      ["Organize as conversas", "Fixe, renomeie, arquive ou apague. Escolha Haiku (rápido), Sonnet ou Opus (mais inteligente).", "#claude"],
+    ],
+  },
+  {
+    title: "Treinar entrevista",
+    lead: "O Claude vira o entrevistador da vaga e te avalia no fim.",
+    steps: [
+      ["Escolha a vaga", "Na vaga, Treinar entrevista; ou na aba Claude, Treinar entrevista e escolha do funil.", "#claude?entrevista"],
+      ["Responda", "Escrevendo ou por áudio. O botão Ouvir lê a pergunta em voz alta.", "#claude"],
+      ["Peça a avaliação", "Encerrar e avaliar: nota por critério, pontos fortes e uma resposta melhor no formato STAR.", "#claude"],
+    ],
+  },
+  {
     title: "Achar vaga e se candidatar",
     lead: "Do radar até o e-mail enviado, com o Claude escrevendo por você.",
     steps: [
-      ["Complete o currículo", "Importe seu PDF ou site. Quanto mais completo, melhor a nota e a carta.", "#curriculo"],
+      ["Complete o currículo", "Importe seu PDF ou site. Use o Scanner ATS pra achar falhas e o Tradutor pra ter o CV em inglês.", "#curriculo"],
       ["Busque do seu jeito", "Use a frase pronta ou descreva a vaga com suas palavras (ex.: \"character artist pra games, remoto\").", "#buscar"],
       ["Deixe o Claude dar nota", "Em Vagas, clique em Avaliar com Claude: ele lê a vaga e diz se vale aplicar.", "#vagas"],
       ["Prepare a candidatura", "Na vaga, Preparar candidatura: carta no idioma da vaga e CV adaptado, sem inventar nada.", "#vagas"],
       ["Revise e envie", "Em Prontas para enviar você edita e manda do seu e-mail, com teto por dia.", "#envios"],
       ["Acompanhe no funil", "Arraste entre Salvas, Candidatei, Entrevista... Follow-up vencido aparece no Hoje.", "#funil"],
+      ["Ou ligue o Auto Apply", "Em Configurações: Híbrido (o Claude prepara sozinho, você confirma) ou Automático (sai sozinho, com teto diário).", "#config"],
     ],
   },
   {

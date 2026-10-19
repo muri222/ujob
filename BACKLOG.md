@@ -70,3 +70,27 @@ Ordem de execução de cima para baixo. Cada item vira uma issue e uma branch. C
 
 ### F1.6 Plano do dia
 - Visão geral ganha "Hoje": N vagas para revisar, N leads para contatar, follow-ups vencidos, reuniões. Um clique leva a cada fila.
+
+## Feito depois da F1 (2026-10-19)
+
+- **Fase A · Personalização:** busca de vagas descrita em texto livre (Haiku vira termos PT/EN), segmento de leads personalizado com IA, 6 paletas em claro/escuro/sistema, menu por fluxo, página Como usar.
+- **Aba Claude:** chat estilo app do Claude com contexto do Radar a cada resposta, streaming, anexos (Read só na pasta da conversa), busca na web, áudio com Whisper local, modelos Haiku/Sonnet/Opus, fixar/renomear/arquivar/apagar.
+- **Paridade AiApply:** Auto Apply (Revisão/Híbrido/Automático, cron de 30 min), simulador de entrevista (modo do chat, avaliação por critério), Scanner ATS, Tradutor de CV com PDF.
+
+## Próximos (F2)
+
+### F2.1 Inbox de respostas
+- IMAP do e-mail já configurado: lê respostas das candidaturas e e-mails frios, liga à mensagem enviada, move o funil (Entrevista, Recusada) com confirmação.
+- Claude resume cada resposta e sugere a réplica (no chat ou em Prontas para enviar).
+
+### F2.2 Formulários ATS (hands)
+- Playwright pra Gupy, Greenhouse, Lever, Ashby: preenche o formulário com o CV adaptado, para antes do envio pra revisão (ou envia no modo Automático).
+
+### F2.3 Interview Buddy (ao vivo)
+- Captura do áudio da chamada (loopback do Windows), transcrição local em tempo real e sugestões do Claude numa janela flutuante. Avaliar viabilidade e ética (avisar quando for usar).
+
+### F2.4 MCP do Radar
+- Servidor MCP expondo vagas, funil, leads e Mente pro Claude Code/Desktop do usuário.
+
+### F2.5 Ações pelo chat
+- O Claude do chat pode propor ações com confirmação: salvar vaga, criar busca, gerar candidatura, criar campanha de leads.
