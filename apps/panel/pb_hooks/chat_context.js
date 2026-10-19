@@ -48,7 +48,7 @@ module.exports = function chatContext(app, profileId) {
     mente: rows("mind_facts", "profile = {:p} && status = 'aprovado'", "-updatedAt", 30).map((fact) => `${fact.getString("kind")}: ${fact.getString("text")}`),
     funil: {
       por_etapa: stages,
-      recentes: rows("applications", "profile = {:p} && stage != 'recusada'", "-updatedAt", 10).map((item) =>
+      recentes: rows("applications", "profile = {:p} && stage != 'recusada'", "-updated", 10).map((item) =>
         [item.getString("title"), item.getString("company"), item.getString("stage"), item.getString("nextAt") ? `próximo passo ${item.getString("nextAt").slice(0, 10)}` : ""].filter(Boolean).join(" · "),
       ),
     },

@@ -464,3 +464,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+.interview-setup {
+  display: grid;
+  gap: 10px;
+  min-width: min(520px, 80vw);
+}
+
+.interview-setup textarea,
+.interview-setup select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}

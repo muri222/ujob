@@ -26,6 +26,8 @@ function queueReply(app, conversation, model) {
     status: "queued",
     priority: CHAT_PRIORITY,
     payload: {
+      mode: conversation.getString("mode") || "chat",
+      setup: JSON.parse(conversation.getString("setup") || "null"),
       model: ["top", "best", "cheap"].includes(model) ? model : "best",
       history,
       files_dir: `${app.dataDir()}/storage/${app.findCollectionByNameOrId("chat_messages").id}`,

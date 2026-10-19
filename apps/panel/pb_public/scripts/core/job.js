@@ -252,6 +252,7 @@ export function jobDetail(job, { onChange } = {}) {
       h("button", { className: "btn", onclick: () => prepare(), title: "Claude escreve a carta e adapta o CV pra essa vaga" }, icon("sparkle"), "Preparar candidatura"),
       h("button", { className: "btn", onclick: () => letterDrawer(job), title: "Carta de apresentação" }, icon("letter"), "Carta"),
       h("button", { className: "btn btn--ghost", onclick: () => decline(), title: "Não quero (N)" }, icon("skip"), "Não quero"),
+      h("a", { className: "btn btn--ghost", href: `#claude?entrevista=${job.id}`, title: "Simular entrevista dessa vaga com o Claude" }, icon("live"), "Treinar entrevista"),
       ...contactButtons(job),
       h("button", { className: "icon-btn", title: "Copiar link", "aria-label": "Copiar link", onclick: copyLink }, icon("copy")),
       h("button", { className: "icon-btn", title: "Mandar no WhatsApp", "aria-label": "Mandar no WhatsApp", onclick: share }, icon("whatsapp")),

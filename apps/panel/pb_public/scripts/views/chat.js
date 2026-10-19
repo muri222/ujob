@@ -1,6 +1,6 @@
 import { api, create, list, quote, update } from "../core/api.js";
 import { brainProblem, ctx, mine } from "../core/context.js";
-import { ask, confirm, h, icon, toast } from "../core/dom.js";
+import { ask, confirm, h, icon, modal, toast } from "../core/dom.js";
 import { ago } from "../core/format.js";
 import { markdown } from "../core/markdown.js";
 import { listen } from "../core/realtime.js";
@@ -79,7 +79,7 @@ export default async function chat(root, { signal, query }) {
             return h(
               "li",
               { className: `chat__item${conversation?.id === item.id ? " is-active" : ""}`, onclick: () => openConversation(item) },
-              h("span", { className: "chat__item-title" }, item.pinned ? "📌 " : "", item.title || "Nova conversa"),
+              h("span", { className: "chat__item-title" }, item.pinned ? "📌 " : "", item.mode === "entrevista" ? "🎤 " : "", item.title || "Nova conversa"),
               h("small", {}, ago(item.lastAt || item.createdAt)),
               menu,
             );
@@ -111,6 +111,7 @@ export default async function chat(root, { signal, query }) {
 
   // ---------- conversa ----------
   const titleNode = h("strong", { className: "chat__title" }, "Nova conversa");
+  const finishButton = h("button", { type: "button", className: "btn btn--soft", hidden: true, onclick: () => ((input.value = "Encerre a entrevista e me dê a avaliação completa."), send()) }, icon("check"), "Encerrar e avaliar");
   const modelSelect = h("select", { className: "chat__model", "aria-label": "Modelo" }, MODELS.map(([key, name, hint]) => h("option", { value: key, selected: key === model }, `${name} · ${hint}`)));
   modelSelect.addEventListener("change", () => {
     model = modelSelect.value;
@@ -169,6 +170,7 @@ export default async function chat(root, { signal, query }) {
       actions.replaceChildren(
         done && record.text ? h("button", { type: "button", title: "Copiar", onclick: () => navigator.clipboard.writeText(record.text).then(() => toast("Copiado.")) }, icon("copy")) : "",
         done && record.role === "assistant" ? h("button", { type: "button", title: "Gerar de novo", onclick: () => regenerate() }, icon("refresh")) : "",
+        done && record.role === "assistant" && record.text && "speechSynthesis" in window ? h("button", { type: "button", title: "Ouvir", onclick: () => speak(record.text) }, icon("live")) : "",
         record.meta?.model_used && done ? h("small", {}, record.meta.model_used.replace("claude-", "")) : "",
       );
       paintBusy();
@@ -177,6 +179,16 @@ export default async function chat(root, { signal, query }) {
     node.paint(message);
     paintFiles(message, files);
     return node;
+  }
+
+  // lê em voz alta com as vozes do Windows (grátis); útil pra treinar entrevista
+  function speak(text) {
+    speechSynthesis.cancel();
+    const plain = text.replace(/[#*_`>\[\]()]/g, "").slice(0, 4000);
+    const utterance = new SpeechSynthesisUtterance(plain);
+    utterance.lang = conversation?.setup?.idioma === "en" ? "en-US" : "pt-BR";
+    utterance.voice = speechSynthesis.getVoices().find((voice) => voice.lang.startsWith(utterance.lang.slice(0, 2))) ?? null;
+    speechSynthesis.speak(utterance);
   }
 
   let busy = false;
@@ -190,6 +202,7 @@ export default async function chat(root, { signal, query }) {
   async function openConversation(item) {
     conversation = item;
     titleNode.textContent = item.title || "Nova conversa";
+    finishButton.hidden = item.mode !== "entrevista";
     nodes.clear();
     const { items } = await list("chat_messages", { filter: `conversation = ${quote(item.id)}`, sort: "createdAt", perPage: 500 });
     thread.replaceChildren(...items.map((message) => {
@@ -207,6 +220,7 @@ export default async function chat(root, { signal, query }) {
   function newConversation() {
     conversation = null;
     titleNode.textContent = "Nova conversa";
+    finishButton.hidden = true;
     nodes.clear();
     welcomeScreen();
     paintBusy();
@@ -299,6 +313,58 @@ export default async function chat(root, { signal, query }) {
     }
   });
 
+  async function setupInterview(jobId = "") {
+    const { items: applications } = await list("applications", { filter: mine("stage != 'recusada' && stage != 'encerrada'"), sort: "-updated", perPage: 50 }).catch(() => ({ items: [] }));
+    const pick = h(
+      "select",
+      {},
+      h("option", { value: "" }, "Descrever outra vaga…"),
+      applications.map((item) => h("option", { value: item.job || `app:${item.id}`, selected: item.job && item.job === jobId }, `${item.title}${item.company ? ` · ${item.company}` : ""}`)),
+    );
+    if (jobId && !applications.some((item) => item.job === jobId)) pick.prepend(h("option", { value: jobId, selected: true }, "A vaga que você abriu"));
+    const describe = h("textarea", { rows: 3, placeholder: "Cargo, empresa e o que a vaga pede (cole a descrição se tiver)" });
+    const language = h("select", {}, h("option", { value: "pt" }, "Português"), h("option", { value: "en" }, "Inglês"));
+    const kind = h("select", {}, h("option", { value: "misto" }, "Misto"), h("option", { value: "comportamental" }, "Comportamental (RH)"), h("option", { value: "tecnica" }, "Técnica"));
+    const syncDescribe = () => (describe.hidden = Boolean(pick.value));
+    pick.addEventListener("change", syncDescribe);
+    syncDescribe();
+    const dialog = h(
+      "dialog",
+      { className: "confirm" },
+      h(
+        "form",
+        { method: "dialog", className: "interview-setup" },
+        h("p", {}, h("strong", {}, "Treinar entrevista"), h("br"), h("small", {}, "O Claude vira o entrevistador dessa vaga, faz uma pergunta por vez e no fim te avalia. Responda escrevendo ou por áudio.")),
+        h("label", { className: "field" }, h("span", {}, "Vaga"), pick),
+        describe,
+        h("div", { className: "resume__grid" }, h("label", { className: "field" }, h("span", {}, "Idioma"), language), h("label", { className: "field" }, h("span", {}, "Tipo"), kind)),
+        h("div", { className: "confirm__actions" }, h("button", { className: "btn btn--ghost", value: "no", formNoValidate: true }, "Cancelar"), h("button", { className: "btn btn--primary", value: "yes" }, icon("live"), "Começar")),
+      ),
+    );
+    if (!(await modal(dialog, (value) => value === "yes"))) return;
+    let vaga = { titulo: describe.value.trim().slice(0, 120), descricao: describe.value.trim().slice(0, 4000) };
+    if (pick.value && !pick.value.startsWith("app:")) {
+      const job = await api(`collections/jobs/records/${pick.value}`).catch(() => null);
+      if (job) vaga = { titulo: job.title, empresa: job.company, descricao: String(job.description || job.summary || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 4000) };
+    } else if (pick.value) {
+      const app = applications.find((item) => `app:${item.id}` === pick.value);
+      vaga = { titulo: app.title, empresa: app.company, descricao: app.notes || "" };
+    }
+    if (!vaga.titulo) return toast("Escolha uma vaga ou descreva a vaga.");
+    const problem = await brainProblem(true);
+    if (problem) return toast(problem);
+    conversation = await create("conversations", {
+      profile: ctx.profile.id,
+      mode: "entrevista",
+      title: `Entrevista · ${vaga.titulo}`.slice(0, 120),
+      setup: { ...vaga, idioma: language.value, tipo: kind.value },
+      lastAt: new Date().toISOString(),
+    });
+    await openConversation(conversation);
+    await create("chat_messages", { conversation: conversation.id, role: "user", text: language.value === "en" ? "I'm ready, let's start the interview." : "Estou pronto, pode começar a entrevista.", status: "pronta" });
+    await api(`radar/chat/${conversation.id}/reply`, { method: "POST", body: { model } });
+  }
+
   async function ensureConversation() {
     if (conversation) return conversation;
     conversation = await create("conversations", { profile: ctx.profile.id, title: "", lastAt: new Date().toISOString() });
@@ -354,6 +420,7 @@ export default async function chat(root, { signal, query }) {
         "aside",
         { className: "chat__side" },
         h("button", { type: "button", className: "btn btn--primary chat__new", onclick: newConversation }, icon("plus"), "Nova conversa"),
+        h("button", { type: "button", className: "btn btn--soft chat__new", onclick: () => setupInterview() }, icon("live"), "Treinar entrevista"),
         search,
         tabs,
         listBox,
@@ -361,7 +428,7 @@ export default async function chat(root, { signal, query }) {
       h(
         "section",
         { className: "chat__main" },
-        h("header", { className: "chat__head" }, titleNode, modelSelect),
+        h("header", { className: "chat__head" }, titleNode, h("div", { className: "import__row" }, finishButton, modelSelect)),
         scroller,
         h("div", { className: "chat__composer" }, tray, h("div", { className: "chat__row" }, attachButton, input, micButton, sendButton), picker, h("small", { className: "chat__hint" }, "Usa o Claude Code logado neste PC, na sua assinatura. Pode pesquisar na web e ler seus anexos.")),
       ),
@@ -369,6 +436,10 @@ export default async function chat(root, { signal, query }) {
   );
 
   await loadList();
+  if (query.get("entrevista") !== null) {
+    newConversation();
+    return setupInterview(query.get("entrevista") || "");
+  }
   const wanted = query.get("c");
   if (wanted) {
     const found = await api(`collections/conversations/records/${wanted}`).catch(() => null);

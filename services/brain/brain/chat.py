@@ -24,6 +24,12 @@ def build_prompt(payload: dict) -> str:
     return f"<contexto_radar atualizado_agora>\n{context}\n</contexto_radar>\n\n<conversa>\n" + "\n\n".join(lines) + "\n</conversa>\n\nResponda à última mensagem do usuário."
 
 
+def system_prompt(payload: dict, name: str) -> str:
+    if payload.get("mode") == "entrevista":
+        return render("chat_interview", nome=name, setup=json.dumps(payload.get("setup") or {}, ensure_ascii=False))
+    return render("chat_system", nome=name)
+
+
 def reply(task: dict, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]:
     """on_text(texto_parcial) devolve True se o usuário pediu pra parar."""
     payload = task["payload"]
@@ -35,7 +41,7 @@ def reply(task: dict, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]
         "claude", "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
         "--model", claude.TIERS[tier], "--tools", TOOLS, "--allowedTools", "WebSearch,WebFetch",
         "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",
-        "--system-prompt", render("chat_system", nome=name),
+        "--system-prompt", system_prompt(payload, name),
     ]
     started = time.monotonic()
     # cwd = pasta dos anexos: o Read só lê dentro dela sem pedir permissão (fora dela é negado no modo -p)

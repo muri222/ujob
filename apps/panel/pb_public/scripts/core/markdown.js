@@ -30,7 +30,7 @@ export function markdown(source) {
     for (const line of block.split("\n")) {
       const heading = line.match(/^(#{1,4})\s+(.*)/);
       const bullet = line.match(/^\s*[-*•]\s+(.*)/);
-      const numbered = line.match(/^\s*\d+[.)]\s+(.*)/);
+      const numbered = line.match(/^\s*(\d+)[.)]\s+(.*)/);
       const quote = line.match(/^&gt;\s?(.*)/);
       if (!line.trim()) flush();
       else if (heading) (flush(), out.push(`<h${heading[1].length + 2}>${inline(heading[2])}</h${heading[1].length + 2}>`));
@@ -39,10 +39,11 @@ export function markdown(source) {
         if (paragraph.length) (out.push(`<p>${inline(paragraph.join("<br>"))}</p>`), (paragraph = []));
         if (list !== kind) {
           if (list) out.push(`</${list}>`);
-          out.push(`<${kind}>`);
+          // lista numerada que continua depois de um parágrafo mantém o número do texto
+          out.push(numbered && numbered[1] !== "1" ? `<ol start="${Number(numbered[1])}">` : `<${kind}>`);
           list = kind;
         }
-        out.push(`<li>${inline((bullet || numbered)[1])}</li>`);
+        out.push(`<li>${inline(bullet ? bullet[1] : numbered[2])}</li>`);
       } else if (quote) (flush(), out.push(`<blockquote>${inline(quote[1])}</blockquote>`));
       else if (/^(-{3,}|\*{3,})$/.test(line.trim())) (flush(), out.push("<hr>"));
       else {
