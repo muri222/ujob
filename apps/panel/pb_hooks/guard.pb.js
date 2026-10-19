@@ -17,8 +17,9 @@ routerUse((e) => {
     /^\/api\/realtime$/,
     /^\/api\/scout\//,
     /^\/api\/ujob\//,
+    /^\/api\/radar\//,
     /^\/api\/collections\/(_superusers|bots)\/(auth-with-password|auth-refresh)$/,
-    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile)\/records(\/[a-z0-9]{15})?$/,
+    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile|ai_tasks|ai_log)\/records(\/[a-z0-9]{15})?$/,
     /^\/api\/files\/token$/,
     /^\/api\/files\/profile\/[a-z0-9]{15}\/[\w.-]+$/,
   ];
@@ -42,6 +43,12 @@ routerUse((e) => {
 
   if (path.startsWith("/api/") && !OPEN_API.some((rule) => rule.test(path))) {
     return e.json(404, { message: "Essa vaga não existe. Nem a rota." });
+  }
+
+  // cada conta de serviço só enxerga a própria API
+  const role = e.auth?.collection().name === "bots" ? e.auth.getString("role") : "";
+  if ((role !== "scout" && role && path.startsWith("/api/scout/")) || (role !== "brain" && role && path.startsWith("/api/radar/tasks"))) {
+    return e.json(403, { message: "Crachá errado pra essa porta." });
   }
 
   if (!path.startsWith("/api/")) {
