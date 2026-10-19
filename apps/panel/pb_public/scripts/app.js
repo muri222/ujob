@@ -22,6 +22,8 @@ import mind from "./views/mind.js";
 import outbox from "./views/outbox.js";
 import settings from "./views/settings.js";
 import preferences from "./views/preferences.js";
+import autoapply from "./views/autoapply.js";
+import kits from "./views/kits.js";
 import overview from "./views/overview.js";
 import pipeline from "./views/pipeline.js";
 import resume from "./views/resume.js";
@@ -46,6 +48,8 @@ const ROUTES = [
   ["envios", outbox],
   ["config", settings],
   ["preferencias", preferences],
+  ["auto", autoapply],
+  ["kits", kits],
   ["leads", leads],
   ["guia", guide],
   ["claude", chat],

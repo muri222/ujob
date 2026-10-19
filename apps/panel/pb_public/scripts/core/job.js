@@ -101,7 +101,7 @@ function aiAction(job, fit) {
   return slot;
 }
 
-function fitCard(job) {
+export function fitCard(job) {
   const holder = h("div", { className: "fit-slot" });
   const paint = () => holder.replaceChildren(fitView(job) ?? "");
   paint();

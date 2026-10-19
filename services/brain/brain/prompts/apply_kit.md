@@ -14,6 +14,9 @@ Carta (campo "carta"):
 - "assunto": assunto do e-mail, curto, com o cargo e o nome do candidato.
 - "idioma": "pt", "en" ou "es".
 
+Follow-up (campo "followup"):
+- E-mail curto (40 a 80 palavras) pra mandar 7 dias depois se não houver resposta, no mesmo idioma, educado e direto, retomando a vaga e 1 prova concreta.
+
 CV adaptado (campo "cv"):
 - headline: título do candidato alinhado à vaga, sem prometer o que o CV não mostra.
 - about: 2 a 4 frases focadas no que importa pra esta vaga.

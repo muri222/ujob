@@ -115,6 +115,7 @@ class ApplyKit(BaseModel):
     idioma: str
     assunto: str
     carta: str
+    followup: str = ""
     cv: TailoredCv
 
 
@@ -151,7 +152,13 @@ def apply_kit(task: dict) -> tuple[dict, list[dict]]:
     )
     value, log = claude.complete("apply_kit", prompt, ApplyKit, "top")
     lang = value.idioma.lower()[:2] if value.idioma.lower()[:2] in ("pt", "en", "es") else "pt"
-    return {"idioma": lang, "assunto": value.assunto.strip(), "carta": value.carta.strip(), "cv": tailor(payload["cv"], value.cv)}, log
+    return {"idioma": lang, "assunto": value.assunto.strip(), "carta": value.carta.strip(), "followup": value.followup.strip(), "cv": tailor(payload["cv"], value.cv)}, log
+
+
+def cv_pdf(task: dict) -> tuple[dict, list[dict]]:
+    """PDF do CV (adaptado ou mestre) gerado no PC, sem IA."""
+    payload = task["payload"]
+    return {"pdf": base64.b64encode(cvpdf.build(payload["cv"], payload.get("lang") or "pt")).decode()}, []
 
 
 def mail_test(task: dict) -> tuple[dict, list[dict]]:
@@ -354,13 +361,14 @@ def cv_translate(task: dict) -> tuple[dict, list[dict]]:
 
 
 # tarefas sem IA rodam mesmo com o Claude fora
-LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich", "transcribe"}
+LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich", "transcribe", "cv_pdf"}
 # pista própria pro chat: não espera atrás de campanha grande
 CHAT = {"chat_reply", "chat_title", "transcribe"}
 
 TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "echo": echo,
     "job_fit": job_fit,
+    "cv_pdf": cv_pdf,
     "cv_import": cv_import,
     "mind_extract": mind_extract,
     "apply_kit": apply_kit,

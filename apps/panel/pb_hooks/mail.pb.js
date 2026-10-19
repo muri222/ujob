@@ -97,7 +97,7 @@ onRecordAfterUpdateSuccess((e) => {
 
   const message = $app.findRecordById("messages", task.getString("ref"));
   if (type === "apply_kit") {
-    message.load(status === "done" ? { subject: String(result.assunto ?? "").slice(0, 200), body: String(result.carta ?? "").slice(0, 8000), lang: String(result.idioma ?? "").slice(0, 10), cv: result.cv ?? null, status: "pronta" } : { status: "erro", error: error.slice(0, 1000) });
+    message.load(status === "done" ? { subject: String(result.assunto ?? "").slice(0, 200), body: String(result.carta ?? "").slice(0, 8000), followup: String(result.followup ?? "").slice(0, 4000), lang: String(result.idioma ?? "").slice(0, 10), cv: result.cv ?? null, status: "pronta" } : { status: "erro", error: error.slice(0, 1000) });
     $app.save(message);
     // Auto Apply no modo Automático: carta pronta sai sozinha, dentro do teto e com audit
     const payload = JSON.parse(task.getString("payload") || "{}") || {};
@@ -154,3 +154,25 @@ onRecordEnrich((e) => {
   e.record.hide("secret");
   e.next();
 }, "mail_accounts");
+
+// Kit avulso: cola a descrição de qualquer vaga (LinkedIn, site...) e o Claude faz carta, CV adaptado e follow-up
+routerAdd(
+  "POST",
+  "/api/radar/kit",
+  (e) => {
+    const { cvOf, menteOf } = require(`${__hooks}/payload.js`);
+    const body = e.requestInfo().body;
+    const profile = $app.findRecordById("profile", String(body.profile ?? ""));
+    const text = String(body.text ?? "").trim().slice(0, 12000);
+    if (text.length < 80) return e.json(400, { message: "Cole a descrição da vaga (pelo menos umas linhas)." });
+    const to = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(body.to ?? "").trim()) ? String(body.to).trim().toLowerCase() : "";
+    const message = new Record($app.findCollectionByNameOrId("messages"));
+    message.load({ profile: profile.id, channel: to ? "email" : "manual", to, status: "gerando", kit: true, title: String(body.title ?? "").slice(0, 200), company: String(body.company ?? "").slice(0, 160) });
+    $app.save(message);
+    const task = new Record($app.findCollectionByNameOrId("ai_tasks"));
+    task.load({ type: "apply_kit", profile: profile.id, ref: message.id, status: "queued", payload: { vaga: { title: message.getString("title"), company: message.getString("company"), description: text }, cv: cvOf(profile), mente: menteOf($app, profile.id) }, attempts: 0 });
+    $app.save(task);
+    return e.json(200, { message: message.id });
+  },
+  $apis.requireSuperuserAuth(),
+);

@@ -10,7 +10,7 @@ function prepare(app, profile, job, { auto = false } = {}) {
   } catch {}
   const to = job.getString("contactEmail");
   const message = new Record(app.findCollectionByNameOrId("messages"));
-  message.load({ profile: profile.id, job: job.id, channel: to ? "email" : "manual", to, status: "gerando" });
+  message.load({ profile: profile.id, job: job.id, channel: to ? "email" : "manual", to, status: "gerando", title: job.getString("title").slice(0, 200), company: job.getString("company").slice(0, 160) });
   app.save(message);
   const task = new Record(app.findCollectionByNameOrId("ai_tasks"));
   task.load({ type: "apply_kit", profile: profile.id, ref: message.id, status: "queued", payload: { vaga: vagaOf(job), cv: cvOf(profile), mente: menteOf(app, profile.id), auto }, attempts: 0 });
