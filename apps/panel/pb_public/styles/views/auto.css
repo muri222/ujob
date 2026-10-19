@@ -638,9 +638,10 @@
   min-height: max-content;
   position: sticky;
   z-index: 5;
-  top: 0;
+  top: -20px;
   margin-bottom: 14px;
-  box-shadow: 0 6px 12px -8px rgb(0 0 0 / 30%);
+  /* cobre a faixa de padding acima e abaixo das abas com o fundo da gaveta */
+  box-shadow: 0 -20px 0 6px var(--bg), 0 10px 0 4px var(--bg);
 }
 
 .drawer__pane {
@@ -723,4 +724,35 @@
 .coach__qa {
   display: grid;
   gap: 6px;
+}
+
+/* dentro da gaveta a barra de ações da vaga não gruda (grudaria embaixo das abas) */
+.drawer__pane .job__actions {
+  position: static;
+  margin: 0;
+}
+
+/* modal de treinar entrevista: campos cabem na largura (select com nome longo empurrava pro lado) */
+.interview-dialog {
+  width: min(100% - 32px, 560px);
+  overflow-x: hidden;
+}
+
+.interview-setup {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.interview-setup .field,
+.interview-setup .resume__grid > * {
+  min-width: 0;
+}
+
+.interview-setup select,
+.interview-setup input,
+.interview-setup textarea {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
 }

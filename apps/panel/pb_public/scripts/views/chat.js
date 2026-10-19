@@ -330,7 +330,7 @@ export default async function chat(root, { signal, query }) {
     syncDescribe();
     const dialog = h(
       "dialog",
-      { className: "confirm" },
+      { className: "confirm interview-dialog" },
       h(
         "form",
         { method: "dialog", className: "interview-setup" },
