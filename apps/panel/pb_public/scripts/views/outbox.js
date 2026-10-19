@@ -23,7 +23,8 @@ export default async function outbox(root, { signal }) {
   root.append(header("Prontas para enviar", "O Claude prepara carta e CV para cada vaga. Você revisa, edita e só sai com o seu clique."), h("p", { className: "outbox__quota" }, quota), holder);
 
   function card(message) {
-    const job = message.expand?.job ?? {};
+    const lead = message.expand?.lead;
+    const job = message.expand?.job ?? (lead ? { title: `E-mail frio · ${lead.name}`, company: lead.domain, url: lead.website } : {});
     const [label, tone] = STATUS[message.status] ?? STATUS.pronta;
     const subject = h("input", { value: message.subject ?? "", maxLength: 200 });
     const body = h("textarea", { value: message.body ?? "", rows: 12, maxLength: 8000 });
@@ -84,7 +85,7 @@ export default async function outbox(root, { signal }) {
     try {
       const since = new Date(Date.now() - 864e5).toISOString().replace("T", " ");
       const [{ items }, sent] = await Promise.all([
-        list("messages", { filter: mine("status != 'descartada'"), sort: "-updatedAt", perPage: 50, expand: "job" }),
+        list("messages", { filter: mine("status != 'descartada'"), sort: "-updatedAt", perPage: 50, expand: "job,lead" }),
         list("messages", { filter: mine(`status = 'enviada' && sentAt >= '${since}'`), perPage: 1, fields: "id" }),
       ]);
       quota.textContent = `${sent.totalItems} de ${ctx.profile.dailyCap || 10} envios nas últimas 24h · ajuste em Configurações`;

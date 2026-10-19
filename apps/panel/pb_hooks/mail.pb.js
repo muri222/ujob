@@ -161,6 +161,15 @@ onRecordAfterUpdateSuccess((e) => {
   $app.save(message);
   audit($app, profileId, "email_enviado", message.getString("to"), { message: message.id, subject: message.getString("subject") });
 
+  // e-mail frio: o lead vira "contatado"
+  const leadId = message.getString("lead");
+  if (leadId) {
+    const lead = $app.findRecordById("leads", leadId);
+    lead.set("status", "contatado");
+    $app.save(lead);
+    return;
+  }
+
   // funil: a vaga vai pra "Candidatei" com a carta guardada
   const jobId = message.getString("job");
   if (!jobId) return;

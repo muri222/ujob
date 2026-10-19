@@ -27,7 +27,7 @@ const writeSkipped = (ids) => {
   } catch {}
 };
 
-function candidatesFilter(profile) {
+export function candidatesFilter(profile) {
   const parts = ["status = 'open'"];
   const areas = profile.categories ?? [];
   if (areas.length) parts.push(`(${areas.map((key) => `category = ${quote(key)}`).join(" || ")})`);

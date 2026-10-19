@@ -161,3 +161,68 @@ onRecordAfterUpdateSuccess((e) => {
   campaign.load({ found: created, status: pending ? "enriquecendo" : "pronta", error: created ? "" : "Nenhuma empresa nova encontrada nessa região." });
   $app.save(campaign);
 }, "ai_tasks");
+
+// dossiê (Opus) e depois abordagem (Sonnet): o Claude só lê o que o PC já raspou do site
+routerAdd(
+  "POST",
+  "/api/radar/leads/{id}/dossier",
+  (e) => {
+    const { cvOf, menteOf } = require(`${__hooks}/payload.js`);
+    const lead = $app.findRecordById("leads", e.request.pathValue("id"));
+    const profile = $app.findRecordById("profile", lead.getString("profile"));
+    const signals = JSON.parse(lead.getString("signals") || "{}") || {};
+    const info = { name: lead.getString("name"), website: lead.getString("website"), city: lead.getString("city"), state: lead.getString("state"), instagram: lead.getString("instagram"), origin: lead.getString("origin") };
+    for (const key of ["title", "description", "text", "socials", "careers", "organization"]) if (signals[key]) info[key] = signals[key];
+    lead.load({ aiStatus: "gerando", dossier: null, outreach: null });
+    $app.save(lead);
+    const task = new Record($app.findCollectionByNameOrId("ai_tasks"));
+    task.load({ type: "lead_dossier", profile: profile.id, ref: lead.id, status: "queued", payload: { lead: info, perfil: cvOf(profile), mente: menteOf($app, profile.id) }, attempts: 0 });
+    $app.save(task);
+    return e.json(200, { task: task.id });
+  },
+  $apis.requireSuperuserAuth(),
+);
+
+// e-mail frio vai pra fila "Prontas para enviar": revisão, teto diário e audit iguais aos da candidatura
+routerAdd(
+  "POST",
+  "/api/radar/leads/{id}/email",
+  (e) => {
+    const lead = $app.findRecordById("leads", e.request.pathValue("id"));
+    if (!lead.getString("email")) return e.json(400, { message: "Esse lead não tem e-mail." });
+    const outreach = JSON.parse(lead.getString("outreach") || "{}") || {};
+    const variant = (outreach.emails || [])[Math.max(0, parseInt(e.requestInfo().body.variant, 10) || 0)];
+    if (!variant) return e.json(400, { message: "Gere a abordagem primeiro." });
+    const message = new Record($app.findCollectionByNameOrId("messages"));
+    message.load({ profile: lead.getString("profile"), lead: lead.id, channel: "email", to: lead.getString("email"), subject: String(variant.assunto ?? "").slice(0, 200), body: String(variant.corpo ?? "").slice(0, 8000), lang: String(outreach.idioma ?? "pt").slice(0, 10), status: "pronta" });
+    $app.save(message);
+    return e.json(200, { message: message.id });
+  },
+  $apis.requireSuperuserAuth(),
+);
+
+onRecordAfterUpdateSuccess((e) => {
+  e.next();
+  const task = e.record;
+  const type = task.getString("type");
+  const status = task.getString("status");
+  if (!["lead_dossier", "outreach"].includes(type) || !["done", "failed"].includes(status)) return;
+  const lead = $app.findRecordById("leads", task.getString("ref"));
+  if (status === "failed") {
+    lead.load({ aiStatus: "erro", [type === "lead_dossier" ? "dossier" : "outreach"]: { error: task.getString("error").slice(0, 300) } });
+    $app.save(lead);
+    return;
+  }
+  const result = JSON.parse(task.getString("result") || "{}") || {};
+  if (type === "outreach") {
+    lead.load({ outreach: result, aiStatus: "pronto" });
+    $app.save(lead);
+    return;
+  }
+  lead.set("dossier", result);
+  $app.save(lead);
+  const payload = JSON.parse(task.getString("payload") || "{}") || {};
+  const next = new Record($app.findCollectionByNameOrId("ai_tasks"));
+  next.load({ type: "outreach", profile: task.getString("profile"), ref: lead.id, status: "queued", payload: { ...payload, dossie: result }, attempts: 0 });
+  $app.save(next);
+}, "ai_tasks");

@@ -1,12 +1,13 @@
-import { list } from "../core/api.js";
+import { count, list } from "../core/api.js";
 import { CATEGORIES, STAGES, STATES, WORKPLACES } from "../core/catalog.js";
-import { asMap, ctx, stats } from "../core/context.js";
+import { asMap, ctx, mine, stats } from "../core/context.js";
 import { flowChart, hbars, stackBar, brazilMap } from "../core/charts.js";
 import { cat, h, icon, logo } from "../core/dom.js";
 import { ago, greeting, number, today } from "../core/format.js";
 import { blurText, reveal, tilt } from "../core/fx.js";
 import { countUp } from "../core/motion.js";
 import { listen } from "../core/realtime.js";
+import { candidatesFilter } from "./marathon.js";
 import { runSearch } from "./search.js";
 import { welcome } from "./welcome.js";
 
@@ -22,6 +23,33 @@ function arrivalCard(job) {
     h("span", {}, job.company || job.expand?.source?.name),
     h("small", {}, [job.city, job.state].filter(Boolean).join("/") || (job.workplace === "remoto" ? "Remoto" : "Brasil")),
   ));
+}
+
+// "Hoje": o que fazer agora, cada número leva pra sua fila
+async function todayPlan(profile) {
+  if (!profile.id) return null;
+  const now = `'${new Date().toISOString().replace("T", " ")}'`;
+  const since = `'${new Date(Date.now() - 864e5).toISOString().replace("T", " ")}'`;
+  const [jobs, leads, followups, ready, mind] = await Promise.all([
+    count("jobs", `${candidatesFilter(profile)} && firstSeenAt >= ${since}`),
+    count("leads", mine("status = 'enriquecido' && (email != '' || phone != '' || instagram != '')")),
+    count("applications", mine(`nextAt != '' && nextAt <= ${now} && stage != 'contratado' && stage != 'encerrada' && stage != 'recusada'`)),
+    count("messages", mine("status = 'pronta'")),
+    count("mind_facts", mine("status = 'pendente'")),
+  ]).catch(() => [0, 0, 0, 0, 0]);
+  const items = [
+    [jobs, "vagas novas pra revisar", "#maratona", "bolt"],
+    [ready, "prontas pra enviar", "#envios", "send"],
+    [leads, "leads pra contatar", "#leads", "building"],
+    [followups, "follow-ups vencidos", "#funil", "kanban"],
+    [mind, "aprendizados pra aprovar", "#mente", "brain"],
+  ];
+  return h(
+    "section",
+    { className: "panel today" },
+    h("header", { className: "section__head" }, h("h2", {}, "Hoje"), h("small", {}, "Um clique leva pra cada fila")),
+    h("div", { className: "today__grid" }, items.map(([total, label, href, iconName]) => h("a", { className: `today__item${total ? "" : " is-done"}`, href }, icon(iconName), h("strong", { className: "num" }, number(total)), h("span", {}, label)))),
+  );
 }
 
 export default async function overview(root, { signal }) {
@@ -90,6 +118,8 @@ export default async function overview(root, { signal }) {
 
   const workplace = asMap(data.workplace);
   const stages = asMap(data.stage);
+  const plan = await todayPlan(profile);
+  if (plan) root.append(plan);
   root.append(
     h(
       "div",

@@ -215,6 +215,43 @@ def lead_enrich(task: dict) -> tuple[dict, list[dict]]:
         raise claude.TaskFailed(f"Site não abriu: {error.__class__.__name__}", []) from error
 
 
+class Dossier(BaseModel):
+    diagnostico: str
+    dor_provavel: str
+    servico_recomendado: str
+    ideia_preview: str
+    merece_projeto_gratuito: bool
+    motivo: str
+    fit: int = Field(ge=0, le=100)
+
+
+def lead_dossier(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("lead_dossier", lead=json.dumps(payload["lead"], ensure_ascii=False), perfil=json.dumps(payload["perfil"], ensure_ascii=False), mente=mind.context(payload.get("mente") or []))
+    value, log = claude.complete("lead_dossier", prompt, Dossier, "top")
+    return value.model_dump(), log
+
+
+class ColdEmail(BaseModel):
+    assunto: str
+    corpo: str
+
+
+class Outreach(BaseModel):
+    idioma: str
+    dms: list[str] = Field(min_length=1, max_length=2)
+    emails: list[ColdEmail] = Field(min_length=1, max_length=2)
+
+
+def outreach(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("outreach", dossie=json.dumps(payload["dossie"], ensure_ascii=False), lead=json.dumps(payload["lead"], ensure_ascii=False), perfil=json.dumps(payload["perfil"], ensure_ascii=False))
+    value, log = claude.complete("outreach", prompt, Outreach, "best")
+    result = value.model_dump()
+    result["idioma"] = "en" if value.idioma.lower().startswith("en") else "pt"
+    return result, log
+
+
 # tarefas sem IA rodam mesmo com o Claude fora
 LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich"}
 
@@ -229,4 +266,6 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "leads_discover": leads_discover,
     "leads_discover_claude": leads_discover_claude,
     "lead_enrich": lead_enrich,
+    "lead_dossier": lead_dossier,
+    "outreach": outreach,
 }

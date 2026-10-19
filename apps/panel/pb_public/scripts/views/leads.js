@@ -1,4 +1,4 @@
-import { api, list, quote, update } from "../core/api.js";
+import { api, create, list, quote, update } from "../core/api.js";
 import { STATES } from "../core/catalog.js";
 import { brainProblem, ctx, mine } from "../core/context.js";
 import { h, header, icon, toast } from "../core/dom.js";
@@ -78,6 +78,63 @@ export default async function leads(root, { signal }) {
   const leadsBox = h("div", { className: "leads__list" });
   let selected = null;
 
+  // dossiê + abordagem: nada é enviado sozinho nas redes; o app copia o texto e abre o link (regra 5)
+  const copy = (text, done = "Copiado.") => navigator.clipboard.writeText(text).then(() => toast(done), () => toast("Não deu pra copiar."));
+  const contacted = (lead, channel) =>
+    Promise.all([update("leads", lead.id, { status: "contatado" }), create("audit", { profile: ctx.profile.id, action: `abordagem_${channel}`, target: lead.name, detail: { lead: lead.id } })]).then(loadLeads);
+  const dossier = (lead) => api(`radar/leads/${lead.id}/dossier`, { method: "POST" }).then(loadLeads, (error) => toast(error.message));
+
+  function leadDetail(lead) {
+    const d = lead.dossier ?? {};
+    const o = lead.outreach ?? {};
+    if (lead.aiStatus === "gerando") return h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Claude montando o dossiê e a abordagem…");
+    if (!lead.dossier || d.error)
+      return h("div", { className: "lead__detail" }, d.error ? h("p", { className: "fit__err" }, d.error) : null, h("button", { className: "btn btn--soft", onclick: () => dossier(lead) }, icon("sparkle"), d.error ? "Tentar de novo" : "Gerar dossiê e abordagem"));
+    const phone = (lead.signals?.socials?.whatsapp || (lead.phone ? `55${lead.phone}` : "")).replace(/\D/g, "");
+    const dmButtons = (o.dms ?? []).map((dm, index) =>
+      h(
+        "div",
+        { className: "lead__dm" },
+        h("p", {}, dm),
+        h(
+          "div",
+          { className: "import__row" },
+          h("button", { className: "btn btn--soft", onclick: () => copy(dm) }, icon("copy"), `Copiar DM ${index + 1}`),
+          lead.instagram ? h("a", { className: "btn", href: `https://instagram.com/${lead.instagram}`, target: "_blank", rel: "noopener noreferrer", onclick: () => (copy(dm, "DM copiada. Cole no Instagram."), contacted(lead, "instagram")) }, "Abrir Instagram") : null,
+          phone ? h("a", { className: "btn", href: `https://wa.me/${phone}?text=${encodeURIComponent(dm)}`, target: "_blank", rel: "noopener noreferrer", onclick: () => contacted(lead, "whatsapp") }, icon("whatsapp"), "Abrir WhatsApp") : null,
+        ),
+      ),
+    );
+    const emailButtons = (o.emails ?? []).map((mail, index) =>
+      h(
+        "div",
+        { className: "lead__dm" },
+        h("p", {}, h("strong", {}, mail.assunto), h("br"), mail.corpo),
+        h(
+          "div",
+          { className: "import__row" },
+          h("button", { className: "btn btn--soft", onclick: () => copy(`${mail.assunto}\n\n${mail.corpo}`) }, icon("copy"), `Copiar e-mail ${index + 1}`),
+          lead.email
+            ? h("button", { className: "btn", onclick: () => api(`radar/leads/${lead.id}/email`, { method: "POST", body: { variant: index } }).then(() => toast("Na fila de envio. Revise e envie de lá.", { label: "Ver", run: () => (location.hash = "#envios") }), (error) => toast(error.message)) }, icon("send"), "Mandar pra fila de envio")
+            : null,
+        ),
+      ),
+    );
+    return h(
+      "div",
+      { className: "lead__detail" },
+      h("p", { className: "fit__head" }, h("strong", {}, `Fit ${d.fit}%`), h("span", { className: `tag ${d.merece_projeto_gratuito ? "tag--ok" : ""}` }, d.merece_projeto_gratuito ? "Vale uma amostra grátis" : "Sem amostra grátis"), h("span", { className: "tag tag--brand" }, icon("sparkle"), "dossiê do Claude")),
+      h("dl", { className: "lead__dossier" }, [["Diagnóstico", d.diagnostico], ["Dor provável", d.dor_provavel], ["O que oferecer", d.servico_recomendado], ["Ideia de amostra", d.ideia_preview], ["Por quê", d.motivo]].map(([term, value]) => h("div", {}, h("dt", {}, term), h("dd", {}, value)))),
+      dmButtons.length ? h("h4", {}, "Mensagem direta") : null,
+      dmButtons,
+      emailButtons.length ? h("h4", {}, "E-mail frio") : null,
+      emailButtons,
+      lead.status !== "contatado" ? h("button", { className: "btn btn--ghost", onclick: () => contacted(lead, "manual") }, icon("check"), "Marcar como contatado") : h("span", { className: "tag tag--ok" }, icon("check"), "Contatado"),
+    );
+  }
+
+  let opened = null;
+
   function leadRow(lead) {
     const s = lead.signals ?? {};
     const contacts = [
@@ -97,8 +154,38 @@ export default async function leads(root, { signal }) {
         h("small", {}, [lead.city && `${lead.city}${lead.state ? `/${lead.state}` : ""}`, lead.origin, s.description || s.title].filter(Boolean).join(" · ")),
         contacts.length ? h("p", { className: "lead__contacts" }, contacts) : lead.status === "enriquecendo" ? h("small", { className: "fit__ai" }, h("span", { className: "spinner" }), "lendo o site…") : h("small", {}, s.error || s.blocked || "Sem contato público achado"),
       ),
+      lead.status !== "descartado" ? h("button", { className: "icon-btn", title: "Dossiê e abordagem", "aria-label": "Dossiê e abordagem", onclick: () => ((opened = opened === lead.id ? null : lead.id), loadLeads()) }, icon("sparkle")) : null,
       lead.status !== "descartado" ? h("button", { className: "icon-btn", title: "Descartar", "aria-label": "Descartar", onclick: () => update("leads", lead.id, { status: "descartado" }).then(loadLeads) }, icon("trash")) : null,
+      opened === lead.id ? leadDetail(lead) : null,
     );
+  }
+
+  // triagem: um lead por vez, ← descarta, → gera dossiê (mesma ideia da Maratona de vagas)
+  function triage(items) {
+    const queue = items.filter((lead) => ["enriquecido", "sem_site"].includes(lead.status) && !lead.dossier && lead.aiStatus !== "gerando");
+    if (!queue.length) return toast("Nada pra triar nessa campanha.");
+    const card = h("div", { className: "triage" });
+    const close = () => (removeEventListener("keydown", keys), card.remove(), loadLeads());
+    const decide = async (keep) => {
+      const lead = queue.shift();
+      await (keep ? dossier(lead) : update("leads", lead.id, { status: "descartado" }));
+      queue.length ? paint() : close();
+    };
+    function paint() {
+      const lead = queue[0];
+      const s = lead.signals ?? {};
+      card.replaceChildren(
+        h("p", { className: "eyebrow" }, `${queue.length} pra triar · ← descarta · → dossiê · Esc sai`),
+        h("h3", {}, lead.name),
+        h("p", {}, s.description || s.title || "Sem descrição no site."),
+        h("small", {}, [lead.city, lead.domain, lead.email, lead.instagram && `@${lead.instagram}`].filter(Boolean).join(" · ")),
+        h("div", { className: "import__row" }, h("button", { className: "btn", onclick: () => decide(false) }, icon("skip"), "Descartar"), h("button", { className: "btn btn--primary", onclick: () => decide(true) }, icon("sparkle"), "Gerar dossiê"), h("button", { className: "btn btn--ghost", onclick: close }, "Sair")),
+      );
+    }
+    const keys = (event) => (event.key === "ArrowLeft" ? decide(false) : event.key === "ArrowRight" ? decide(true) : event.key === "Escape" ? close() : null);
+    addEventListener("keydown", keys);
+    leadsBox.prepend(card);
+    paint();
   }
 
   async function loadLeads() {
@@ -106,7 +193,7 @@ export default async function leads(root, { signal }) {
     const { items } = await list("leads", { filter: mine(`campaign = ${quote(selected)}`), sort: "status,name", perPage: 300 }).catch(() => ({ items: [] }));
     leadsBox.replaceChildren(
       items.length
-        ? h("ul", { className: "rows rows--plain" }, items.map(leadRow))
+        ? h("div", {}, h("button", { className: "btn btn--soft leads__triage", onclick: () => triage(items) }, icon("bolt"), "Triagem rápida"), h("ul", { className: "rows rows--plain" }, items.map(leadRow)))
         : h("div", { className: "empty card" }, h("strong", {}, "Nenhum lead nessa campanha ainda"), "Assim que a busca terminar, eles aparecem aqui."),
     );
   }
