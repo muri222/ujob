@@ -107,6 +107,11 @@ routerAdd(
     for (const field of ["name", "headline", "about", "skills", "experiences", "education", "languages", "seniority", "city", "state", "workplace", "salary", "categories", "countries", "portfolio"]) {
       cv[field] = profile.get(field);
     }
+    // Mente: fatos aprovados e ainda válidos entram no julgamento
+    const today = new Date().toISOString().replace("T", " ");
+    const mente = $app
+      .findRecordsByFilter("mind_facts", "profile = {:profile} && status = 'aprovado' && (validUntil = '' || validUntil >= {:today})", "-updatedAt", 60, 0, { profile: profile.id, today })
+      .map((fact) => ({ kind: fact.getString("kind"), text: fact.getString("text") }));
     const collection = $app.findCollectionByNameOrId("ai_tasks");
     let created = 0;
     for (const id of ids) {
@@ -129,7 +134,7 @@ routerAdd(
       for (const field of ["title", "company", "city", "state", "country", "workplace", "contract", "seniority", "category", "salaryMin", "salaryMax", "tags"]) vaga[field] = job.get(field);
       vaga.description = plain(job.getString("description") || job.getString("summary")).slice(0, 8000);
       const task = new Record(collection);
-      task.load({ type: "job_fit", ref: id, profile: profile.id, status: "queued", payload: { vaga, cv }, attempts: 0 });
+      task.load({ type: "job_fit", ref: id, profile: profile.id, status: "queued", payload: { vaga, cv, mente }, attempts: 0 });
       $app.save(task);
       created++;
     }

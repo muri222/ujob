@@ -82,7 +82,7 @@ export function toast(message, action) {
   toastTimer = setTimeout(() => box.classList.remove("is-on"), action ? 6000 : 2800);
 }
 
-function modal(dialog, resolveWith) {
+export function modal(dialog, resolveWith) {
   return new Promise((resolve) => {
     dialog.addEventListener("close", () => {
       resolve(resolveWith(dialog.returnValue));

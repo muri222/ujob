@@ -4,6 +4,7 @@ Regras:
 - Use só os fatos do CV e da vaga abaixo. Não invente experiência, skill ou requisito.
 - Seja sincero: nota alta só quando o candidato atende de verdade os requisitos principais.
 - Se a descrição da vaga for curta ou vazia, avalie pelo título e diga isso em "por_que".
+- Leve a sério o que a Mente aprendeu sobre o candidato: uma restrição violada derruba a nota e o vale_aplicar.
 - Escreva em português do Brasil, frases curtas e diretas, sem travessão.
 
 Campos da resposta:
@@ -20,3 +21,6 @@ VAGA (JSON):
 
 CV DO CANDIDATO (JSON):
 {cv}
+
+O QUE A MENTE APRENDEU SOBRE O CANDIDATO:
+{mente}

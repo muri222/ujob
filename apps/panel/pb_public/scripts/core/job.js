@@ -5,6 +5,7 @@ import { cat, h, host, icon, logo, safeUrl, toast } from "./dom.js";
 import { ago, formatDay, parseDate, phoneLabel, salary } from "./format.js";
 import { letterDrawer } from "./letter.js";
 import { match, tone } from "./match.js";
+import { refuse } from "./refuse.js";
 import { richText } from "./sanitize.js";
 
 const place = (job) => (job.workplace === "remoto" && !job.city ? "Remoto" : [job.city, job.state].filter(Boolean).join("/") || job.country || "Local não informado");
@@ -53,7 +54,7 @@ export function jobRow(job) {
         { className: "job-row__tags" },
         job.workplace && h("span", { className: "tag" }, WORKPLACES[job.workplace]),
         job.salaryMin > 0 && h("span", { className: "tag tag--ok" }, salary(job)),
-        stage && h("span", { className: "tag tag--brand" }, icon("bookmark"), STAGES.find(([key]) => key === stage)?.[1]),
+        stage && h("span", { className: `tag ${stage === "recusada" ? "tag--down" : "tag--brand"}` }, icon("bookmark"), STAGES.find(([key]) => key === stage)?.[1] ?? "Recusada"),
       ),
     ),
     h("div", { className: "job-row__side" }, scoreBadge(job), h("time", { className: "job-row__time" }, isFresh(job) && h("i", { className: "dot dot--live" }), ago(job.firstSeenAt))),
@@ -161,7 +162,7 @@ export function jobDetail(job, { onChange } = {}) {
   const save = h("button", { className: "btn", title: "Salvar (S)" });
   const paintSave = () => {
     const saved = Boolean(stage());
-    save.replaceChildren(icon("bookmark"), saved ? STAGES.find(([key]) => key === stage())?.[1] ?? "Salva" : "Salvar");
+    save.replaceChildren(icon("bookmark"), saved ? STAGES.find(([key]) => key === stage())?.[1] ?? "Recusada" : "Salvar");
     save.classList.toggle("is-done", saved);
   };
   paintSave();
@@ -249,6 +250,7 @@ export function jobDetail(job, { onChange } = {}) {
       h("button", { className: "btn btn--primary btn--lg", onclick: apply, title: "Candidatar (A)" }, icon("send"), job.status === "closed" ? "Ver na fonte" : "Candidatar"),
       save,
       h("button", { className: "btn", onclick: () => letterDrawer(job), title: "Carta de apresentação" }, icon("letter"), "Carta"),
+      h("button", { className: "btn btn--ghost", onclick: () => decline(), title: "Não quero (N)" }, icon("skip"), "Não quero"),
       ...contactButtons(job),
       h("button", { className: "icon-btn", title: "Copiar link", "aria-label": "Copiar link", onclick: copyLink }, icon("copy")),
       h("button", { className: "icon-btn", title: "Mandar no WhatsApp", "aria-label": "Mandar no WhatsApp", onclick: share }, icon("whatsapp")),
@@ -259,7 +261,13 @@ export function jobDetail(job, { onChange } = {}) {
     body,
     job.tags?.length > 0 && h("div", { className: "job__skills" }, job.tags.map((tag) => h("span", { className: "tag" }, tag))),
   );
-  node.actions = { apply, toggleSave };
+  async function decline() {
+    if (await refuse(job)) {
+      paintSave();
+      onChange?.(job);
+    }
+  }
+  node.actions = { apply, toggleSave, decline };
   paintBody();
   return node;
 }

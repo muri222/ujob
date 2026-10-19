@@ -660,3 +660,80 @@
     flex: 1;
   }
 }
+
+.facts-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts-list > li:not(.empty) {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.facts-list__body {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.facts-list__text {
+  margin: 0;
+  color: var(--ink);
+}
+
+.facts-list__body small {
+  color: var(--faint);
+}
+
+.facts-list__actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.facts-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.facts-add input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.refuse .quick {
+  margin: 12px 0;
+}
+
+.refuse textarea {
+  width: 100%;
+}
+
+.import {
+  display: grid;
+  gap: 10px;
+}
+
+.import__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.import__row input {
+  flex: 1;
+  min-width: 200px;
+}

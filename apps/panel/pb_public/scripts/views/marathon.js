@@ -4,6 +4,7 @@ import { applicationFor, ctx, track, untrack } from "../core/context.js";
 import { cat, h, header, icon, logo, safeUrl, toast } from "../core/dom.js";
 import { ago, number, salary } from "../core/format.js";
 import { scoreBadge } from "../core/job.js";
+import { refuse } from "../core/refuse.js";
 import { letterDrawer } from "../core/letter.js";
 import { mascot } from "../core/mascot.js";
 import { match } from "../core/match.js";
@@ -113,6 +114,7 @@ export default async function marathon(root, { signal }) {
     if (action === "skip") {
       skipped.add(job.id);
       writeSkipped(skipped);
+      toast("Pulou.", { label: "Por quê?", run: () => refuse(job) });
     } else if (action === "save") {
       tally.saved++;
       track(job, "salva").catch(() => toast("Não deu pra salvar essa."));

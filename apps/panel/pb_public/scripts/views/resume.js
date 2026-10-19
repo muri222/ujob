@@ -1,10 +1,11 @@
 import { api, create, update } from "../core/api.js";
 import { CATEGORIES, SENIORITY, STATES } from "../core/catalog.js";
-import { ctx } from "../core/context.js";
-import { h, header, icon, toast } from "../core/dom.js";
+import { brainProblem, ctx } from "../core/context.js";
+import { confirm, h, header, icon, toast } from "../core/dom.js";
 import { DEFAULT_LETTER } from "../core/letter.js";
 import { SKILLS } from "../core/match.js";
 import { fold, isCity, loadCities } from "../core/places.js";
+import { listen } from "../core/realtime.js";
 import { segmented } from "../core/ui.js";
 
 const TEMPLATES = [["classico", "Clássico"], ["moderno", "Moderno"], ["compacto", "Compacto"]];
@@ -12,6 +13,20 @@ const SAVE_DELAY = 700;
 
 const blankExperience = () => ({ role: "", company: "", start: "", end: "", text: "" });
 const blankEducation = () => ({ course: "", school: "", end: "" });
+const SCALARS = ["name", "headline", "email", "phone", "city", "state", "about", "seniority"];
+const LISTS = ["skills", "languages", "links"];
+
+// junta o CV importado: "fill" só completa o vazio, "replace" troca pelo importado (sem apagar o que veio vazio)
+function mergeResume(p, cv, mode) {
+  const has = (value) => (Array.isArray(value) ? value.length : Boolean(value));
+  for (const key of SCALARS) if (has(cv[key]) && (mode === "replace" || !has(p[key]))) p[key] = cv[key];
+  for (const key of LISTS) p[key] = mode === "replace" && has(cv[key]) ? cv[key] : [...new Set([...(p[key] ?? []), ...(cv[key] ?? [])])].slice(0, 40);
+  for (const key of ["experiences", "education"]) {
+    const filled = (p[key] ?? []).filter((item) => Object.values(item).some(Boolean));
+    if (has(cv[key]) && (mode === "replace" || !filled.length)) p[key] = cv[key];
+  }
+  return p;
+}
 
 function completeness(p) {
   const checks = [p.name, p.headline, p.email || p.phone, p.city, p.about?.length > 60, (p.skills ?? []).length >= 4, (p.experiences ?? []).some((item) => item.role), (p.education ?? []).some((item) => item.course), (p.languages ?? []).length];
@@ -210,6 +225,50 @@ export default async function resume(root, { signal }) {
     }
   });
 
+  // importar com Claude: o PDF/site é lido no PC (sem token) e o Claude só organiza os campos
+  const importBox = h("div", { className: "import" });
+  const siteInput = h("input", { type: "url", placeholder: "https://seu-portfolio.com", maxLength: 500 });
+  function importIdle(message) {
+    const fromPdf = h("button", { type: "button", className: "btn btn--soft", disabled: !ctx.profile?.resume, title: ctx.profile?.resume ? "" : "Envie o PDF primeiro" }, icon("file"), "Ler meu PDF");
+    const fromSite = h("button", { type: "button", className: "btn btn--soft" }, icon("external"), "Ler site");
+    fromPdf.addEventListener("click", () => runImport({ source: "pdf" }));
+    fromSite.addEventListener("click", () => siteInput.value.trim() && runImport({ source: "url", url: siteInput.value.trim() }));
+    importBox.replaceChildren(h("div", { className: "import__row" }, fromPdf, siteInput, fromSite), message ? h("p", { className: "fit__err" }, message) : "");
+    brainProblem().then((problem) => problem && importBox.append(h("p", { className: "fit__err" }, problem)));
+  }
+  function importReady(cv) {
+    const summary = [cv.headline, `${cv.experiences.length} experiências`, `${cv.skills.length} habilidades`, cv.links.length && `${cv.links.length} links`].filter(Boolean).join(" · ");
+    const apply = async (mode) => {
+      if (mode === "replace" && !(await confirm("Trocar os campos do currículo pelos importados?", { confirmLabel: "Substituir" }))) return;
+      mergeResume(p, cv, mode);
+      await persist();
+      location.reload();
+    };
+    importBox.replaceChildren(
+      h("p", {}, h("strong", {}, "O Claude organizou: "), summary),
+      h("div", { className: "import__row" }, h("button", { type: "button", className: "btn btn--primary", onclick: () => apply("fill") }, icon("check"), "Completar o que está vazio"), h("button", { type: "button", className: "btn", onclick: () => apply("replace") }, "Substituir pelo importado"), h("button", { type: "button", className: "btn btn--ghost", onclick: () => importIdle() }, "Descartar")),
+    );
+  }
+  async function runImport(body) {
+    if (!p.id) await persist();
+    try {
+      const { task } = await api("radar/cv/import", { method: "POST", body: { ...body, profile: p.id } });
+      importBox.replaceChildren(h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Lendo no seu PC e organizando com o Claude…"));
+      listen(
+        "ai_tasks",
+        ({ record }) => {
+          if (record.id !== task) return;
+          if (record.status === "done") importReady(record.result);
+          if (record.status === "failed") importIdle(record.error || "A importação falhou.");
+        },
+        signal,
+      );
+    } catch (error) {
+      importIdle(error.message);
+    }
+  }
+  importIdle();
+
   const card = (title, lead, ...content) => h("section", { className: "panel resume__card" }, h("header", { className: "section__head" }, h("h2", {}, title), lead ? h("small", {}, lead) : null), content);
   const [skillsBox, skillsHints] = chipsInput("skills", areaSkills, "Digite e aperte Enter");
   const [langBox, langHints] = chipsInput("languages", ["Inglês básico", "Inglês intermediário", "Inglês fluente", "Espanhol básico", "Espanhol intermediário", "Espanhol fluente", "Libras"], "Ex.: Inglês intermediário");
@@ -230,6 +289,7 @@ export default async function resume(root, { signal }) {
       h(
         "div",
         { className: "resume__form" },
+        card("Importar com Claude", "De um PDF ou do seu site/portfólio", importBox),
         card(
           "Sobre você",
           null,

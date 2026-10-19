@@ -179,6 +179,7 @@ export function createSplit(root, { load, empty, toolbar, signal, onCount }) {
         Escape: close,
         a: () => detail?.actions.apply(),
         s: () => detail?.actions.toggleSave(),
+        n: () => detail?.actions.decline(),
         o: () => current() && open(current().url, "_blank", "noopener,noreferrer"),
       };
       if (!actions[key]) return;

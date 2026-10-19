@@ -6,6 +6,7 @@ dependencies = [
     "requests>=2.32",
     "pydantic>=2.8",
     "python-dotenv>=1.0",
+    "pypdf>=6.21.1",
 ]
 
 [dependency-groups]
