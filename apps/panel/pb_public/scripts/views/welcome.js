@@ -1,13 +1,13 @@
 import { api, create, update } from "../core/api.js";
 import { CATEGORIES, STATES, WORKPLACES } from "../core/catalog.js";
-import { ctx } from "../core/context.js";
+import { ctx, useProfile } from "../core/context.js";
 import { cat, h, icon, toast } from "../core/dom.js";
 import { fold, loadCities } from "../core/places.js";
 import { segmented } from "../core/ui.js";
 
-export function welcome({ force = false } = {}) {
+export function welcome({ force = false, fresh = false } = {}) {
   if (document.querySelector(".welcome")) return;
-  const profile = ctx.profile ?? {};
+  const profile = fresh ? {} : (ctx.profile ?? {});
   const picked = new Set(profile.categories ?? []);
   let workplace = profile.workplace ?? "";
   let step = 0;
@@ -97,10 +97,12 @@ export function welcome({ force = false } = {}) {
     next.disabled = true;
     const data = { name: name.value.trim(), categories: [...picked], state: found?.state ?? state.value, city: found?.name ?? "", workplace };
     try {
-      ctx.profile = profile.id ? await update("profile", profile.id, data) : await create("profile", data);
-      const { search } = await api("ujob/search", { method: "POST", body: { category: data.categories[0], state: data.state, city: data.city, workplace: data.workplace } });
+      ctx.profile = profile.id ? await update("profile", profile.id, data) : await create("profile", { kind: "pessoa", sendMode: "revisao", threshold: 70, dailyCap: 10, ...data });
+      useProfile(ctx.profile.id);
+      const { search } = await api("ujob/search", { method: "POST", body: { category: data.categories[0], state: data.state, city: data.city, workplace: data.workplace, profile: ctx.profile.id } });
       dialog.close();
       location.hash = `#buscar/${search.id}`;
+      if (!profile.id) location.reload();
     } catch {
       toast("Não deu pra salvar. Tenta de novo.");
     } finally {

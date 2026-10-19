@@ -9,6 +9,7 @@ routerAdd(
     const body = e.requestInfo().body;
     const query = normalizeQuery(body);
     const key = searchKey(query);
+    const profile = /^[a-z0-9]{15}$/.test(String(body.profile ?? "")) ? body.profile : "";
     const cacheMinutes = Math.max(15, parseInt($os.getenv("SEARCH_CACHE_MINUTES") || "180", 10));
     const fresh = new Date(Date.now() - cacheMinutes * 60000).toISOString().replace("T", " ");
     const cancelOthers = (keep) =>
@@ -22,8 +23,8 @@ routerAdd(
     try {
       record = $app.findFirstRecordByFilter(
         "searches",
-        "key = {:key} && (status = 'queued' || status = 'running' || (status = 'done' && finishedAt >= {:fresh}))",
-        { key, fresh },
+        "key = {:key} && profile = {:profile} && (status = 'queued' || status = 'running' || (status = 'done' && finishedAt >= {:fresh}))",
+        { key, fresh, profile },
       );
       const stuck = record.getString("status") === "running" && record.getString("startedAt") < new Date(Date.now() - 6 * 60000).toISOString().replace("T", " ");
       if (stuck) record.load({ status: "queued", requestedAt: now(), progress: {} });
@@ -34,7 +35,7 @@ routerAdd(
     } catch {}
 
     record = new Record($app.findCollectionByNameOrId("searches"));
-    record.load({ ...query, key, status: "queued", progress: {}, requestedAt: now(), saved: Boolean(body.saved), everyMinutes: 120, name: String(body.name ?? "").slice(0, 80) });
+    record.load({ ...query, key, profile, status: "queued", progress: {}, requestedAt: now(), saved: Boolean(body.saved), everyMinutes: 120, name: String(body.name ?? "").slice(0, 80) });
     $app.save(record);
     cancelOthers(record.id);
     return e.json(200, { reused: false, search: record });

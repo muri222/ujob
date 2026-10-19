@@ -1,5 +1,5 @@
 import { count, list, quote, update } from "../core/api.js";
-import { ctx } from "../core/context.js";
+import { ctx, mine } from "../core/context.js";
 import { cat, h, header, icon, toast } from "../core/dom.js";
 import { ago, number } from "../core/format.js";
 import { describe, toFilter } from "../core/query.js";
@@ -13,7 +13,7 @@ const EVERY = [
 ];
 
 export default async function saved(root) {
-  const { items } = await list("searches", { filter: "saved = true", sort: "-finishedAt", perPage: 100 });
+  const { items } = await list("searches", { filter: mine("saved = true"), sort: "-finishedAt", perPage: 100 });
   root.append(header("Buscas salvas", "Elas rodam sozinhas no ritmo que você escolher e avisam quando entra vaga nova.", h("a", { className: "btn btn--primary", href: "#buscar" }, icon("plus"), "Nova busca")));
 
   if (!items.length) {

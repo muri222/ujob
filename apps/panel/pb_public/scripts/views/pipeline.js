@@ -1,6 +1,6 @@
 import { api, create, list, update } from "../core/api.js";
 import { STAGES } from "../core/catalog.js";
-import { ctx, loadApplications } from "../core/context.js";
+import { ctx, loadApplications, mine } from "../core/context.js";
 import { confirm, h, header, icon, logo, toast } from "../core/dom.js";
 import { ago, formatDay, parseDate } from "../core/format.js";
 import { interviewPrep } from "../core/interview.js";
@@ -8,7 +8,7 @@ import { interviewPrep } from "../core/interview.js";
 const toInput = (value) => (value ? new Date(parseDate(value).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
 
 export default async function pipeline(root, { signal }) {
-  const { items } = await list("applications", { sort: "position", perPage: 500 });
+  const { items } = await list("applications", { sort: "position", perPage: 500, filter: mine() });
   const byStage = new Map(STAGES.map(([key]) => [key, []]));
   for (const item of items) byStage.get(item.stage)?.push(item);
 
@@ -227,7 +227,7 @@ export default async function pipeline(root, { signal }) {
       dialog.remove();
       if (dialog.returnValue !== "save" || !title.value.trim()) return;
       try {
-        const record = await create("applications", { title: title.value.trim(), company: company.value.trim(), url: url.value.trim(), stage: "salva", position: 0 });
+        const record = await create("applications", { profile: ctx.profile?.id, title: title.value.trim(), company: company.value.trim(), url: url.value.trim(), stage: "salva", position: 0 });
         byStage.get("salva").unshift(record);
         paint();
         ctx.refreshCounts();

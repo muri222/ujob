@@ -5,11 +5,31 @@ const subscribers = new Set();
 
 export const ctx = {
   profile: null,
+  profiles: [],
   refreshCounts: () => {},
 };
 
+const PROFILE_KEY = "radar:profile";
+
+export function storedProfile() {
+  try {
+    return localStorage.getItem(PROFILE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function useProfile(id) {
+  try {
+    localStorage.setItem(PROFILE_KEY, id);
+  } catch {}
+}
+
+// filtro do perfil ativo, para applications e searches
+export const mine = (filter = "") => [`profile = '${ctx.profile?.id ?? ""}'`, filter].filter(Boolean).map((part) => `(${part})`).join(" && ");
+
 export async function loadApplications() {
-  const { items } = await list("applications", { perPage: 500, fields: "id,job,stage", filter: "job != ''" });
+  const { items } = await list("applications", { perPage: 500, fields: "id,job,stage", filter: mine("job != ''") });
   applications.clear();
   for (const item of items) applications.set(item.job, item);
 }
@@ -33,6 +53,7 @@ export async function track(job, stage) {
     ? await update("applications", current.id, { stage, ...(stage === "aplicada" && !current.appliedAt ? { appliedAt: now } : {}) })
     : await create("applications", {
         job: job.id,
+        profile: ctx.profile?.id,
         title: job.title,
         company: job.company,
         companyLogo: job.companyLogo,
@@ -60,7 +81,7 @@ let statsCache = null;
 
 export async function stats(force = false) {
   if (!force && statsCache && Date.now() - statsCache.at < 30_000) return statsCache.data;
-  const data = await api("ujob/stats");
+  const data = await api(`ujob/stats?profile=${ctx.profile?.id ?? ""}`);
   statsCache = { at: Date.now(), data };
   return data;
 }

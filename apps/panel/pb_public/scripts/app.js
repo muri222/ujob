@@ -1,5 +1,5 @@
 import { count, list, login, refresh, SessionError } from "./core/api.js";
-import { ctx, loadApplications } from "./core/context.js";
+import { ctx, loadApplications, mine, storedProfile, useProfile } from "./core/context.js";
 import { $, h, isTyping } from "./core/dom.js";
 import { ago, parseDate } from "./core/format.js";
 import { clickSpark, dotGrid } from "./core/fx.js";
@@ -68,8 +68,8 @@ async function refreshCounts() {
   const since = `'${new Date(Date.now() - 864e5).toISOString().replace("T", " ")}'`;
   const [fresh, active, alerts] = await Promise.all([
     count("jobs", `status = 'open' && firstSeenAt >= ${since}`),
-    count("applications", "stage != 'contratado' && stage != 'encerrada'"),
-    count("searches", "saved = true && found > 0 && (seenAt = '' || finishedAt > seenAt)"),
+    count("applications", mine("stage != 'contratado' && stage != 'encerrada'")),
+    count("searches", mine("saved = true && found > 0 && (seenAt = '' || finishedAt > seenAt)")),
   ]);
   setCount("vagas", fresh);
   setCount("funil", active);
@@ -109,6 +109,19 @@ function watchLive() {
 
 let sidebar;
 
+function mountProfiles() {
+  const slot = $("[data-profiles]");
+  slot.hidden = ctx.profiles.length < 2;
+  const select = h(
+    "select",
+    { className: "side__profile", "aria-label": "Perfil ativo" },
+    ctx.profiles.map((item) => h("option", { value: item.id, selected: item.id === ctx.profile?.id }, item.name || "Sem nome")),
+  );
+  // ponytail: trocar de perfil recarrega a página, mais simples que invalidar cada tela
+  select.addEventListener("change", () => (useProfile(select.value), location.reload()));
+  slot.replaceChildren(select);
+}
+
 function highlight(pattern) {
   const key = NAV_KEY[pattern] ?? pattern.split("/")[0];
   for (const link of document.querySelectorAll("[data-link]")) link.toggleAttribute("aria-current", link.dataset.link === key);
@@ -120,6 +133,7 @@ function initChrome() {
   const palette = createPalette({
     actions: [
       ["Ajustar meu perfil", () => welcome({ force: true }), "user"],
+      ["Novo perfil", () => welcome({ force: true, fresh: true }), "user"],
       ["Sair", () => showLogin("Até a próxima vaga."), "logout"],
     ],
   });
@@ -148,8 +162,11 @@ async function open() {
   $("[data-user]").textContent = email;
   $("[data-user-initial]").textContent = email.charAt(0).toUpperCase();
 
-  const [profile] = await Promise.all([list("profile", { perPage: 1 }).then(({ items }) => items[0] ?? null), loadApplications()]);
+  ctx.profiles = (await list("profile", { perPage: 50 })).items;
+  const profile = ctx.profiles.find((item) => item.id === storedProfile()) ?? ctx.profiles[0] ?? null;
   ctx.profile = profile;
+  mountProfiles();
+  await loadApplications();
   ctx.refreshCounts = () => refreshCounts().catch(() => {});
 
   initChrome();

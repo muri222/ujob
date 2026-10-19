@@ -1,6 +1,6 @@
 import { api, list } from "../core/api.js";
 import { CATEGORIES } from "../core/catalog.js";
-import { asMap, ctx, stats } from "../core/context.js";
+import { asMap, ctx, mine, stats } from "../core/context.js";
 import { cat, h, icon, stagger, toast } from "../core/dom.js";
 import { ago, number } from "../core/format.js";
 import { dotGrid, magnet, rotatingText } from "../core/fx.js";
@@ -11,7 +11,7 @@ const ROLES = ["vendedor", "enfermeira", "motorista", "dev", "professora", "desi
 const STATUS = { queued: ["Na fila", "tag"], running: ["Buscando", "tag tag--brand"], done: ["Pronta", "tag tag--ok"], error: ["Falhou", "tag tag--down"], canceled: ["Trocada", "tag"] };
 
 export async function runSearch(query, { saved = false } = {}) {
-  const { search, reused } = await api("ujob/search", { method: "POST", body: { ...query, saved } });
+  const { search, reused } = await api("ujob/search", { method: "POST", body: { ...query, saved, profile: ctx.profile?.id } });
   if (reused && search.status === "done") toast("Essa busca é fresquinha. Mostrando o resultado na hora.");
   location.hash = `#buscar/${search.id}`;
 }
@@ -63,7 +63,7 @@ export default async function search(root, { query, signal }) {
   dotGrid(root.querySelector(".hero"));
   if (query.get("go")) submit();
 
-  const { items } = await list("searches", { sort: "-requestedAt", perPage: 12 });
+  const { items } = await list("searches", { sort: "-requestedAt", perPage: 12, filter: mine() });
   if (!items.length) return;
   root.append(
     h(

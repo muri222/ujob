@@ -41,7 +41,7 @@ routerAdd(
       seniority: groups(`SELECT seniority AS k, COUNT(*) AS n ${open} GROUP BY seniority ORDER BY n DESC`),
       state: groups(`SELECT state AS k, COUNT(*) AS n ${open} AND state != '' GROUP BY state ORDER BY n DESC`),
       group: groups(`SELECT s."group" AS k, COUNT(*) AS n FROM jobs j JOIN sources s ON s.id = j.source WHERE j.status = 'open' GROUP BY s."group" ORDER BY n DESC`),
-      stage: groups("SELECT stage AS k, COUNT(*) AS n FROM applications GROUP BY stage"),
+      stage: groups("SELECT stage AS k, COUNT(*) AS n FROM applications WHERE profile = {:profile} GROUP BY stage", { profile: String(e.request.url.query().get("profile") ?? "") }),
       topCompanies: companies.map(({ name, logo, n }) => ({ name, logo, total: n })),
     });
   },

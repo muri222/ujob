@@ -6,6 +6,7 @@ import sys
 import time
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
 
 from . import catalog
@@ -22,7 +23,12 @@ SEARCH_LANES = int(os.getenv("SCOUT_SEARCH_LANES", "3"))
 
 
 def connect() -> Panel:
-    return Panel(os.getenv("PANEL_URL", "http://127.0.0.1:8090"), os.environ["SCOUT_EMAIL"], os.environ["SCOUT_PASSWORD"])
+    while True:
+        try:
+            return Panel(os.getenv("PANEL_URL", "http://127.0.0.1:8090"), os.environ["SCOUT_EMAIL"], os.environ["SCOUT_PASSWORD"])
+        except requests.ConnectionError as error:
+            log.warning("esperando o painel: %s", error.__class__.__name__)
+            time.sleep(10)
 
 
 def sync(panel: Panel) -> None:
