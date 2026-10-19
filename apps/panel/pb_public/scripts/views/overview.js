@@ -53,6 +53,7 @@ async function todayPlan(profile) {
 
 // cada função escolhe o que aparece no painel dela
 const WIDGETS = [
+  ["semana", "Sua semana (resumo, atividade, alta compatibilidade, sequência)"],
   ["chegando", "Chegando agora"],
   ["hoje", "Hoje (filas do dia)"],
   ["fluxo", "Entrada e saída de vagas"],
@@ -61,6 +62,67 @@ const WIDGETS = [
   ["modalidade", "Como trabalhar e funil"],
   ["empresas", "Empresas com mais vagas"],
 ];
+
+// "Sua semana" (igual AiApply): resumo, atividade, alta compatibilidade e sequência de dias
+const STAGE_TEXT = { salva: "Salvou", aplicada: "Candidatou-se", entrevista: "Entrevista", teste: "Teste", proposta: "Proposta", contratado: "Contratado", encerrada: "Encerrou", recusada: "Recusou" };
+const iso = (ms) => new Date(ms).toISOString().replace("T", " ");
+
+async function weekBlock(profile) {
+  if (!profile.id) return null;
+  const day = 864e5;
+  const midnight = new Date().setHours(0, 0, 0, 0);
+  const [apps, messages, fits] = await Promise.all([
+    list("applications", { filter: mine(`updated >= '${iso(Date.now() - 30 * day)}'`), sort: "-updated", perPage: 300, fields: "id,job,title,company,stage,appliedAt,updated" }),
+    list("messages", { filter: mine(`createdAt >= '${iso(Date.now() - 30 * day)}' && lead = ''`), sort: "-createdAt", perPage: 300, fields: "id,title,company,status,sentAt,createdAt" }),
+    list("ai_tasks", { filter: mine("type = 'job_fit' && status = 'done'"), sort: "-updatedAt", perPage: 200, fields: "ref,result" }),
+  ]).catch(() => [{ items: [] }, { items: [] }, { items: [] }]);
+  const applied = (since) => apps.items.filter((item) => item.appliedAt && item.appliedAt >= iso(since)).length + messages.items.filter((item) => item.status === "enviada" && item.sentAt >= iso(since) && !apps.items.some((app) => app.title === item.title && app.appliedAt)).length;
+  const sentToday = applied(midnight);
+  const week = applied(Date.now() - 7 * day);
+  const interviews = apps.items.filter((item) => item.stage === "entrevista").length;
+
+  // sequência: dias seguidos (até hoje ou ontem) com alguma ação
+  const days = new Set([...apps.items.map((item) => item.updated), ...messages.items.map((item) => item.createdAt)].map((stamp) => new Date(stamp.replace(" ", "T")).setHours(0, 0, 0, 0)));
+  let streak = 0;
+  for (let cursor = days.has(midnight) ? midnight : midnight - day; days.has(cursor); cursor -= day) streak++;
+
+  const activity = [
+    ...apps.items.map((item) => ({ at: item.updated, text: `${STAGE_TEXT[item.stage] ?? "Atualizou"}: ${item.title}`, sub: item.company, href: "#funil" })),
+    ...messages.items.map((item) => ({ at: item.createdAt, text: `${item.status === "enviada" ? "Candidatura enviada" : item.status === "pronta" ? "Kit pronto" : "Kit"}: ${item.title || "vaga"}`, sub: item.company, href: "#kits" })),
+  ]
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, 7);
+
+  const tracked = new Set(apps.items.map((item) => item.job));
+  const best = fits.items.filter((fit) => (fit.result?.score ?? 0) >= 60 && !tracked.has(fit.ref)).sort((a, b) => b.result.score - a.result.score).slice(0, 4);
+  const bestJobs = best.length ? (await list("jobs", { filter: best.map((fit) => `id = '${fit.ref}'`).join(" || "), perPage: 4, fields: "id,title,company,companyLogo" })).items : [];
+
+  const panel = (title, href, ...content) => h("section", { className: "panel week__card" }, h("header", { className: "section__head" }, h("h2", {}, title), href ? h("a", { href }, "Ver", icon("arrow")) : null), content);
+  return h(
+    "div",
+    { className: "week" },
+    panel(
+      "Resumo",
+      "#auto?aba=vagas",
+      h("div", { className: "week__nums" }, [["Hoje", sentToday], ["Esta semana", week], ["Entrevistas", interviews]].map(([text, value]) => h("div", {}, h("small", {}, text), h("strong", { className: "num" }, number(value))))),
+    ),
+    panel(
+      "Atividade",
+      null,
+      activity.length
+        ? h("ul", { className: "week__feed" }, activity.map((item) => h("li", {}, h("a", { href: item.href }, h("time", {}, ago(item.at)), h("span", {}, item.text, item.sub ? h("small", {}, ` · ${item.sub}`) : null)))))
+        : h("p", { className: "settings__help" }, "Sem atividade nos últimos 30 dias. Comece pela Candidatura automática."),
+    ),
+    panel(
+      "Alta compatibilidade",
+      "#auto",
+      bestJobs.length
+        ? h("ul", { className: "week__feed" }, bestJobs.map((job) => h("li", {}, h("a", { href: `#vaga/${job.id}` }, logo(job.company, job.companyLogo, "sm"), h("span", {}, job.title, h("small", {}, ` · ${job.company || ""}`)), h("b", { className: "num" }, best.find((fit) => fit.ref === job.id)?.result.score)))))
+        : h("p", { className: "settings__help" }, "Nenhuma vaga com nota 60+ ainda. Complete o currículo (ferramentas e skills) e peça novas avaliações."),
+    ),
+    panel("Sequência", null, h("div", { className: "week__streak" }, h("span", { "aria-hidden": "true" }, streak ? "🔥" : "💤"), h("strong", { className: "num" }, `${streak} ${streak === 1 ? "dia" : "dias"}`), h("small", {}, streak ? "seguidos cuidando da sua busca" : "Faça uma ação hoje pra começar"))),
+  );
+}
 
 async function customize(profile) {
   const hidden = new Set(profile.dashboard?.hidden ?? []);
@@ -141,6 +203,10 @@ export default async function overview(root, { signal }) {
     ),
   );
   requestAnimationFrame(() => countUp(big, data.open, { duration: 1400 }));
+  if (!hidden.has("semana")) {
+    const week = await weekBlock(profile).catch(() => null);
+    if (week) root.append(week);
+  }
 
   const rail = h("div", { className: "arrivals-rail" }, arrivals.items.map(arrivalCard));
   root.append(

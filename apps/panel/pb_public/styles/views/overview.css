@@ -623,3 +623,108 @@
     padding: 16px;
   }
 }
+
+.week {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1.4fr 0.9fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.week__card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.week__nums {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.week__nums div {
+  display: grid;
+}
+
+.week__nums small,
+.week__feed small,
+.week__feed time,
+.week__streak small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.week__nums strong {
+  font-size: 26px;
+}
+
+.week__feed {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week__feed a {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.week__feed a:hover {
+  background: var(--hover);
+}
+
+.week__feed span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week__feed time {
+  flex: none;
+  min-width: 62px;
+}
+
+.week__streak {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.week__streak span {
+  font-size: 30px;
+}
+
+.week__streak strong {
+  font-size: 24px;
+}
+
+@media (max-width: 1100px) {
+  .week {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .week {
+    grid-template-columns: 1fr;
+  }
+}
+
+.week__feed,
+.week__feed li {
+  min-width: 0;
+}
