@@ -15,7 +15,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s brain %(message)s")
 log = logging.getLogger(__name__)
 
 IDLE_SECONDS = 3
-STATUS_EVERY = 300
+CHECK_EVERY = 300  # checar provedores roda claude auth status, então sem pressa
+REPORT_EVERY = 60  # o painel guarda o status só em memória: reenviar sempre
 
 
 def connect() -> Panel:
@@ -46,13 +47,15 @@ def run(panel: Panel, task: dict, ready: dict) -> None:
 
 def main() -> None:
     panel = connect()
-    ready, checked = {}, 0.0
+    ready, checked, reported = {}, 0.0, 0.0
     while True:
         try:
-            if time.monotonic() - checked > STATUS_EVERY:
-                ready, checked = providers.status(), time.monotonic()
-                panel.status(ready)
+            if time.monotonic() - checked > CHECK_EVERY:
+                ready, checked, reported = providers.status(), time.monotonic(), 0.0
                 log.info("provedores: %s", {name: problem or "ok" for name, problem in ready.items()})
+            if time.monotonic() - reported > REPORT_EVERY:
+                panel.status(ready)
+                reported = time.monotonic()
             task = panel.next_task()
             if task:
                 run(panel, task, ready)

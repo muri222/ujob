@@ -638,3 +638,34 @@ a.tag:hover {
     flex: 1;
   }
 }
+
+.score--ai {
+  box-shadow: inset 0 0 0 1.5px var(--brand);
+}
+
+.fit__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.fit__why {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.fit__ai {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.fit__err {
+  color: var(--down);
+  font-size: 12.5px;
+}

@@ -1,5 +1,5 @@
 import { count, list, login, refresh, SessionError } from "./core/api.js";
-import { ctx, loadApplications, mine, storedProfile, useProfile } from "./core/context.js";
+import { ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
 import { $, h, isTyping } from "./core/dom.js";
 import { ago, parseDate } from "./core/format.js";
 import { clickSpark, dotGrid } from "./core/fx.js";
@@ -166,7 +166,7 @@ async function open() {
   const profile = ctx.profiles.find((item) => item.id === storedProfile()) ?? ctx.profiles[0] ?? null;
   ctx.profile = profile;
   mountProfiles();
-  await loadApplications();
+  await Promise.all([loadApplications(), loadFits().catch(() => {})]);
   ctx.refreshCounts = () => refreshCounts().catch(() => {});
 
   initChrome();

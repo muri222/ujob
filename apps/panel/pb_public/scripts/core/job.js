@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STAGES, WORKPLACES } from "./catalog.js";
-import { applicationFor, ctx, track, untrack } from "./context.js";
+import { applicationFor, brainProblem, ctx, fitFor, onFit, requestFit, track, untrack } from "./context.js";
 import { cat, h, host, icon, logo, safeUrl, toast } from "./dom.js";
 import { ago, formatDay, parseDate, phoneLabel, salary } from "./format.js";
 import { letterDrawer } from "./letter.js";
@@ -11,10 +11,21 @@ const place = (job) => (job.workplace === "remoto" && !job.city ? "Remoto" : [jo
 
 export const isFresh = (job) => Date.now() - parseDate(job.firstSeenAt) < 864e5;
 
+// nota da IA quando existir, senão a regra local
+const scoreOf = (job) => {
+  const fit = fitFor(job.id);
+  return fit?.status === "done" ? { score: fit.result.score, ai: true } : match(job);
+};
+
 export function scoreBadge(job, size = "sm") {
-  const result = match(job);
+  const result = scoreOf(job);
   if (!result) return null;
-  const node = h("span", { className: `score score--${size} score--${tone(result.score)}`, title: `${result.score}% compatível com o seu perfil` }, h("b", { className: "num" }, result.score), h("small", {}, "%"));
+  const node = h(
+    "span",
+    { className: `score score--${size} score--${tone(result.score)}${result.ai ? " score--ai" : ""}`, title: result.ai ? `${result.score}% na avaliação do Claude` : `${result.score}% compatível com o seu perfil` },
+    h("b", { className: "num" }, result.score),
+    h("small", {}, "%"),
+  );
   if (size === "lg") {
     const ns = "http://www.w3.org/2000/svg";
     const ring = document.createElementNS(ns, "svg");
@@ -49,7 +60,57 @@ export function jobRow(job) {
   );
 }
 
+function aiFit(job, fit) {
+  const { score, por_que, atende = [], parcial = [], falta = [], vale_aplicar, motivo } = fit.result;
+  const tags = (list, className) => list.map((item) => h("span", { className: `tag ${className}` }, item));
+  return h(
+    "section",
+    { className: `fit fit--${tone(score)}` },
+    scoreBadge(job, "lg"),
+    h(
+      "div",
+      { className: "fit__body" },
+      h("p", { className: "fit__head" }, h("strong", {}, vale_aplicar ? "Vale aplicar" : "Melhor pular"), h("span", { className: "tag tag--brand" }, icon("sparkle"), "avaliada pelo Claude")),
+      h("p", {}, por_que),
+      atende.length ? h("p", { className: "fit__row" }, icon("check"), h("span", {}, "Atende: "), tags(atende, "tag--ok")) : null,
+      parcial.length ? h("p", { className: "fit__row" }, icon("level"), h("span", {}, "Em parte: "), tags(parcial, "")) : null,
+      falta.length ? h("p", { className: "fit__row" }, icon("plus"), h("span", {}, "Falta: "), tags(falta, "tag--down")) : null,
+      motivo ? h("p", { className: "fit__why" }, motivo) : null,
+      fit.updatedAt && fit.updatedAt < ctx.profile?.updated ? [h("p", { className: "fit__err" }, "Seu perfil mudou depois desta nota."), aiAction(job, null)] : null,
+    ),
+  );
+}
+
+function aiAction(job, fit) {
+  if (fit?.status === "queued" || fit?.status === "running") return h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Claude avaliando a vaga…");
+  const slot = h("p", { className: "fit__ai" });
+  const button = h("button", { className: "btn btn--soft" }, icon("sparkle"), fit?.status === "failed" ? "Tentar de novo" : "Avaliar com Claude");
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      await requestFit([job.id]);
+      slot.replaceChildren(h("span", { className: "spinner" }), "Claude avaliando a vaga…");
+    } catch {
+      toast("Não deu pra pedir a avaliação.");
+      button.disabled = false;
+    }
+  });
+  slot.append(button, fit?.status === "failed" ? h("span", { className: "fit__err" }, "A última avaliação falhou.") : "");
+  brainProblem().then((problem) => problem && slot.append(h("span", { className: "fit__err" }, problem)));
+  return slot;
+}
+
 function fitCard(job) {
+  const holder = h("div", { className: "fit-slot" });
+  const paint = () => holder.replaceChildren(fitView(job) ?? "");
+  paint();
+  onFit(holder, (ref) => ref === job.id && paint());
+  return holder;
+}
+
+function fitView(job) {
+  const fit = fitFor(job.id);
+  if (fit?.status === "done" && fit.result) return aiFit(job, fit);
   const result = match(job);
   if (!result) return null;
   return h(
@@ -64,6 +125,7 @@ function fitCard(job) {
       result.hits.length ? h("p", { className: "fit__row" }, icon("check"), h("span", {}, "Você tem: "), result.hits.map((skill) => h("span", { className: "tag tag--ok" }, skill))) : null,
       result.misses.length ? h("p", { className: "fit__row" }, icon("plus"), h("span", {}, "A vaga cita: "), result.misses.map((skill) => h("span", { className: "tag" }, skill))) : null,
       !(ctx.profile?.skills ?? []).length ? h("a", { className: "link", href: "#curriculo" }, "Complete seu currículo pra uma nota mais certeira", icon("arrow")) : null,
+      aiAction(job, fit),
     ),
   );
 }

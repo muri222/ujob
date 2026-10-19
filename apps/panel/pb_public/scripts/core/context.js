@@ -1,4 +1,5 @@
 import { api, create, list, update } from "./api.js";
+import { listen } from "./realtime.js";
 
 const applications = new Map();
 const subscribers = new Set();
@@ -75,6 +76,46 @@ export async function untrack(job) {
   await api(`collections/applications/records/${current.id}`, { method: "DELETE" });
   applications.delete(job.id);
   notify();
+}
+
+// notas da IA (tarefas job_fit) do perfil ativo, por vaga
+const fits = new Map();
+const fitWatchers = new Set();
+
+export async function loadFits() {
+  if (!ctx.profile) return;
+  const { items } = await list("ai_tasks", { perPage: 500, sort: "updatedAt", fields: "ref,status,result,error,profile,type,updatedAt", filter: mine("type = 'job_fit'") });
+  for (const item of items) fits.set(item.ref, item);
+  listen("ai_tasks", ({ record }) => {
+    if (record.type !== "job_fit" || record.profile !== ctx.profile?.id) return;
+    fits.set(record.ref, record);
+    for (const watcher of fitWatchers) watcher(record.ref);
+  });
+}
+
+export const fitFor = (jobId) => fits.get(jobId) ?? null;
+
+// avisa quando a nota de uma vaga muda; para sozinho quando o nó sai da tela
+export function onFit(node, handler) {
+  const watcher = (ref) => (node.isConnected ? handler(ref) : fitWatchers.delete(watcher));
+  fitWatchers.add(watcher);
+}
+
+export async function requestFit(jobIds) {
+  const { created } = await api("radar/fit", { method: "POST", body: { profile: ctx.profile?.id, jobs: jobIds } });
+  for (const id of jobIds) if (!fits.has(id) || fits.get(id).status === "failed") fits.set(id, { ref: id, status: "queued" });
+  return created;
+}
+
+let brainCache = null;
+
+// motivo pelo qual a IA não vai responder, ou null se está tudo pronto
+export async function brainProblem() {
+  if (!brainCache || Date.now() - brainCache.at > 60_000) brainCache = { at: Date.now(), data: await api("radar/brain").catch(() => null) };
+  const data = brainCache.data;
+  if (!data?.at || Date.now() - Date.parse(data.at) > 3 * 60_000) return "O brain está desligado. Abra o Radar pelo INICIAR.bat.";
+  const problems = Object.values(data.providers ?? {});
+  return problems.length && problems.every(Boolean) ? `Nenhuma IA disponível: ${problems[0]}` : null;
 }
 
 let statsCache = null;

@@ -1,6 +1,7 @@
 import { list } from "../core/api.js";
-import { asMap, stats } from "../core/context.js";
-import { h, icon } from "../core/dom.js";
+import { asMap, ctx, fitFor, requestFit, stats } from "../core/context.js";
+import { h, icon, toast } from "../core/dom.js";
+import { match } from "../core/match.js";
 import { fromParams, toFilter, toParams } from "../core/query.js";
 import { createSentence } from "../core/sentence.js";
 import { createSplit } from "../core/split.js";
@@ -35,6 +36,32 @@ export default async function jobs(root, { query, signal }) {
   const hunt = h("button", { className: "btn btn--soft", title: "Buscar mais nos portais agora" }, icon("radar"), "Buscar mais nas fontes");
   hunt.addEventListener("click", () => runSearch(state));
 
+  // ponytail: a regra local filtra de graça; só as melhores acima de 50 vão pro Claude
+  const judge = h("button", { className: "btn btn--soft", title: "Nota do Claude para as 20 melhores deste filtro" }, icon("sparkle"), "Avaliar com Claude");
+  judge.addEventListener("click", async () => {
+    if (!ctx.profile) return toast("Crie seu perfil primeiro.");
+    judge.disabled = true;
+    try {
+      const { items } = await list("jobs", { filter: toFilter(state), sort: "-firstSeenAt", perPage: 200 });
+      const best = items
+        .filter((job) => {
+          const fit = fitFor(job.id);
+          return !["queued", "running"].includes(fit?.status) && !(fit?.status === "done" && fit.updatedAt > ctx.profile.updated);
+        })
+        .map((job) => ({ id: job.id, score: match(job)?.score ?? 0 }))
+        .filter(({ score }) => score > 50)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20);
+      if (!best.length) return toast("Nenhuma vaga nova acima de 50 por aqui.");
+      const created = await requestFit(best.map(({ id }) => id));
+      toast(`${created} vagas na fila do Claude. As notas aparecem sozinhas.`);
+    } catch {
+      toast("Não deu pra pedir as avaliações.");
+    } finally {
+      judge.disabled = false;
+    }
+  });
+
   function paintChips() {
     chips.replaceChildren(
       ...QUICK.map(([key, value, iconName, text]) => {
@@ -48,7 +75,7 @@ export default async function jobs(root, { query, signal }) {
   paintChips();
 
   root.classList.add("view--flush");
-  const toolbar = h("div", { className: "explorer" }, h("div", { className: "explorer__top" }, sentence), h("div", { className: "explorer__bar" }, chips, status, hunt));
+  const toolbar = h("div", { className: "explorer" }, h("div", { className: "explorer__top" }, sentence), h("div", { className: "explorer__bar" }, chips, status, judge, hunt));
 
   const split = createSplit(root, {
     signal,
