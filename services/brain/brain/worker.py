@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from . import claude
 from .panel import Panel
-from .tasks import TASKS
+from .tasks import LOCAL, TASKS
 
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s brain %(message)s")
@@ -57,8 +57,8 @@ def main() -> None:
             if time.monotonic() - reported > REPORT_EVERY:
                 panel.status(problem)
                 reported = time.monotonic()
-            # sem Claude, as tarefas esperam na fila; a tela mostra o motivo
-            task = None if problem else panel.next_task()
+            # sem Claude, as tarefas de IA esperam na fila (a tela mostra o motivo); e-mail segue
+            task = panel.next_task(sorted(LOCAL) if problem else sorted(TASKS))
             if task:
                 run(panel, task)
                 continue

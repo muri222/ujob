@@ -11,8 +11,8 @@ class Panel:
         token = self._call("POST", "collections/bots/auth-with-password", json={"identity": email, "password": password})["token"]
         self.http.headers["Authorization"] = token
 
-    def next_task(self) -> dict | None:
-        return self._call("GET", "radar/tasks/next")["task"]
+    def next_task(self, types: list[str]) -> dict | None:
+        return self._call("GET", "radar/tasks/next", params={"types": ",".join(types)})["task"]
 
     def result(self, task_id: str, result: dict | None = None, error: str = "", log: list[dict] | None = None) -> dict:
         return self._call("POST", f"radar/tasks/{task_id}/result", json={"result": result, "error": error, "log": log or []})

@@ -249,6 +249,7 @@ export function jobDetail(job, { onChange } = {}) {
       { className: "job__actions" },
       h("button", { className: "btn btn--primary btn--lg", onclick: apply, title: "Candidatar (A)" }, icon("send"), job.status === "closed" ? "Ver na fonte" : "Candidatar"),
       save,
+      h("button", { className: "btn", onclick: () => prepare(), title: "Claude escreve a carta e adapta o CV pra essa vaga" }, icon("sparkle"), "Preparar candidatura"),
       h("button", { className: "btn", onclick: () => letterDrawer(job), title: "Carta de apresentação" }, icon("letter"), "Carta"),
       h("button", { className: "btn btn--ghost", onclick: () => decline(), title: "Não quero (N)" }, icon("skip"), "Não quero"),
       ...contactButtons(job),
@@ -261,6 +262,16 @@ export function jobDetail(job, { onChange } = {}) {
     body,
     job.tags?.length > 0 && h("div", { className: "job__skills" }, job.tags.map((tag) => h("span", { className: "tag" }, tag))),
   );
+  async function prepare() {
+    if (!ctx.profile) return toast("Crie seu perfil primeiro.");
+    try {
+      const { reused } = await api("radar/apply/prepare", { method: "POST", body: { profile: ctx.profile.id, job: job.id } });
+      toast(reused ? "Essa candidatura já está na fila." : job.contactEmail ? "Claude preparando carta e CV. Revise antes de enviar." : "Claude preparando. Essa vaga não tem e-mail: você copia a carta e aplica no site.", { label: "Ver", run: () => (location.hash = "#envios") });
+    } catch (error) {
+      toast(error.message || "Não deu pra preparar.");
+    }
+  }
+
   async function decline() {
     if (await refuse(job)) {
       paintSave();

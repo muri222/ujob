@@ -16,6 +16,8 @@ import jobs from "./views/jobs.js";
 import live from "./views/live.js";
 import marathon from "./views/marathon.js";
 import mind from "./views/mind.js";
+import outbox from "./views/outbox.js";
+import settings from "./views/settings.js";
 import overview from "./views/overview.js";
 import pipeline from "./views/pipeline.js";
 import resume from "./views/resume.js";
@@ -37,6 +39,8 @@ const ROUTES = [
   ["maratona", marathon],
   ["curriculo", resume],
   ["mente", mind],
+  ["envios", outbox],
+  ["config", settings],
   ["ao-vivo", live],
   ["empresas", companies],
   ["areas", areas],
@@ -67,12 +71,14 @@ async function refreshClaude() {
 
 async function refreshCounts() {
   const since = `'${new Date(Date.now() - 864e5).toISOString().replace("T", " ")}'`;
-  const [fresh, active, alerts, review] = await Promise.all([
+  const [fresh, active, alerts, review, ready] = await Promise.all([
     count("jobs", `status = 'open' && firstSeenAt >= ${since}`),
     count("applications", mine("stage != 'contratado' && stage != 'encerrada' && stage != 'recusada'")),
     count("searches", mine("saved = true && found > 0 && (seenAt = '' || finishedAt > seenAt)")),
     count("mind_facts", mine("status = 'pendente'")),
+    count("messages", mine("status = 'pronta'")),
   ]);
+  setCount("envios", ready);
   setCount("mente", review);
   setCount("vagas", fresh);
   setCount("funil", active);

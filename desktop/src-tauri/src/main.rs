@@ -32,21 +32,28 @@ fn secret() -> String {
     (0..2).map(|i| { let mut h = RandomState::new().build_hasher(); h.write_u8(i); format!("{:016x}", h.finish()) }).collect()
 }
 
-// primeira execução: cria o .env a partir do exemplo, com senhas novas
+const SECRETS: [&str; 3] = ["SCOUT_PASSWORD", "BRAIN_PASSWORD", "RADAR_SECRET"];
+
+// cria o .env a partir do exemplo na primeira vez e completa segredo vazio ou faltando (versões novas trazem chaves novas)
 fn ensure_env(root: &Path) {
     let path = root.join(".env");
-    if path.exists() {
-        return;
-    }
-    let example = fs::read_to_string(root.join(".env.example")).unwrap_or_default();
-    let filled: Vec<String> = example
+    let base = fs::read_to_string(&path).or_else(|_| fs::read_to_string(root.join(".env.example"))).unwrap_or_default();
+    let mut lines: Vec<String> = base
         .lines()
-        .map(|line| match line {
-            "SCOUT_PASSWORD=" | "BRAIN_PASSWORD=" => format!("{line}{}", secret()),
+        .map(|line| match line.strip_suffix('=') {
+            Some(key) if SECRETS.contains(&key) => format!("{line}{}", secret()),
             _ => line.to_string(),
         })
         .collect();
-    let _ = fs::write(path, filled.join("\n") + "\n");
+    for key in SECRETS {
+        if !lines.iter().any(|line| line.starts_with(&format!("{key}="))) {
+            lines.push(format!("{key}={}", secret()));
+        }
+    }
+    let filled = lines.join("\n") + "\n";
+    if filled != base {
+        let _ = fs::write(path, filled);
+    }
 }
 
 fn env_file(root: &Path) -> Vec<(String, String)> {

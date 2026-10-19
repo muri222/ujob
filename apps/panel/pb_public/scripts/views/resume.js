@@ -33,7 +33,7 @@ function completeness(p) {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
-function paper(p) {
+export function paper(p) {
   const contact = [p.email, p.phone, [p.city, p.state].filter(Boolean).join("/"), ...(p.links ?? [])].filter(Boolean);
   const section = (title, ...content) => (content.flat().filter(Boolean).length ? h("section", {}, h("h3", {}, title), content) : null);
   return h(

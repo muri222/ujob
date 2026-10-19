@@ -19,7 +19,7 @@ routerUse((e) => {
     /^\/api\/ujob\//,
     /^\/api\/radar\//,
     /^\/api\/collections\/(_superusers|bots)\/(auth-with-password|auth-refresh)$/,
-    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile|ai_tasks|ai_log|mind_facts)\/records(\/[a-z0-9]{15})?$/,
+    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile|ai_tasks|ai_log|mind_facts|mail_accounts|messages|audit)\/records(\/[a-z0-9]{15})?$/,
     /^\/api\/files\/token$/,
     /^\/api\/files\/profile\/[a-z0-9]{15}\/[\w.-]+$/,
   ];

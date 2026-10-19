@@ -16,10 +16,19 @@ routerAdd(
       .newQuery("UPDATE ai_tasks SET status = 'failed', error = 'travou 3 vezes' WHERE status = 'running' AND startedAt <= strftime('%Y-%m-%d %H:%M:%fZ', 'now', '-15 minutes')")
       .execute();
 
+    // o worker diz quais tipos sabe fazer agora (sem Claude, só os de e-mail)
+    const types = String(e.request.url.query().get("types") ?? "")
+      .split(",")
+      .filter((type) => /^[a-z_]{1,40}$/.test(type))
+      .slice(0, 20);
+    if (!types.length) return e.json(200, { task: null });
+    const params = Object.fromEntries(types.map((type, i) => [`t${i}`, type]));
+    const filter = `status = 'queued' && (${types.map((_, i) => `type = {:t${i}}`).join(" || ")})`;
+
     for (let attempt = 0; attempt < 5; attempt++) {
       let candidate;
       try {
-        candidate = $app.findFirstRecordByFilter("ai_tasks", "status = 'queued'", {});
+        candidate = $app.findFirstRecordByFilter("ai_tasks", filter, params);
       } catch {
         break;
       }
@@ -33,9 +42,18 @@ routerAdd(
       // salva pelo app (não SQL cru) para o realtime avisar a tela
       const task = $app.findRecordById("ai_tasks", candidate.id);
       $app.save(task);
-      return e.json(200, {
-        task: { id: task.id, type: task.getString("type"), profile: task.getString("profile"), ref: task.getString("ref"), payload: task.get("payload") || {}, attempts: task.getInt("attempts") },
-      });
+      const out = { id: task.id, type: task.getString("type"), profile: task.getString("profile"), ref: task.getString("ref"), payload: task.get("payload") || {}, attempts: task.getInt("attempts") };
+      // senha do e-mail: descriptografada só na resposta, nunca gravada na tarefa
+      if (out.type.startsWith("mail_")) {
+        try {
+          out.mail = require(`${__hooks}/mail.js`).credentials($app, out.profile);
+        } catch (error) {
+          task.load({ status: "failed", error: "Configure o e-mail de envio primeiro." });
+          $app.save(task);
+          continue;
+        }
+      }
+      return e.json(200, { task: out });
     }
     return e.json(200, { task: null });
   },
@@ -102,16 +120,9 @@ routerAdd(
     const body = e.requestInfo().body;
     const profile = $app.findRecordById("profile", String(body.profile ?? ""));
     const ids = (Array.isArray(body.jobs) ? body.jobs : []).filter((id) => /^[a-z0-9]{15}$/.test(id)).slice(0, 50);
-    const plain = (html) => String(html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    const cv = {};
-    for (const field of ["name", "headline", "about", "skills", "experiences", "education", "languages", "seniority", "city", "state", "workplace", "salary", "categories", "countries", "portfolio"]) {
-      cv[field] = profile.get(field);
-    }
-    // Mente: fatos aprovados e ainda válidos entram no julgamento
-    const today = new Date().toISOString().replace("T", " ");
-    const mente = $app
-      .findRecordsByFilter("mind_facts", "profile = {:profile} && status = 'aprovado' && (validUntil = '' || validUntil >= {:today})", "-updatedAt", 60, 0, { profile: profile.id, today })
-      .map((fact) => ({ kind: fact.getString("kind"), text: fact.getString("text") }));
+    const { cvOf, vagaOf, menteOf } = require(`${__hooks}/payload.js`);
+    const cv = cvOf(profile);
+    const mente = menteOf($app, profile.id);
     const collection = $app.findCollectionByNameOrId("ai_tasks");
     let created = 0;
     for (const id of ids) {
@@ -130,9 +141,7 @@ routerAdd(
       } catch {
         continue;
       }
-      const vaga = {};
-      for (const field of ["title", "company", "city", "state", "country", "workplace", "contract", "seniority", "category", "salaryMin", "salaryMax", "tags"]) vaga[field] = job.get(field);
-      vaga.description = plain(job.getString("description") || job.getString("summary")).slice(0, 8000);
+      const vaga = vagaOf(job);
       const task = new Record(collection);
       task.load({ type: "job_fit", ref: id, profile: profile.id, status: "queued", payload: { vaga, cv, mente }, attempts: 0 });
       $app.save(task);
