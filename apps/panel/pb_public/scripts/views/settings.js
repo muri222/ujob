@@ -1,6 +1,7 @@
 import { api, list, update } from "../core/api.js";
 import { brainProblem, ctx, mine } from "../core/context.js";
 import { h, header, icon, toast } from "../core/dom.js";
+import { segmented } from "../core/ui.js";
 import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
 
@@ -11,6 +12,34 @@ const HELP = {
   yahoo: "No Yahoo: gere uma senha de app em Segurança da conta.",
   icloud: "No iCloud: gere uma senha específica de app no site da Apple.",
 };
+
+const PALETTES = [
+  ["areia", "Areia", "#9a7a4f"],
+  ["oceano", "Oceano", "#2f6fb0"],
+  ["floresta", "Floresta", "#2f7d5b"],
+  ["ameixa", "Ameixa", "#7a4fa0"],
+  ["coral", "Coral", "#c8573a"],
+  ["grafite", "Grafite", "#4a5059"],
+];
+
+function appearance() {
+  const current = window.radarTheme.get();
+  const mode = segmented([["system", "Sistema"], ["light", "Claro"], ["dark", "Escuro"]], current.mode, (value) => window.radarTheme.set({ mode: value }), "Modo");
+  const swatches = h("div", { className: "swatches" });
+  const paint = () =>
+    swatches.replaceChildren(
+      ...PALETTES.map(([key, label, color]) =>
+        h(
+          "button",
+          { type: "button", className: "swatch", "aria-pressed": String(window.radarTheme.get().palette === key), onclick: () => (window.radarTheme.set({ palette: key }), paint()) },
+          h("i", { style: { background: color } }),
+          label,
+        ),
+      ),
+    );
+  paint();
+  return h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Aparência"), h("small", {}, "Fica salvo neste PC")), h("div", { className: "import__row" }, mode), swatches);
+}
 
 export default async function settings(root, { signal }) {
   if (!ctx.profile) {
@@ -109,6 +138,7 @@ export default async function settings(root, { signal }) {
 
   root.append(
     header("Configurações", `Perfil: ${ctx.profile.name || "sem nome"}. Tudo fica só neste PC.`),
+    appearance(),
     h(
       "section",
       { className: "panel settings" },

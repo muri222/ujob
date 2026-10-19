@@ -35,7 +35,7 @@ routerAdd(
     } catch {}
 
     record = new Record($app.findCollectionByNameOrId("searches"));
-    record.load({ ...query, key, profile, status: "queued", progress: {}, requestedAt: now(), saved: Boolean(body.saved), everyMinutes: 120, name: String(body.name ?? "").slice(0, 80) });
+    record.load({ ...query, key, profile, status: "queued", progress: {}, requestedAt: now(), saved: Boolean(body.saved), everyMinutes: 120, name: String(body.name ?? "").slice(0, 80), prompt: String(body.prompt ?? "").slice(0, 500) });
     $app.save(record);
     cancelOthers(record.id);
     return e.json(200, { reused: false, search: record });

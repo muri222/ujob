@@ -10,6 +10,7 @@ import { createRouter } from "./core/router.js";
 import { createSidebar } from "./core/sidebar.js";
 import areas from "./views/areas.js";
 import companies from "./views/companies.js";
+import guide from "./views/guide.js";
 import history from "./views/history.js";
 import job from "./views/job.js";
 import jobs from "./views/jobs.js";
@@ -43,6 +44,7 @@ const ROUTES = [
   ["envios", outbox],
   ["config", settings],
   ["leads", leads],
+  ["guia", guide],
   ["ao-vivo", live],
   ["empresas", companies],
   ["areas", areas],
@@ -145,6 +147,8 @@ function initChrome() {
     actions: [
       ["Ajustar meu perfil", () => welcome({ force: true }), "user"],
       ["Novo perfil", () => welcome({ force: true, fresh: true }), "user"],
+      ["Alternar claro / escuro", () => window.radarTheme.set({ mode: document.documentElement.dataset.mode === "dark" ? "light" : "dark" }), "sparkle"],
+      ["Configurações e temas", () => (location.hash = "#config"), "gear"],
     ],
   });
   sidebar = createSidebar();

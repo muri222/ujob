@@ -1,12 +1,15 @@
 """Descobrir empresas sem gastar token: OpenStreetMap (grátis) ou Google Maps via Apify (créditos da pessoa)."""
 
 import math
+import re
 
 import requests
 
 OVERPASS = "https://overpass-api.de/api/interpreter"
 APIFY_ACTOR = "compass~crawler-google-places"
 UA = {"User-Agent": "Radar/0.1 (app local de prospeccao)"}
+# só colchetes chave/valor: nada que feche a query e injete outra coisa no Overpass
+OSM_FILTER = re.compile(r'^(\["[a-z_:]+"(=|~|!=|!~)"[^"\\]{1,80}"(,i)?\])+$')
 
 
 def _quote(value: str) -> str:
@@ -28,7 +31,10 @@ def _tag(tags: dict, *keys: str) -> str:
 
 
 def osm(payload: dict) -> list[dict]:
-    query = overpass_query(payload["osm"], payload["state"], payload.get("city", ""), payload["limit"] * 2)
+    filters = [f for f in payload["osm"] if OSM_FILTER.match(f)]
+    if not filters:
+        raise ValueError("esse segmento não tem filtro do OpenStreetMap; use Apify ou Claude")
+    query = overpass_query(filters, payload["state"], payload.get("city", ""), payload["limit"] * 2)
     response = requests.post(OVERPASS, data={"data": query}, headers=UA, timeout=120)
     response.raise_for_status()
     places = []

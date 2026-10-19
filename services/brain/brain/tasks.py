@@ -252,6 +252,57 @@ def outreach(task: dict) -> tuple[dict, list[dict]]:
     return result, log
 
 
+CATEGORIES = ["tecnologia", "dados", "design", "produto", "marketing", "vendas", "atendimento", "administrativo", "financeiro", "rh", "juridico", "saude", "educacao", "engenharia", "industria", "logistica", "varejo", "alimentacao", "construcao", "agro", "seguranca", "servicos", "outros"]
+
+
+class JobQuery(BaseModel):
+    terms: list[str] = Field(min_length=1, max_length=8)
+    category: str
+    state: str
+    city: str
+    workplace: str
+    contract: str
+    explicacao: str
+
+
+def job_query(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("job_query", texto=str(payload.get("text", ""))[:500], perfil=json.dumps(payload.get("perfil") or {}, ensure_ascii=False), categorias=", ".join(CATEGORIES))
+    value, log = claude.complete("job_query", prompt, JobQuery, "cheap")
+    allowed = lambda value, options: value if value in options else ""
+    return {
+        "terms": [term.strip()[:60] for term in value.terms if term.strip()][:8],
+        "category": allowed(value.category, CATEGORIES),
+        "state": value.state.upper() if re.fullmatch(r"[A-Za-z]{2}", value.state or "") else "",
+        "city": value.city.strip()[:80],
+        "workplace": allowed(value.workplace, ["remoto", "hibrido", "presencial"]),
+        "contract": allowed(value.contract, ["clt", "pj", "estagio", "aprendiz", "trainee", "temporario", "freelancer"]),
+        "explicacao": value.explicacao.strip(),
+    }, log
+
+
+OSM_FILTER = leads.OSM_FILTER
+
+
+class LeadPack(BaseModel):
+    name: str
+    description: str
+    searches: list[str] = Field(min_length=1, max_length=6)
+    osm: list[str] = Field(max_length=5)
+
+
+def lead_pack(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("lead_pack", texto=str(payload.get("text", ""))[:500], perfil=json.dumps(payload.get("perfil") or {}, ensure_ascii=False))
+    value, log = claude.complete("lead_pack", prompt, LeadPack, "cheap")
+    return {
+        "name": value.name.strip()[:80],
+        "description": value.description.strip()[:300],
+        "searches": [search.strip()[:80] for search in value.searches if search.strip()][:6],
+        "osm": [f.strip() for f in value.osm if OSM_FILTER.match(f.strip())][:5],  # filtro fora do formato nunca chega no Overpass
+    }, log
+
+
 # tarefas sem IA rodam mesmo com o Claude fora
 LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich"}
 
@@ -268,4 +319,6 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "lead_enrich": lead_enrich,
     "lead_dossier": lead_dossier,
     "outreach": outreach,
+    "job_query": job_query,
+    "lead_pack": lead_pack,
 }

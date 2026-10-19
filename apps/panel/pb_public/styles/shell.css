@@ -44,7 +44,7 @@ body:has(.shell:not([hidden])) {
   background: var(--brand);
   color: var(--on-brand);
   font-weight: 650;
-  box-shadow: 0 10px 22px -12px rgb(154 122 79 / 55%);
+  box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--brand) 55%, transparent);
   transition: transform 260ms var(--spring), background-color var(--quick), box-shadow 200ms;
 }
 
@@ -493,7 +493,7 @@ body:has(.shell:not([hidden])) {
     border-radius: 20px;
     background: var(--brand);
     color: var(--on-brand);
-    box-shadow: 0 10px 22px -10px rgb(154 122 79 / 60%);
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--brand) 60%, transparent);
     transition: transform 300ms var(--spring);
   }
 

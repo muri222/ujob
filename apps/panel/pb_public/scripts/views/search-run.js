@@ -17,8 +17,11 @@ const QUERY_KEYS = ["term", "category", "state", "city", "workplace", "contract"
 export default async function searchRun(root, { params, signal }) {
   let search = await get("searches", params.id);
   const query = Object.fromEntries(QUERY_KEYS.filter((key) => search[key]).map((key) => [key, search[key]]));
+  if (search.terms?.length) query.terms = search.terms;
   const opened = stamp(new Date(Date.now() - 5000));
-  const matches = `(${toFilter(query)}) || (status = 'open' && search_hits_via_job.search ?= ${quote(search.id)})`;
+  // busca descrita: o que os portais devolverem também precisa bater com algum termo (portal devolve muita coisa solta)
+  const termMatch = search.terms?.length ? ` && (${search.terms.map((term) => `title ~ ${quote(term)}`).join(" || ")})` : "";
+  const matches = `(${toFilter(query)}) || (status = 'open' && search_hits_via_job.search ?= ${quote(search.id)}${termMatch})`;
   let newest = opened;
 
   const sourceIds = () => Object.keys(search.progress ?? {});
@@ -54,6 +57,7 @@ export default async function searchRun(root, { params, signal }) {
       "header",
       { className: "run" },
       h("div", { className: "run__query" }, h("a", { className: "icon-btn", href: "#buscar", "aria-label": "Nova busca" }, icon("back")), sentence),
+      search.terms?.length ? h("p", { className: "run__custom" }, icon("sparkle"), h("span", {}, search.prompt ? `“${search.prompt}” · ` : "", "buscando: ", search.terms.join(", "))) : null,
       h(
         "div",
         { className: "run__board" },

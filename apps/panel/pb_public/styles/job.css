@@ -502,7 +502,7 @@ a.tag:hover {
 }
 
 .prose {
-  color: #2b2620;
+  color: color-mix(in srgb, var(--ink) 90%, var(--bg));
   font-size: 15px;
   line-height: 1.75;
   overflow-wrap: anywhere;

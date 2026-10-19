@@ -107,6 +107,30 @@ export async function requestFit(jobIds) {
   return created;
 }
 
+// pede uma tarefa curta ao Claude e espera o resultado pelo realtime
+export function askClaude(type, payload, { timeout = 120_000 } = {}) {
+  return new Promise(async (resolve, reject) => {
+    let task;
+    const stop = new AbortController();
+    const finish = (settle, value) => (clearTimeout(timer), stop.abort(), settle(value));
+    const timer = setTimeout(() => finish(reject, new Error("O Claude demorou demais. Tenta de novo.")), timeout);
+    listen(
+      "ai_tasks",
+      ({ record }) => {
+        if (!task || record.id !== task.id) return;
+        if (record.status === "done") finish(resolve, record.result);
+        if (record.status === "failed") finish(reject, new Error(record.error || "O Claude não conseguiu."));
+      },
+      stop.signal,
+    );
+    try {
+      task = await create("ai_tasks", { type, profile: ctx.profile?.id, ref: "", status: "queued", payload, attempts: 0 });
+    } catch (error) {
+      finish(reject, error);
+    }
+  });
+}
+
 let brainCache = null;
 
 // motivo pelo qual o Claude do PC não vai responder, ou null se está pronto

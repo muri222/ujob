@@ -1,7 +1,7 @@
 import { api, create, list, quote, update } from "../core/api.js";
 import { STATES } from "../core/catalog.js";
-import { brainProblem, ctx, mine } from "../core/context.js";
-import { h, header, icon, toast } from "../core/dom.js";
+import { askClaude, brainProblem, ctx, mine } from "../core/context.js";
+import { confirm, h, header, icon, toast } from "../core/dom.js";
 import { ago, number } from "../core/format.js";
 import { loadCities } from "../core/places.js";
 import { listen } from "../core/realtime.js";
@@ -19,9 +19,97 @@ export default async function leads(root, { signal }) {
     root.append(header("Leads", null), h("div", { className: "empty card" }, h("strong", {}, "Crie seu perfil primeiro"), "Cada perfil tem as próprias campanhas."));
     return;
   }
-  const [{ items: packs }, integrations] = await Promise.all([list("segment_packs", { sort: "name", perPage: 50 }), api("radar/integrations").catch(() => ({ apify: {} }))]);
+  const [{ items: packs }, integrations] = await Promise.all([list("segment_packs", { sort: "name", perPage: 100, filter: `profile = '' || profile = ${quote(ctx.profile.id)}` }), api("radar/integrations").catch(() => ({ apify: {} }))]);
 
-  const pack = h("select", { "aria-label": "Segmento" }, packs.map((item) => h("option", { value: item.id }, item.name)));
+  // segmento: os de fábrica + os que a pessoa criou; "personalizado" abre o montador com IA
+  const CUSTOM = "__custom";
+  const pack = h("select", { "aria-label": "Segmento" });
+  const paintPacks = (selectedId) => {
+    pack.replaceChildren(
+      h("optgroup", { label: "Prontos" }, packs.filter((item) => !item.profile).map((item) => h("option", { value: item.id, selected: item.id === selectedId }, item.name))),
+      packs.some((item) => item.profile) ? h("optgroup", { label: "Seus segmentos" }, packs.filter((item) => item.profile).map((item) => h("option", { value: item.id, selected: item.id === selectedId }, item.name))) : null,
+      h("option", { value: CUSTOM }, "+ Criar segmento personalizado…"),
+    );
+  };
+  paintPacks();
+
+  const builderText = h("textarea", { rows: 2, maxLength: 500, placeholder: "Descreva quem você quer prospectar. Ex.: escritórios de arquitetura que fazem projeto residencial de alto padrão" });
+  const builderGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Montar com IA");
+  const builderOut = h("div", { className: "packer__out" });
+  const builder = h("div", { className: "packer", hidden: true }, h("div", { className: "hero__describe-row" }, builderText, builderGo), builderOut);
+  const ownActions = h("div", { className: "packer__own" });
+
+  function paintOwn() {
+    const current = packs.find((item) => item.id === pack.value);
+    builder.hidden = pack.value !== CUSTOM;
+    ownActions.replaceChildren(
+      current?.profile
+        ? h(
+            "button",
+            {
+              type: "button",
+              className: "btn btn--ghost",
+              onclick: async () => {
+                if (!(await confirm(`Excluir o segmento "${current.name}"?`, { confirmLabel: "Excluir" }))) return;
+                await api(`collections/segment_packs/records/${current.id}`, { method: "DELETE" }).catch(() => toast("Não deu pra excluir."));
+                packs.splice(packs.indexOf(current), 1);
+                paintPacks();
+                paintOwn();
+              },
+            },
+            icon("trash"),
+            "Excluir segmento",
+          )
+        : current
+          ? h("small", {}, current.description)
+          : "",
+    );
+  }
+  pack.addEventListener("change", paintOwn);
+
+  builderGo.addEventListener("click", async () => {
+    const text = builderText.value.trim();
+    if (!text) return builderText.focus();
+    const problem = await brainProblem(true);
+    if (problem) return toast(problem);
+    builderGo.disabled = true;
+    builderOut.replaceChildren(h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Montando as buscas…"));
+    try {
+      const found = await askClaude("lead_pack", { text, perfil: { headline: ctx.profile.headline, about: ctx.profile.about, skills: ctx.profile.skills } }, { timeout: 60_000 });
+      const name = h("input", { value: found.name, maxLength: 80 });
+      const searches = h("textarea", { rows: 4, value: found.searches.join("\n") });
+      const osm = h("textarea", { rows: 3, value: found.osm.join("\n"), spellcheck: false });
+      const save = h("button", { type: "button", className: "btn btn--primary" }, icon("check"), "Salvar segmento");
+      save.addEventListener("click", async () => {
+        const lines = (node) => node.value.split("\n").map((line) => line.trim()).filter(Boolean);
+        try {
+          const record = await api("collections/segment_packs/records", {
+            method: "POST",
+            body: { profile: ctx.profile.id, slug: `p-${Date.now().toString(36)}`, name: name.value.trim() || found.name, description: found.description, searches: lines(searches).slice(0, 6), osm: lines(osm).slice(0, 5) },
+          });
+          packs.push(record);
+          paintPacks(record.id);
+          builderText.value = "";
+          builderOut.replaceChildren();
+          paintOwn();
+          toast("Segmento salvo. Ele fica na lista pra próximas campanhas.");
+        } catch {
+          toast("Não deu pra salvar o segmento.");
+        }
+      });
+      builderOut.replaceChildren(
+        h("p", { className: "settings__help" }, found.description),
+        h("label", { className: "field" }, h("span", {}, "Nome do segmento"), name),
+        h("label", { className: "field" }, h("span", {}, "Buscas no Google Maps (Apify), uma por linha"), searches),
+        h("details", {}, h("summary", {}, "Filtros do OpenStreetMap (avançado)"), osm, found.osm.length ? null : h("small", {}, "Sem filtro bom no mapa pra esse segmento: use Apify ou Claude.")),
+        save,
+      );
+    } catch (error) {
+      builderOut.replaceChildren(h("p", { className: "fit__err" }, error.message));
+    } finally {
+      builderGo.disabled = false;
+    }
+  });
   const state = h("select", { "aria-label": "Estado" }, h("option", { value: "" }, "Todo o Brasil"), Object.entries(STATES).map(([code, label]) => h("option", { value: code, selected: code === ctx.profile.state }, label)));
   const city = h("input", { placeholder: "Cidade (opcional)", list: "leads-cities", maxLength: 80 });
   const cities = h("datalist", { id: "leads-cities" });
@@ -58,6 +146,7 @@ export default async function leads(root, { signal }) {
 
   const go = h("button", { className: "btn btn--primary" }, icon("radar"), "Buscar empresas");
   go.addEventListener("click", async () => {
+    if (pack.value === CUSTOM) return toast("Salve o segmento personalizado primeiro.");
     if (source === "claude") {
       const problem = await brainProblem(true);
       if (problem) return toast(problem);
@@ -226,6 +315,8 @@ export default async function leads(root, { signal }) {
       { className: "panel" },
       h("header", { className: "section__head" }, h("h2", {}, "Nova campanha"), h("small", {}, "Contatos saem do site de cada empresa, lidos no seu PC sem gastar token")),
       h("div", { className: "leads__form" }, pack, state, city, cities, h("label", { className: "leads__limit" }, "até", limit, "empresas")),
+      ownActions,
+      builder,
       options,
       h("div", { className: "import__row" }, go, estimate),
     ),
@@ -236,5 +327,6 @@ export default async function leads(root, { signal }) {
   const soon = () => (clearTimeout(timer), (timer = setTimeout(loadCampaigns, 800)));
   listen("campaigns", ({ record }) => record.profile === ctx.profile.id && soon(), signal);
   listen("leads", ({ record }) => record.campaign === selected && soon(), signal);
+  paintOwn();
   await loadCampaigns();
 }

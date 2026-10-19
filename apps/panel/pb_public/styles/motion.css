@@ -33,13 +33,13 @@
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(154 122 79 / 45%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 8px rgb(154 122 79 / 0%);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--brand) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(154 122 79 / 0%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 0%, transparent);
   }
 }
 

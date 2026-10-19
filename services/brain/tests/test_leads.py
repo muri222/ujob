@@ -27,3 +27,12 @@ def test_overpass_query_scopes_state_and_city():
     assert '["name"="Campinas \\"x\\""]' in query and "map_to_area->.a" in query
     assert 'nwr["craft"="brewery"](area.a);' in query and query.endswith("out center tags 20;")
     assert ".s->.a" in leads.overpass_query(['["craft"="brewery"]'], "SP", "", 5)
+
+
+def test_osm_filter_whitelist_blocks_injection():
+    from brain.tasks import OSM_FILTER
+
+    assert OSM_FILTER.match('["office"="architect"]')
+    assert OSM_FILTER.match('["office"="company"]["name"~"arquitet|architect",i]')
+    assert not OSM_FILTER.match('["x"="1"]);out;(')
+    assert not OSM_FILTER.match("office=architect")

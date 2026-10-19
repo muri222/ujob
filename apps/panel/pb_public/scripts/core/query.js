@@ -27,6 +27,8 @@ export function toFilter(query) {
     const words = query.term.trim().split(/\s+/).slice(0, 4);
     parts.push(words.map((word) => `(title ~ ${quote(word)} || company ~ ${quote(word)})`).join(" && "));
   }
+  // busca descrita: qualquer um dos termos que o Claude sugeriu (PT e EN)
+  if (!query.term && Array.isArray(query.terms) && query.terms.length) parts.push(`(${query.terms.slice(0, 8).map((term) => `title ~ ${quote(term)}`).join(" || ")})`);
   if (CATEGORIES[query.category]) parts.push(`category = ${quote(query.category)}`);
   if (STATES[query.state]) parts.push(`state = ${quote(query.state)}`);
   if (query.city) parts.push(`city ~ ${quote(query.city)}`);

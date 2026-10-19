@@ -58,6 +58,7 @@ export function paper(p) {
 
 export default async function resume(root, { signal }) {
   const p = structuredClone(ctx.profile ?? {});
+  const snapshot = (value) => JSON.parse(JSON.stringify(value));
   for (const key of ["skills", "experiences", "education", "languages", "links"]) p[key] = Array.isArray(p[key]) ? p[key] : [];
   if (!p.experiences.length) p.experiences.push(blankExperience());
   if (!p.education.length) p.education.push(blankEducation());
@@ -68,16 +69,27 @@ export default async function resume(root, { signal }) {
   const preview = h("div", { className: "resume__paper" });
   let timer;
 
+  // salva só o que mudou desde que a tela abriu: uma aba antiga não apaga o que foi importado ou editado em outro lugar
+  function shape() {
+    const full = { ...p, experiences: p.experiences.filter((item) => item.role || item.company), education: p.education.filter((item) => item.course) };
+    full.salary = Number(full.salary) || 0;
+    for (const key of ["id", "resume", "collectionId", "collectionName", "updated", "expand"]) delete full[key];
+    return snapshot(full);
+  }
+  let sent = shape();
   async function persist() {
-    const body = { ...p, experiences: p.experiences.filter((item) => item.role || item.company), education: p.education.filter((item) => item.course) };
-    body.salary = Number(body.salary) || 0;
-    delete body.id;
-    delete body.resume;
-    for (const key of ["collectionId", "collectionName", "updated", "expand"]) delete body[key];
+    const full = shape();
+    const body = p.id ? Object.fromEntries(Object.entries(full).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(sent[key]))) : full;
+    if (p.id && !Object.keys(body).length) {
+      status.replaceChildren(icon("check"), "Tudo salvo");
+      status.classList.remove("is-saving");
+      return;
+    }
     try {
       const saved = p.id ? await update("profile", p.id, body) : await create("profile", body);
       p.id = saved.id;
       ctx.profile = saved;
+      sent = { ...sent, ...snapshot(body) };
       status.replaceChildren(icon("check"), "Tudo salvo");
       status.classList.remove("is-saving");
     } catch {

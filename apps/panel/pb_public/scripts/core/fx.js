@@ -110,9 +110,16 @@ export function dotGrid(host, { gap = 24, reach = 150 } = {}) {
   host.classList.add("has-dots");
   host.prepend(canvas);
   const context = canvas.getContext("2d");
-  const style = getComputedStyle(document.documentElement);
-  const rest = style.getPropertyValue("--line-strong").trim() || "#ddd5c9";
-  const lit = style.getPropertyValue("--brand").trim() || "#9a7a4f";
+  // resolve o token até rgb() (o canvas não entende color-mix dos temas)
+  const resolve = (token, fallback) => {
+    const probe = h("i", { style: { color: `var(${token})`, display: "none" } });
+    document.body.append(probe);
+    const color = getComputedStyle(probe).color || fallback;
+    probe.remove();
+    return color;
+  };
+  const rest = resolve("--line-strong", "#ddd5c9");
+  const lit = resolve("--brand", "#9a7a4f");
   let pointer = null;
   let wave = null;
   let frame = 0;

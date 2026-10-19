@@ -1,6 +1,6 @@
 import { api, list } from "../core/api.js";
 import { CATEGORIES } from "../core/catalog.js";
-import { asMap, ctx, mine, stats } from "../core/context.js";
+import { askClaude, asMap, brainProblem, ctx, mine, stats } from "../core/context.js";
 import { cat, h, icon, stagger, toast } from "../core/dom.js";
 import { ago, number } from "../core/format.js";
 import { dotGrid, magnet, rotatingText } from "../core/fx.js";
@@ -43,6 +43,32 @@ export default async function search(root, { query, signal }) {
   go.addEventListener("click", submit);
   magnet(go);
 
+  // busca descrita: o Claude (Haiku) vira o texto em termos PT/EN + filtros; serve pra função bem específica
+  const described = h("textarea", { rows: 2, maxLength: 500, placeholder: "Ex.: character artist pra jogos, remoto, de preferência empresa gringa" });
+  const describeGo = h("button", { className: "btn btn--soft" }, icon("sparkle"), "Buscar com IA");
+  const describeNote = h("p", { className: "hero__hint" });
+  async function submitDescribed() {
+    const text = described.value.trim();
+    if (!text) return described.focus();
+    const problem = await brainProblem(true);
+    if (problem) return toast(problem);
+    describeGo.disabled = true;
+    describeNote.replaceChildren(h("span", { className: "spinner" }), " Entendendo o que você procura…");
+    try {
+      const found = await askClaude("job_query", { text, perfil: { headline: profile.headline, skills: profile.skills, categories: profile.categories, state: profile.state, city: profile.city, workplace: profile.workplace } }, { timeout: 60_000 });
+      describeNote.textContent = found.explicacao;
+      // termos mandam: a área do classificador erra em função específica e cortaria vaga boa
+      const query = Object.fromEntries(Object.entries({ terms: found.terms, state: found.state, city: found.city, workplace: found.workplace, contract: found.contract, prompt: text }).filter(([, value]) => (Array.isArray(value) ? value.length : value)));
+      await runSearch(query, { saved: keep.querySelector("input").checked });
+    } catch (error) {
+      describeNote.textContent = error.message;
+    } finally {
+      describeGo.disabled = false;
+    }
+  }
+  describeGo.addEventListener("click", submitDescribed);
+  described.addEventListener("keydown", (event) => event.key === "Enter" && !event.shiftKey && (event.preventDefault(), submitDescribed()));
+
   const quick = (profile.categories ?? []).slice(0, 6).map((key) =>
     h("button", { className: "chip", onclick: () => runSearch({ category: key, state: profile.state, city: profile.city, workplace: profile.workplace }) }, cat(key, 18), CATEGORIES[key]),
   );
@@ -55,6 +81,7 @@ export default async function search(root, { query, signal }) {
       h("h1", { className: "hero__title" }, "Tem vaga de ", rotatingText(ROLES, { signal }), " esperando por você."),
       sentence,
       h("div", { className: "hero__actions" }, go, keep),
+      h("div", { className: "hero__describe" }, h("span", { className: "eyebrow" }, icon("sparkle"), "Ou descreva com suas palavras"), h("div", { className: "hero__describe-row" }, described, describeGo), describeNote),
       h("p", { className: "hero__hint" }, "Toque nas partes destacadas pra mudar. A gente vasculha portais, empresas, comunidades e o acervo do ujob na hora, e as vagas vão chegando enquanto você olha."),
       quick.length > 0 && h("div", { className: "hero__quick" }, h("span", {}, "Seus atalhos"), quick),
     ),

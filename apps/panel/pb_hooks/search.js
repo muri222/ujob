@@ -33,8 +33,10 @@ const clip = (value, max) => String(value ?? "").trim().replace(/\s+/g, " ").sli
 const pick = (value, allowed) => (allowed.includes(value) ? value : "");
 
 function normalizeQuery(body) {
+  const terms = (Array.isArray(body.terms) ? body.terms : []).map((term) => clip(term, 60)).filter(Boolean).slice(0, 8);
   return {
     term: clip(body.term, 80),
+    terms,
     category: pick(body.category, Object.keys(AREA_TERMS)),
     state: /^[A-Z]{2}$/.test(body.state ?? "") ? body.state : "",
     city: clip(body.city, 80),
@@ -44,9 +46,11 @@ function normalizeQuery(body) {
 }
 
 const searchKey = (query) =>
-  [query.term.toLowerCase(), query.category, query.state, query.city.toLowerCase(), query.workplace, query.contract].join("|");
+  [query.term.toLowerCase(), query.terms.join(",").toLowerCase(), query.category, query.state, query.city.toLowerCase(), query.workplace, query.contract].join("|");
 
 function searchTerms(search) {
+  const custom = JSON.parse(search.getString("terms") || "[]") || [];
+  if (custom.length) return custom;
   const term = search.getString("term");
   const area = AREA_TERMS[search.getString("category")] ?? [];
   const contract = { estagio: "estagio", aprendiz: "jovem aprendiz", trainee: "trainee", temporario: "temporario" }[search.getString("contract")];
