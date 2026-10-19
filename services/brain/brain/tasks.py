@@ -178,6 +178,59 @@ def inbox_reply(task: dict) -> tuple[dict, list[dict]]:
     return {**value.model_dump(), "etapa": etapa}, log
 
 
+class CoachCompany(BaseModel):
+    resumo: str
+    cultura: str = ""
+    noticias: list[str] = []
+    dicas: list[str] = []
+    fontes: list[str] = []
+
+
+class CoachSalary(BaseModel):
+    faixa_min: float = 0
+    faixa_max: float = 0
+    moeda: str = ""
+    periodo: str = "mes"
+    recomendado: float = 0
+    justificativa: str = ""
+    fontes: list[str] = []
+
+
+class CoachQuestion(BaseModel):
+    pergunta: str
+    porque: str = ""
+    resposta: str = ""
+
+
+class Coach(BaseModel):
+    empresa: CoachCompany | None = None
+    salario: CoachSalary | None = None
+    roteiro: list[CoachQuestion] | None = None
+    pitch: str | None = None
+    perguntas: list[str] | None = None
+
+
+COACH_SECTIONS = {"empresa", "salario", "roteiro", "pitch", "perguntas"}
+
+
+def interview_coach(task: dict) -> tuple[dict, list[dict]]:
+    """Prepara a entrevista só com as partes pedidas; pesquisa na web só pra empresa/salário."""
+    payload = task["payload"]
+    sections = [key for key in payload.get("sections") or [] if key in COACH_SECTIONS]
+    web = bool({"empresa", "salario"} & set(sections))
+    prompt = render(
+        "interview_coach",
+        secoes=", ".join(sections),
+        notas=str(payload.get("notes") or "nada")[:2000],
+        vaga=json.dumps(payload.get("vaga") or {}, ensure_ascii=False)[:9000],
+        cv=json.dumps(payload.get("cv") or {}, ensure_ascii=False)[:12000],
+        mente=mind.context(payload.get("mente") or []),
+    )
+    value, log = claude.complete("interview_coach", prompt, Coach, "best", tools="WebSearch,WebFetch" if web else "")
+    result = value.model_dump()
+    return {key: result[key] for key in sections if result.get(key) is not None}, log
+
+
 def cv_pdf(task: dict) -> tuple[dict, list[dict]]:
     """PDF do CV (adaptado ou mestre) gerado no PC, sem IA."""
     payload = task["payload"]
@@ -392,6 +445,7 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "echo": echo,
     "job_fit": job_fit,
     "cv_pdf": cv_pdf,
+    "interview_coach": interview_coach,
     "mail_sync": mail_sync,
     "inbox_reply": inbox_reply,
     "cv_import": cv_import,

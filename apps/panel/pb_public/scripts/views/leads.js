@@ -23,7 +23,7 @@ export default async function leads(root, { signal }) {
   const [{ items: packs }, integrations] = await Promise.all([list("segment_packs", { sort: "name", perPage: 100, filter: `profile = '' || profile = ${quote(ctx.profile.id)}` }), api("radar/integrations").catch(() => ({ apify: {} }))]);
 
   // segmento: cartões com os prontos + os da pessoa (editar/excluir); "Criar segmento" abre o montador com IA
-  let packId = packs.find((item) => item.profile)?.id ?? packs[0]?.id ?? "";
+  let packId = packs.find((item) => item.profile && !item.archived)?.id ?? packs.find((item) => !item.archived)?.id ?? "";
   const packGrid = h("div", { className: "packs" });
   const builderText = h("textarea", { rows: 2, maxLength: 500, placeholder: "Descreva quem você quer prospectar. Ex.: escritórios de arquitetura que fazem projeto residencial de alto padrão" });
   const builderGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Montar com IA");
@@ -62,31 +62,59 @@ export default async function leads(root, { signal }) {
   }
 
   async function deletePack(item) {
-    if (!(await confirm(`Excluir o segmento "${item.name}"? As campanhas já feitas continuam.`, { confirmLabel: "Excluir" }))) return;
+    if (!(await confirm(`Excluir o segmento "${item.name}" de vez? As campanhas já feitas continuam. Se só quiser tirar da frente, use Arquivar.`, { confirmLabel: "Excluir" }))) return;
     try {
       await remove("segment_packs", item.id);
       packs.splice(packs.indexOf(item), 1);
-      if (packId === item.id) packId = packs[0]?.id ?? "";
+      if (packId === item.id) packId = packs.find((other) => !other.archived)?.id ?? "";
       paintPacks();
     } catch {
       toast("Não deu pra excluir.");
     }
   }
 
+  let showArchived = false;
+  async function archivePack(item, archived) {
+    try {
+      const saved = await update("segment_packs", item.id, { archived });
+      packs.splice(packs.indexOf(item), 1, saved);
+      if (archived && packId === item.id) packId = packs.find((other) => !other.archived)?.id ?? "";
+      paintPacks();
+      toast(archived ? "Segmento arquivado." : "Segmento de volta.");
+    } catch {
+      toast("Não deu pra arquivar.");
+    }
+  }
+
   function paintPacks() {
+    const actions = (item) =>
+      h(
+        "span",
+        { className: "pack__actions" },
+        h("button", { type: "button", className: "icon-btn", title: "Editar", "aria-label": "Editar segmento", onclick: () => editPack(item) }, icon("edit")),
+        h("button", { type: "button", className: "icon-btn", title: item.archived ? "Desarquivar" : "Arquivar", "aria-label": item.archived ? "Desarquivar segmento" : "Arquivar segmento", onclick: () => archivePack(item, !item.archived) }, icon(item.archived ? "undo" : "layers")),
+        h("button", { type: "button", className: "icon-btn", title: "Excluir", "aria-label": "Excluir segmento", onclick: () => deletePack(item) }, icon("trash")),
+      );
     const card = (item) =>
       h(
         "div",
-        { className: "pack", "aria-pressed": String(item.id === packId && builder.hidden) },
-        h("button", { type: "button", className: "pack__pick", onclick: () => ((packId = item.id), (builder.hidden = true), paintPacks()) }, h("strong", {}, item.name), h("small", {}, item.description || (item.searches ?? []).slice(0, 3).join(", "))),
-        item.profile
-          ? h("span", { className: "pack__actions" }, h("button", { type: "button", className: "icon-btn", title: "Editar", "aria-label": "Editar segmento", onclick: () => editPack(item) }, icon("edit")), h("button", { type: "button", className: "icon-btn", title: "Excluir", "aria-label": "Excluir segmento", onclick: () => deletePack(item) }, icon("trash")))
-          : h("span", { className: "tag pack__tag" }, "Pronto"),
+        { className: `pack${item.archived ? " is-archived" : ""}`, "aria-pressed": String(item.id === packId && builder.hidden && !item.archived) },
+        h(
+          "button",
+          { type: "button", className: "pack__pick", disabled: item.archived, onclick: () => ((packId = item.id), (builder.hidden = true), paintPacks()) },
+          h("strong", {}, item.name, item.profile ? "" : h("span", { className: "tag pack__tag" }, "Pronto")),
+          h("small", {}, item.description || (item.searches ?? []).slice(0, 3).join(", ")),
+        ),
+        actions(item),
       );
+    const active = packs.filter((item) => !item.archived);
+    const archived = packs.filter((item) => item.archived);
     packGrid.replaceChildren(
-      ...packs.filter((item) => item.profile).map(card),
-      ...packs.filter((item) => !item.profile).map(card),
+      ...active.filter((item) => item.profile).map(card),
+      ...active.filter((item) => !item.profile).map(card),
       h("button", { type: "button", className: "pack pack--new", "aria-pressed": String(!builder.hidden), onclick: () => ((builder.hidden = !builder.hidden), paintPacks(), builder.hidden || builderText.focus()) }, icon("plus"), h("strong", {}, "Criar segmento"), h("small", {}, "Descreva e o Claude monta as buscas")),
+      archived.length ? h("button", { type: "button", className: "btn btn--ghost btn--sm packs__archived", onclick: () => ((showArchived = !showArchived), paintPacks()) }, icon("layers"), `${showArchived ? "Esconder" : "Ver"} arquivados (${archived.length})`) : "",
+      ...(showArchived ? archived.map(card) : []),
     );
   }
 
@@ -322,8 +350,26 @@ export default async function leads(root, { signal }) {
     );
   }
 
+  let showOldCampaigns = false;
+  async function dropCampaign(item) {
+    if (!(await confirm(`Excluir a campanha "${item.name}" e as empresas dela? Não dá pra desfazer.`, { confirmLabel: "Excluir" }))) return;
+    try {
+      const { items: found } = await list("leads", { filter: `campaign = ${quote(item.id)}`, perPage: 500, fields: "id" });
+      for (const lead of found) await remove("leads", lead.id).catch(() => {});
+      await remove("campaigns", item.id);
+      if (selected === item.id) selected = null;
+      loadCampaigns();
+      toast("Campanha excluída.");
+    } catch {
+      toast("Não deu pra excluir.");
+    }
+  }
+
   async function loadCampaigns() {
-    const { items } = await list("campaigns", { filter: mine(), sort: "-createdAt", perPage: 30, expand: "pack" }).catch(() => ({ items: [] }));
+    const { items: all } = await list("campaigns", { filter: mine(), sort: "-createdAt", perPage: 60, expand: "pack" }).catch(() => ({ items: [] }));
+    const items = all.filter((item) => showOldCampaigns || !item.archived);
+    const hiddenCount = all.filter((item) => item.archived).length;
+    if (selected && !items.some((item) => item.id === selected)) selected = null;
     selected ??= items[0]?.id ?? null;
     campaignsBox.replaceChildren(
       ...(items.length
@@ -332,13 +378,20 @@ export default async function leads(root, { signal }) {
             return h(
               "button",
               { type: "button", className: "leads__campaign", "aria-pressed": String(item.id === selected), onclick: () => ((selected = item.id), loadCampaigns()) },
-              h("strong", {}, item.name),
+              h("strong", {}, item.name, item.archived ? h("span", { className: "tag" }, " arquivada") : ""),
               h("small", {}, `${SOURCE[item.source]} · ${number(item.found || 0)} empresas · ${ago(item.createdAt)}`),
+              h(
+                "span",
+                { className: "pack__actions leads__campaign-actions" },
+                h("span", { role: "button", tabIndex: 0, className: "icon-btn", title: item.archived ? "Desarquivar" : "Arquivar", onclick: (event) => (event.stopPropagation(), update("campaigns", item.id, { archived: !item.archived }).then(loadCampaigns)) }, icon(item.archived ? "undo" : "layers")),
+                h("span", { role: "button", tabIndex: 0, className: "icon-btn", title: "Excluir", onclick: (event) => (event.stopPropagation(), dropCampaign(item)) }, icon("trash")),
+              ),
               h("span", { className: tone }, label),
               item.error ? h("small", { className: "fit__err" }, item.error) : null,
             );
           })
         : [h("p", { className: "leads__estimate" }, "Nenhuma campanha ainda. Comece pelo OpenStreetMap: é grátis.")]),
+      hiddenCount ? h("button", { type: "button", className: "btn btn--ghost btn--sm", onclick: () => ((showOldCampaigns = !showOldCampaigns), loadCampaigns()) }, icon("layers"), `${showOldCampaigns ? "Esconder" : "Ver"} arquivadas (${hiddenCount})`) : "",
     );
     await loadLeads();
   }

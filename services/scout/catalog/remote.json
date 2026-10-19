@@ -76,5 +76,38 @@
     "https://weworkremotely.com/categories/remote-management-and-finance-jobs.rss"
    ]
   }
+ },
+ {
+  "slug": "getonbrd",
+  "name": "Get on Board (América Latina)",
+  "kind": "getonbrd",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.getonbrd.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=getonbrd.com&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "terms": "@geral"
+  }
+ },
+ {
+  "slug": "workingnomads",
+  "name": "Working Nomads",
+  "kind": "workingnomads",
+  "group": "remoto",
+  "target": "",
+  "site": "https://www.workingnomads.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=workingnomads.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "dribbble-jobs",
+  "name": "Dribbble Jobs (design)",
+  "kind": "rss_dribbble",
+  "group": "portal",
+  "target": "",
+  "site": "https://dribbble.com/jobs",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=dribbble.com&sz=128",
+  "intervalMinutes": 360
  }
 ]

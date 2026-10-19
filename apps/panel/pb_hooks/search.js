@@ -1,9 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-const SEARCHABLE = ["gupy_search", "jsonld", "card_listing", "adzuna", "jooble", "workable_search", "apify_linkedin", "apify_indeed", "apify_google"];
+const SEARCHABLE = ["gupy_search", "jsonld", "card_listing", "adzuna", "jooble", "workable_search", "getonbrd", "apify_linkedin", "apify_indeed", "apify_google"];
 // portais só do Brasil: ficam de fora quando a busca não inclui o Brasil
 const BR_ONLY = ["gupy_search", "jsonld", "card_listing", "jooble", "trampos", "programathor", "github"];
-const FILTERABLE = ["greenhouse", "lever", "ashby", "github", "remoteok", "himalayas", "jobicy", "arbeitnow", "wwr", "trampos", "programathor"];
+const FILTERABLE = ["workingnomads", "rss_dribbble", "workable", "recruitee", "personio", "artstation", "greenhouse", "lever", "ashby", "github", "remoteok", "himalayas", "jobicy", "arbeitnow", "wwr", "trampos", "programathor"];
 
 const AREA_TERMS = {
   tecnologia: ["desenvolvedor", "analista de sistemas", "suporte tecnico", "infraestrutura"],

@@ -278,5 +278,135 @@
   "site": "",
   "logoUrl": "",
   "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-crystaldynamics",
+  "name": "Crystal Dynamics",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "crystaldynamics",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-firaxis",
+  "name": "Firaxis Games",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "firaxis",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-gearbox",
+  "name": "Gearbox Software",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "gearbox",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-hangar13",
+  "name": "Hangar 13",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "hangar13",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-visualconcepts",
+  "name": "Visual Concepts",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "visualconcepts",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-motive",
+  "name": "Motive Studio (EA)",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "motive",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-sonypicturesanimation",
+  "name": "Sony Pictures Animation",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "sonypicturesanimation",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-foundry",
+  "name": "Foundry",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "foundry",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-kabam",
+  "name": "Kabam",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "kabam",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-ideogram",
+  "name": "Ideogram",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "ideogram",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-suno",
+  "name": "Suno",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "suno",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-tldraw",
+  "name": "tldraw",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "tldraw",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-gamma",
+  "name": "Gamma",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "gamma",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
  }
 ]

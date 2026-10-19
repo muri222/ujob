@@ -1,9 +1,12 @@
-import { api, create, list, update } from "../core/api.js";
+import { api, create, get, list, update } from "../core/api.js";
 import { STAGES } from "../core/catalog.js";
 import { ctx, loadApplications, mine } from "../core/context.js";
 import { confirm, h, header, icon, logo, toast } from "../core/dom.js";
 import { ago, formatDay, parseDate } from "../core/format.js";
 import { interviewPrep } from "../core/interview.js";
+import { coachBox } from "../core/coach.js";
+import { fitCard, jobDetail } from "../core/job.js";
+import { segmented } from "../core/ui.js";
 
 const toInput = (value) => (value ? new Date(parseDate(value).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
 
@@ -151,6 +154,30 @@ export default async function pipeline(root, { signal }) {
     const prep = interviewPrep(item.prep ?? {});
     const letter = h("textarea", { value: item.letter ?? "", rows: 6, placeholder: "A carta que você mandou fica guardada aqui." });
     const remove = h("button", { type: "button", className: "btn btn--danger" }, icon("trash"), "Remover");
+    const panes = {
+      prep: h("div", { className: "drawer__pane", hidden: true }, prep, coachBox(item)),
+      vaga: h("div", { className: "drawer__pane", hidden: true }),
+      compat: h("div", { className: "drawer__pane", hidden: true }),
+    };
+    let job = null;
+    const loadJob = async () => {
+      if (job || !item.job) return job;
+      job = await get("jobs", item.job, { expand: "source" }).catch(() => null);
+      return job;
+    };
+    const tabs = segmented(
+      [["candidatura", "Candidatura"], ["prep", "Preparação"], ["vaga", "Vaga"], ["compat", "Compatibilidade"]],
+      "candidatura",
+      async (key) => {
+        for (const pane of dialog.querySelectorAll(".drawer__pane")) pane.hidden = true;
+        if (key === "candidatura") return (dialog.querySelector("[data-pane=candidatura]").hidden = false);
+        panes[key].hidden = false;
+        if (key === "prep") return;
+        const found = await loadJob();
+        panes[key].replaceChildren(found ? (key === "vaga" ? jobDetail(found) : fitCard(found)) : h("div", { className: "empty card" }, h("strong", {}, "Vaga de fora do radar"), item.url ? h("a", { className: "btn btn--soft", href: item.url, target: "_blank", rel: "noopener noreferrer" }, "Abrir a vaga no site", icon("external")) : "Sem link salvo."));
+      },
+      "Seções",
+    );
     const dialog = h(
       "dialog",
       { className: "drawer" },
@@ -161,15 +188,18 @@ export default async function pipeline(root, { signal }) {
         h(
           "div",
           { className: "drawer__body" },
-          h("div", { className: "kdetail" }, logo(item.company, item.companyLogo, "lg"), h("div", {}, h("strong", {}, item.company || "Empresa"), item.url && h("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", className: "link" }, "Abrir vaga", icon("external")))),
+          tabs,
+          panes.prep,
+          panes.vaga,
+          panes.compat,
+          h("div", { className: "drawer__pane", "data-pane": "candidatura" }, h("div", { className: "kdetail" }, logo(item.company, item.companyLogo, "lg"), h("div", {}, h("strong", {}, item.company || "Empresa"), item.url && h("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", className: "link" }, "Abrir vaga", icon("external")))),
           h("label", { className: "field" }, h("span", {}, "Etapa"), stage),
           h("label", { className: "field" }, h("span", {}, "Próximo passo"), fields.nextAt),
-          prep,
           h("label", { className: "field" }, h("span", {}, "Anotações"), fields.notes),
           h("label", { className: "field" }, h("span", {}, "Contato"), fields.contactName),
           h("div", { className: "welcome__row" }, h("label", { className: "field" }, h("span", {}, "E-mail"), fields.contactEmail), h("label", { className: "field" }, h("span", {}, "Telefone"), fields.contactPhone)),
           h("label", { className: "field" }, h("span", {}, "Salário"), fields.salary),
-          h("label", { className: "field" }, h("span", {}, "Carta de apresentação"), letter),
+          h("label", { className: "field" }, h("span", {}, "Carta de apresentação"), letter)),
         ),
         h("footer", { className: "drawer__foot" }, remove, h("button", { className: "btn btn--primary", value: "save" }, "Salvar")),
       ),
