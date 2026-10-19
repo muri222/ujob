@@ -5,6 +5,7 @@ import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
 
 const HELP = {
+  workspace: "Google Workspace (e-mail do seu domínio no Google): ative a verificação em 2 etapas e crie uma senha de app. Se a opção não aparecer, o admin do Workspace precisa liberar.",
   gmail: "No Gmail: ative a verificação em 2 etapas e crie uma senha de app (16 letras). A senha normal não funciona.",
   outlook: "No Outlook/Hotmail: crie uma senha de app na sua conta Microsoft (precisa da verificação em 2 etapas).",
   yahoo: "No Yahoo: gere uma senha de app em Segurança da conta.",
@@ -50,7 +51,7 @@ export default async function settings(root, { signal }) {
     } catch {}
   }
   email.addEventListener("change", detect);
-  if (email.value && !account.smtpHost) detect();
+  if (email.value && (!account.smtpHost || account.lastError)) detect();
 
   save.addEventListener("click", async () => {
     save.disabled = true;

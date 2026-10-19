@@ -12,6 +12,45 @@ const KNOWN = {
   terra: { domains: ["terra.com.br"], smtpHost: "smtp.terra.com.br", smtpPort: 587, imapHost: "imap.terra.com.br", imapPort: 993, help: "" },
 };
 
+// e-mail de domínio próprio: o MX diz quem hospeda (Google Workspace, Microsoft 365, Zoho, Hostinger...)
+const BY_MX = [
+  [/google\.com$|googlemail\.com$/, "gmail"],
+  [/outlook\.com$|protection\.outlook\.com$/, "office365"],
+  [/zoho\.(com|eu|in)$/, "zoho"],
+  [/hostinger\.(com|io)$/, "hostinger"],
+  [/titan\.email$/, "titan"],
+  [/secureserver\.net$/, "godaddy"],
+  [/locaweb\.com\.br$/, "locaweb"],
+  [/umbler\.com$/, "umbler"],
+  [/kinghost\.net$/, "kinghost"],
+  [/icloud\.com$/, "icloud"],
+];
+const HOSTED = {
+  office365: { smtpHost: "smtp.office365.com", smtpPort: 587, imapHost: "outlook.office365.com", imapPort: 993, help: "https://mysignins.microsoft.com/security-info" },
+  hostinger: { smtpHost: "smtp.hostinger.com", smtpPort: 465, imapHost: "imap.hostinger.com", imapPort: 993, help: "" },
+  titan: { smtpHost: "smtp.titan.email", smtpPort: 465, imapHost: "imap.titan.email", imapPort: 993, help: "" },
+  godaddy: { smtpHost: "smtpout.secureserver.net", smtpPort: 465, imapHost: "imap.secureserver.net", imapPort: 993, help: "" },
+  locaweb: { smtpHost: "email-ssl.com.br", smtpPort: 465, imapHost: "email-ssl.com.br", imapPort: 993, help: "" },
+  umbler: { smtpHost: "smtp.umbler.com", smtpPort: 587, imapHost: "imap.umbler.com", imapPort: 993, help: "" },
+  kinghost: { smtpHost: "smtpi.kinghost.net", smtpPort: 465, imapHost: "imap.kinghost.net", imapPort: 993, help: "" },
+};
+
+function fromMx(domain) {
+  try {
+    const res = $http.send({ url: `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`, method: "GET", timeout: 6 });
+    const hosts = (JSON.parse(toString(res.body)).Answer || []).map((answer) => String(answer.data).split(" ").pop().replace(/\.$/, "").toLowerCase());
+    for (const host of hosts) {
+      const hit = BY_MX.find(([pattern]) => pattern.test(host));
+      if (!hit) continue;
+      const provider = hit[1];
+      const known = KNOWN[provider];
+      const info = known ? { smtpHost: known.smtpHost, smtpPort: known.smtpPort, imapHost: known.imapHost, imapPort: known.imapPort, help: known.help } : HOSTED[provider];
+      return { provider: provider === "gmail" ? "workspace" : provider, ...info };
+    }
+  } catch {}
+  return null;
+}
+
 function fromIspdb(domain) {
   try {
     const res = $http.send({ url: `https://autoconfig.thunderbird.net/v1.1/${encodeURIComponent(domain)}`, method: "GET", timeout: 6 });
@@ -36,6 +75,8 @@ function detect(email) {
     if (info.domains.includes(domain)) return { provider, smtpHost: info.smtpHost, smtpPort: info.smtpPort, imapHost: info.imapHost, imapPort: info.imapPort, help: info.help };
   }
   // ponytail: sem achar, chuta smtp./imap. do domínio; o usuário corrige no "avançado"
+  const hosted = fromMx(domain);
+  if (hosted) return hosted;
   return { provider: "outro", ...(fromIspdb(domain) || { smtpHost: `smtp.${domain}`, smtpPort: 587, imapHost: `imap.${domain}`, imapPort: 993, help: "" }) };
 }
 

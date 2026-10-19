@@ -14,6 +14,11 @@ def _smtp(mail: dict) -> smtplib.SMTP:
     else:
         server = smtplib.SMTP(mail["smtpHost"], mail["smtpPort"], timeout=30)
         server.starttls(context=context)
+    # um método só: o Gmail fecha a conexão depois do primeiro 535 e o smtplib, tentando o próximo método,
+    # trocaria "senha recusada" por um "desconectou" que não ajuda ninguém
+    server.ehlo_or_helo_if_needed()
+    if "PLAIN" in server.esmtp_features.get("auth", "").upper().split():
+        server.esmtp_features["auth"] = "PLAIN"
     server.login(mail["email"], mail["password"])
     return server
 
