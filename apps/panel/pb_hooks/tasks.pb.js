@@ -42,13 +42,23 @@ routerAdd(
       // salva pelo app (não SQL cru) para o realtime avisar a tela
       const task = $app.findRecordById("ai_tasks", candidate.id);
       $app.save(task);
-      const out = { id: task.id, type: task.getString("type"), profile: task.getString("profile"), ref: task.getString("ref"), payload: task.get("payload") || {}, attempts: task.getInt("attempts") };
+      const out = { id: task.id, type: task.getString("type"), profile: task.getString("profile"), ref: task.getString("ref"), payload: JSON.parse(task.getString("payload") || "{}") || {}, attempts: task.getInt("attempts") };
       // senha do e-mail: descriptografada só na resposta, nunca gravada na tarefa
       if (out.type.startsWith("mail_")) {
         try {
           out.mail = require(`${__hooks}/mail.js`).credentials($app, out.profile);
         } catch (error) {
           task.load({ status: "failed", error: "Configure o e-mail de envio primeiro." });
+          $app.save(task);
+          continue;
+        }
+      }
+      if (out.type === "leads_discover" && out.payload.source === "apify") {
+        try {
+          const apify = $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
+          out.apifyToken = $security.decrypt(apify.getString("secret"), $os.getenv("RADAR_SECRET"));
+        } catch {
+          task.load({ status: "failed", error: "Conecte sua conta da Apify em Configurações." });
           $app.save(task);
           continue;
         }

@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import requests
+import truststore
 from dotenv import load_dotenv
 
 from . import claude
@@ -11,6 +12,7 @@ from .panel import Panel
 from .tasks import LOCAL, TASKS
 
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+truststore.inject_into_ssl()  # certificados do Windows: antivírus que intercepta TLS (ex.: Kaspersky) não quebra os sites
 logging.basicConfig(level=logging.INFO, format="%(asctime)s brain %(message)s")
 log = logging.getLogger(__name__)
 

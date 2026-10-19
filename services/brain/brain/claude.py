@@ -48,16 +48,17 @@ def friendly(message: str) -> str:
     return f"Claude falhou: {message}"[:500]
 
 
-def ask(prompt: str, schema: dict, tier: str) -> tuple[str, dict]:
-    """Uma chamada crua. Sem ferramentas, MCP, skills nem CLAUDE.md: só o prompt (~1k tokens de base em vez de ~136k)."""
+def ask(prompt: str, schema: dict, tier: str, tools: str = "") -> tuple[str, dict]:
+    """Uma chamada crua. Sem MCP, skills nem CLAUDE.md: só o prompt (~1k tokens de base em vez de ~136k).
+    tools="WebSearch,WebFetch" libera a web, e aí gasta bem mais da assinatura."""
     command = [
         "claude", "-p", "--output-format", "json", "--model", TIERS[tier],
-        "--tools", "", "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",
+        "--tools", tools, *(["--allowedTools", tools] if tools else []), "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",
         "--system-prompt", SYSTEM, "--json-schema", json.dumps(schema),
     ]
     started = time.monotonic()
     try:
-        done = subprocess.run(command, input=prompt, capture_output=True, text=True, timeout=600, encoding="utf-8")
+        done = subprocess.run(command, input=prompt, capture_output=True, text=True, timeout=1200 if tools else 600, encoding="utf-8")
         data = json.loads(done.stdout)
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
         raise TaskFailed(friendly(str(error)),[{"provider": "claude", "ok": False, "error": str(error)[:2000]}]) from error
@@ -77,12 +78,12 @@ def ask(prompt: str, schema: dict, tier: str) -> tuple[str, dict]:
     return (json.dumps(output) if output is not None else data.get("result", "")), entry
 
 
-def complete(task: str, prompt: str, schema: type[T], tier: str = "best") -> tuple[T, list[dict]]:
+def complete(task: str, prompt: str, schema: type[T], tier: str = "best", tools: str = "") -> tuple[T, list[dict]]:
     """Resposta validada pelo schema. Inválida: 1 nova tentativa com o erro, depois TaskFailed."""
     entries: list[dict] = []
     attempt = prompt
     for _ in range(2):
-        text, entry = ask(attempt, schema.model_json_schema(), tier)
+        text, entry = ask(attempt, schema.model_json_schema(), tier, tools)
         try:
             value = schema.model_validate_json(text)
             entries.append({**entry, "ok": True})

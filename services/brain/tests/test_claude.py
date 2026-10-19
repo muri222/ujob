@@ -11,7 +11,7 @@ class Score(BaseModel):
 
 
 def fake_ask(replies, prompts):
-    def ask(prompt, schema, tier):
+    def ask(prompt, schema, tier, tools=""):
         prompts.append(prompt)
         return replies.pop(0), {"provider": "claude", "model": tier}
     return ask

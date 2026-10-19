@@ -84,6 +84,25 @@ export default async function settings(root, { signal }) {
     toast(`Teto: ${value} envios por dia.`);
   });
 
+  // Apify: opcional, pra buscar leads no Google Maps com os créditos da própria pessoa
+  const apifyToken = h("input", { type: "password", placeholder: "apify_api_...", autocomplete: "off" });
+  const apifyState = h("p", { className: "settings__state" });
+  const integrations = await api("radar/integrations").catch(() => ({ apify: {} }));
+  apifyState.replaceChildren(integrations.apify?.connected ? [h("span", { className: "tag tag--ok" }, icon("check"), "Conectada"), ` ${ago(integrations.apify.verifiedAt)}`] : h("span", { className: "tag" }, "Não conectada"));
+  const apifySave = h("button", { className: "btn btn--primary" }, icon("check"), "Conectar");
+  apifySave.addEventListener("click", async () => {
+    apifySave.disabled = true;
+    try {
+      const { username } = await api("radar/integrations/apify", { method: "POST", body: { token: apifyToken.value } });
+      apifyToken.value = "";
+      apifyState.replaceChildren(h("span", { className: "tag tag--ok" }, icon("check"), "Conectada"), ` como ${username}`);
+    } catch (error) {
+      apifyState.replaceChildren(h("span", { className: "tag tag--down" }, error.message));
+    } finally {
+      apifySave.disabled = false;
+    }
+  });
+
   const claude = h("p", {}, "Checando…");
   brainProblem(true).then((problem) => claude.replaceChildren(problem ? h("span", { className: "tag tag--down" }, problem) : h("span", { className: "tag tag--ok" }, icon("check"), "Claude Code logado e pronto")));
 
@@ -103,6 +122,13 @@ export default async function settings(root, { signal }) {
       { className: "panel settings" },
       h("header", { className: "section__head" }, h("h2", {}, "Envio"), h("small", {}, "Modo Revisão: nada sai sem o seu clique")),
       h("div", { className: "resume__grid" }, field("Máximo de envios por dia", cap)),
+    ),
+    h(
+      "section",
+      { className: "panel settings" },
+      h("header", { className: "section__head" }, h("h2", {}, "Apify (opcional)"), h("small", {}, "Busca leads no Google Maps com os seus créditos")),
+      h("p", { className: "settings__help" }, "Crie uma conta grátis na Apify (US$ 5 de crédito por mês) e cole o token de API.", h("a", { href: "https://console.apify.com/settings/integrations", target: "_blank", rel: "noopener noreferrer" }, "Pegar meu token", icon("external"))),
+      h("div", { className: "import__row" }, apifyToken, apifySave, apifyState),
     ),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "IA"), h("small", {}, "Usa o Claude Code logado neste PC, na sua assinatura")), claude),
   );

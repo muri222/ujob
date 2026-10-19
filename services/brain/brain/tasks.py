@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 import re
 import unicodedata
 
-from . import claude, cvpdf, mail, mind, read
+from . import claude, cvpdf, leads, mail, mind, read, site
 from .prompts import render
 
 
@@ -173,8 +173,50 @@ def mail_send(task: dict) -> tuple[dict, list[dict]]:
     return {"messageId": message_id, "pdfBytes": len(attachment or b"")}, []
 
 
+class Place(BaseModel):
+    name: str
+    website: str
+    phone: str
+    email: str
+    instagram: str
+    city: str
+    state: str
+    address: str
+    externalId: str
+    origin: str
+
+
+class Places(BaseModel):
+    places: list[Place]
+
+
+def leads_discover(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    try:
+        places = leads.apify(payload, task["apifyToken"]) if payload["source"] == "apify" else leads.osm(payload)
+    except Exception as error:  # rede, cota, região não achada: mensagem clara na campanha
+        raise claude.TaskFailed(f"Busca falhou: {error}"[:400], []) from error
+    return {"places": places}, []
+
+
+def leads_discover_claude(task: dict) -> tuple[dict, list[dict]]:
+    """Claude navegando na web: acha o que o mapa não tem, mas gasta bem mais da assinatura."""
+    payload = task["payload"]
+    regiao = ", ".join(filter(None, [payload.get("city"), payload.get("state")])) or "Brasil"
+    prompt = render("leads_discover_claude", limit=str(payload["limit"]), pack=payload["pack"], description=payload.get("description", ""), regiao=regiao, buscas=", ".join(payload.get("searches") or []))
+    value, log = claude.complete("leads_discover_claude", prompt, Places, "best", tools="WebSearch,WebFetch")
+    return {"places": [place.model_dump() for place in value.places[: payload["limit"]]]}, log
+
+
+def lead_enrich(task: dict) -> tuple[dict, list[dict]]:
+    try:
+        return site.enrich(task["payload"]["website"]), []
+    except Exception as error:
+        raise claude.TaskFailed(f"Site não abriu: {error.__class__.__name__}", []) from error
+
+
 # tarefas sem IA rodam mesmo com o Claude fora
-LOCAL = {"mail_test", "mail_send"}
+LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich"}
 
 TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "echo": echo,
@@ -184,4 +226,7 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "apply_kit": apply_kit,
     "mail_test": mail_test,
     "mail_send": mail_send,
+    "leads_discover": leads_discover,
+    "leads_discover_claude": leads_discover_claude,
+    "lead_enrich": lead_enrich,
 }

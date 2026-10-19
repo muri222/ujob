@@ -13,6 +13,7 @@ import companies from "./views/companies.js";
 import history from "./views/history.js";
 import job from "./views/job.js";
 import jobs from "./views/jobs.js";
+import leads from "./views/leads.js";
 import live from "./views/live.js";
 import marathon from "./views/marathon.js";
 import mind from "./views/mind.js";
@@ -41,6 +42,7 @@ const ROUTES = [
   ["mente", mind],
   ["envios", outbox],
   ["config", settings],
+  ["leads", leads],
   ["ao-vivo", live],
   ["empresas", companies],
   ["areas", areas],

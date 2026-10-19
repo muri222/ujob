@@ -8,6 +8,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "pypdf>=6.21.1",
     "fpdf2>=2.8.9",
+    "truststore>=0.10.5",
 ]
 
 [dependency-groups]
