@@ -26,12 +26,9 @@ routerAdd(
     const filter = `status = 'queued' && (${types.map((_, i) => `type = {:t${i}}`).join(" || ")})`;
 
     for (let attempt = 0; attempt < 5; attempt++) {
-      let candidate;
-      try {
-        candidate = $app.findFirstRecordByFilter("ai_tasks", filter, params);
-      } catch {
-        break;
-      }
+      // prioridade primeiro (chat), depois a mais antiga
+      const candidate = $app.findRecordsByFilter("ai_tasks", filter, "-priority,createdAt", 1, 0, params)[0];
+      if (!candidate) break;
       const claimed = $app
         .db()
         .newQuery("UPDATE ai_tasks SET status = 'running', startedAt = {:now}, attempts = attempts + 1 WHERE id = {:id} AND status = 'queued'")

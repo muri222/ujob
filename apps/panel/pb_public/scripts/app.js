@@ -9,6 +9,7 @@ import { listen } from "./core/realtime.js";
 import { createRouter } from "./core/router.js";
 import { createSidebar } from "./core/sidebar.js";
 import areas from "./views/areas.js";
+import chat from "./views/chat.js";
 import companies from "./views/companies.js";
 import guide from "./views/guide.js";
 import history from "./views/history.js";
@@ -45,6 +46,7 @@ const ROUTES = [
   ["config", settings],
   ["leads", leads],
   ["guia", guide],
+  ["claude", chat],
   ["ao-vivo", live],
   ["empresas", companies],
   ["areas", areas],

@@ -9,6 +9,8 @@ dependencies = [
     "pypdf>=6.21.1",
     "fpdf2>=2.8.9",
     "truststore>=0.10.5",
+    "faster-whisper>=1.2.1",
+    "av<16",
 ]
 
 [dependency-groups]

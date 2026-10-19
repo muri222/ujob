@@ -17,6 +17,13 @@ class Panel:
     def result(self, task_id: str, result: dict | None = None, error: str = "", log: list[dict] | None = None) -> dict:
         return self._call("POST", f"radar/tasks/{task_id}/result", json={"result": result, "error": error, "log": log or []})
 
+    def partial(self, task_id: str, text: str) -> bool:
+        """Manda o texto parcial do chat; devolve True se o usuário pediu pra parar."""
+        try:
+            return bool(self._call("POST", f"radar/tasks/{task_id}/partial", json={"text": text}).get("stop"))
+        except requests.HTTPError:
+            return True
+
     def status(self, problem: str | None) -> dict:
         return self._call("POST", "radar/brain/status", json={"problem": problem})
 

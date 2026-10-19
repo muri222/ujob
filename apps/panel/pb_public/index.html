@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="styles/overlays.css" />
     <link rel="stylesheet" href="styles/job.css" />
     <link rel="stylesheet" href="styles/views/overview.css" />
+    <link rel="stylesheet" href="styles/views/chat.css" />
     <link rel="stylesheet" href="styles/views/search.css" />
     <link rel="stylesheet" href="styles/views/jobs.css" />
     <link rel="stylesheet" href="styles/views/live.css" />
@@ -81,6 +82,7 @@
       <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M5 5h14v10H5zM3 19h18" /></symbol>
       <symbol id="i-contract" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h4" /></symbol>
       <symbol id="i-level" viewBox="0 0 24 24"><path d="M5 20v-5M10 20v-9M15 20V7M20 20V3" /></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></symbol>
       <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></symbol>
       <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1" /></symbol>
@@ -155,6 +157,7 @@
         </button>
 
         <nav class="side__nav" data-side-nav>
+          <a href="#claude" data-link="claude"><svg class="icon"><use href="#i-sparkle" /></svg><span class="label">Claude</span></a>
           <a href="#inicio" data-link="inicio"><svg class="icon"><use href="#i-home" /></svg><span class="label">Visão geral</span></a>
           <p class="side__group">Vagas</p>
           <a href="#vagas" data-link="vagas"><svg class="icon"><use href="#i-briefcase" /></svg><span class="label">Vagas</span><span class="count" data-count="vagas"></span></a>

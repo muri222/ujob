@@ -19,9 +19,9 @@ routerUse((e) => {
     /^\/api\/ujob\//,
     /^\/api\/radar\//,
     /^\/api\/collections\/(_superusers|bots)\/(auth-with-password|auth-refresh)$/,
-    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile|ai_tasks|ai_log|mind_facts|mail_accounts|messages|audit|campaigns|leads|segment_packs)\/records(\/[a-z0-9]{15})?$/,
+    /^\/api\/collections\/(jobs|sources|runs|applications|searches|profile|ai_tasks|ai_log|mind_facts|mail_accounts|messages|audit|campaigns|leads|segment_packs|conversations|chat_messages)\/records(\/[a-z0-9]{15})?$/,
     /^\/api\/files\/token$/,
-    /^\/api\/files\/profile\/[a-z0-9]{15}\/[\w.-]+$/,
+    /^\/api\/files\/(profile|chat_messages|pbc_[0-9]+)\/[a-z0-9]{15}\/[\w.-]+$/,
   ];
   const TRAPS = [/^\/_\/?/, /^\/(wp-admin|wp-login\.php|xmlrpc\.php|phpmyadmin|administrator|\.env|\.git)/i];
   const REPLIES = [

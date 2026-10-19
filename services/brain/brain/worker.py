@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 import time
 from pathlib import Path
 
@@ -7,9 +8,9 @@ import requests
 import truststore
 from dotenv import load_dotenv
 
-from . import claude
+from . import chat, claude
 from .panel import Panel
-from .tasks import LOCAL, TASKS
+from .tasks import CHAT, LOCAL, TASKS
 
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 truststore.inject_into_ssl()  # certificados do Windows: antivírus que intercepta TLS (ex.: Kaspersky) não quebra os sites
@@ -33,6 +34,8 @@ def connect() -> Panel:
 
 def run(panel: Panel, task: dict) -> None:
     handler = TASKS.get(task["type"])
+    if task["type"] == "chat_reply":
+        handler = lambda task: chat.reply(task, lambda text: panel.partial(task["id"], text))  # noqa: E731
     if not handler:
         panel.result(task["id"], error=f"tipo de tarefa desconhecido: {task['type']}")
         return
@@ -48,27 +51,37 @@ def run(panel: Panel, task: dict) -> None:
         panel.result(task["id"], error=f"erro interno: {error}"[:2000])
 
 
-def main() -> None:
+state = {"problem": None}
+
+
+def lane(name: str, kinds: set[str], reports: bool) -> None:
+    """Uma pista: pega tarefas só dos tipos dela. A geral também checa e reporta o Claude."""
     panel = connect()
-    problem, checked, reported = None, 0.0, 0.0
+    checked, reported = 0.0, 0.0
     while True:
         try:
-            if time.monotonic() - checked > (RECHECK_EVERY if problem else CHECK_EVERY):
-                problem, checked, reported = claude.problem(), time.monotonic(), 0.0
-                log.info("claude: %s", problem or "pronto")
-            if time.monotonic() - reported > REPORT_EVERY:
-                panel.status(problem)
+            if reports and time.monotonic() - checked > (RECHECK_EVERY if state["problem"] else CHECK_EVERY):
+                state["problem"], checked, reported = claude.problem(), time.monotonic(), 0.0
+                log.info("claude: %s", state["problem"] or "pronto")
+            if reports and time.monotonic() - reported > REPORT_EVERY:
+                panel.status(state["problem"])
                 reported = time.monotonic()
-            # sem Claude, as tarefas de IA esperam na fila (a tela mostra o motivo); e-mail segue
-            task = panel.next_task(sorted(LOCAL) if problem else sorted(TASKS))
+            # sem Claude, as tarefas de IA esperam na fila (a tela mostra o motivo); e-mail e áudio seguem
+            allowed = sorted(kinds & LOCAL if state["problem"] else kinds)
+            task = panel.next_task(allowed) if allowed else None
             if task:
                 run(panel, task)
                 continue
         except requests.RequestException as error:
-            log.warning("painel fora do ar: %s", error)
+            log.warning("%s: painel fora do ar: %s", name, error)
             time.sleep(10)
             panel = connect()
-        time.sleep(IDLE_SECONDS)
+        time.sleep(1 if name == "chat" else IDLE_SECONDS)
+
+
+def main() -> None:
+    threading.Thread(target=lane, args=("chat", set(CHAT), False), daemon=True).start()
+    lane("geral", set(TASKS) - CHAT, True)
 
 
 if __name__ == "__main__":

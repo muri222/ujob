@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 import re
 import unicodedata
 
-from . import claude, cvpdf, leads, mail, mind, read, site
+from . import claude, cvpdf, leads, mail, mind, read, site, transcribe as whisper
 from .prompts import render
 
 
@@ -303,8 +303,27 @@ def lead_pack(task: dict) -> tuple[dict, list[dict]]:
     }, log
 
 
+class Title(BaseModel):
+    title: str
+
+
+def chat_title(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    value, log = claude.complete("chat_title", render("chat_title", user=payload.get("user", ""), reply=payload.get("reply", "")), Title, "cheap")
+    return {"title": value.title.strip().strip('"').rstrip(".")[:120]}, log
+
+
+def transcribe(task: dict) -> tuple[dict, list[dict]]:
+    try:
+        return {"text": whisper.transcribe(task["payload"]["path"])}, []
+    except Exception as error:
+        raise claude.TaskFailed(f"Não consegui transcrever o áudio: {error}"[:300], []) from error
+
+
 # tarefas sem IA rodam mesmo com o Claude fora
-LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich"}
+LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich", "transcribe"}
+# pista própria pro chat: não espera atrás de campanha grande
+CHAT = {"chat_reply", "chat_title", "transcribe"}
 
 TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "echo": echo,
@@ -321,4 +340,7 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "outreach": outreach,
     "job_query": job_query,
     "lead_pack": lead_pack,
+    "chat_title": chat_title,
+    "transcribe": transcribe,
+    "chat_reply": None,  # tratado no worker (precisa mandar texto parcial)
 }
