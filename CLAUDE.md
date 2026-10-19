@@ -41,13 +41,20 @@ infra/                 docker-compose e Caddy (ujob), mantidos para rodar em ser
 
 ## Como rodar (Windows, local)
 
+Porta **8096** (a 8095 fica com o ujob antigo em Downloads).
+
+- Duplo clique em `Radar.lnk` (app Tauri em `desktop/`): sobe painel, scout e brain, abre a janela; fechar encerra tudo.
+- Ou `INICIAR.bat` (abre no navegador, processos ficam em janelas minimizadas).
+- Build do app: `cd desktop/src-tauri && cargo build --release`.
+
+Primeira vez:
 ```
-copy .env.example .env        # preencher SCOUT_PASSWORD e BRAIN_PASSWORD
-cd apps/panel && pocketbase.exe superuser upsert EMAIL SENHA && pocketbase.exe serve --http=127.0.0.1:8095
-cd services/scout && uv sync && uv run python -m ujob_scout.scheduler
-cd services/brain && uv sync && uv run python -m brain.worker
+copy .env.example .env        # preencher SCOUT_PASSWORD e BRAIN_PASSWORD (token_urlsafe(24))
+cd apps/panel && pocketbase.exe superuser upsert EMAIL SENHA
+cd services/scout && uv sync
+cd services/brain && uv sync
 ```
-Abrir http://127.0.0.1:8095. Testes: `uv run --group dev pytest` em cada serviço Python.
+Testes: `uv run --group dev pytest` em cada serviço Python.
 
 ## Padrões do código
 
