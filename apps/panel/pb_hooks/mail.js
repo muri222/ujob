@@ -89,8 +89,17 @@ function key() {
 
 const encrypt = (password) => $security.encrypt(password, key());
 
+// e-mail é da conta, não da função: usa o da função se tiver, senão o primeiro configurado
+function accountFor(app, profileId) {
+  try {
+    return app.findFirstRecordByFilter("mail_accounts", "profile = {:profile}", { profile: profileId });
+  } catch {
+    return app.findRecordsByFilter("mail_accounts", "", "-verifiedAt", 1, 0)[0] ?? null;
+  }
+}
+
 function credentials(app, profileId) {
-  const account = app.findFirstRecordByFilter("mail_accounts", "profile = {:profile}", { profile: profileId });
+  const account = accountFor(app, profileId);
   return {
     email: account.getString("email"),
     name: account.getString("name"),
@@ -102,4 +111,4 @@ function credentials(app, profileId) {
   };
 }
 
-module.exports = { detect, encrypt, credentials };
+module.exports = { detect, encrypt, credentials, accountFor };

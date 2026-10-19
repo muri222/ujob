@@ -8,7 +8,30 @@ function cvOf(profile) {
   for (const field of ["name", "headline", "email", "phone", "about", "skills", "experiences", "education", "languages", "links", "seniority", "city", "state", "workplace", "salary", "categories", "countries", "portfolio"]) {
     cv[field] = profile.get(field);
   }
+  // preferências da função (sem a autoidentificação, que nunca entra na avaliação)
+  const prefs = JSON.parse(profile.getString("prefs") || "{}") || {};
+  delete prefs.identity;
+  delete prefs.queueCap;
+  cv.preferencias = prefs;
+  const answers = JSON.parse(profile.getString("answers") || "[]") || [];
+  cv.respostas_prontas = answers.filter((item) => item && item.a && String(item.a).trim()).slice(0, 40);
   return cv;
+}
+
+// cargos da função e empresas excluídas viram filtro SQL (mesma regra do painel)
+function scopeOf(profile) {
+  const prefs = JSON.parse(profile.getString("prefs") || "{}") || {};
+  const areas = JSON.parse(profile.getString("categories") || "[]") || [];
+  const roles = (prefs.roles || []).filter(Boolean).slice(0, 10);
+  const exclude = (prefs.exclude || []).filter(Boolean).slice(0, 30);
+  const params = {};
+  const any = [...areas.map((area, i) => ((params[`a${i}`] = area), `category = {:a${i}}`)), ...roles.map((role, i) => ((params[`r${i}`] = role), `title ~ {:r${i}}`))];
+  let filter = any.length ? ` && (${any.join(" || ")})` : "";
+  for (const [i, company] of exclude.entries()) {
+    params[`x${i}`] = company;
+    filter += ` && company !~ {:x${i}}`;
+  }
+  return { filter, params };
 }
 
 function vagaOf(job) {
@@ -26,4 +49,4 @@ function menteOf(app, profileId) {
     .map((fact) => ({ kind: fact.getString("kind"), text: fact.getString("text") }));
 }
 
-module.exports = { cvOf, vagaOf, menteOf };
+module.exports = { cvOf, vagaOf, menteOf, scopeOf };

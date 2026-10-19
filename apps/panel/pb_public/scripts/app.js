@@ -1,6 +1,6 @@
-import { count, list, SessionError, startSession } from "./core/api.js";
-import { brainProblem, ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
-import { $, h, isTyping } from "./core/dom.js";
+import { count, create, list, SessionError, startSession } from "./core/api.js";
+import { askClaude, brainProblem, ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
+import { $, h, icon, isTyping, modal, toast } from "./core/dom.js";
 import { ago, parseDate } from "./core/format.js";
 import { clickSpark } from "./core/fx.js";
 import { createPalette } from "./core/palette.js";
@@ -21,6 +21,7 @@ import marathon from "./views/marathon.js";
 import mind from "./views/mind.js";
 import outbox from "./views/outbox.js";
 import settings from "./views/settings.js";
+import preferences from "./views/preferences.js";
 import overview from "./views/overview.js";
 import pipeline from "./views/pipeline.js";
 import resume from "./views/resume.js";
@@ -44,6 +45,7 @@ const ROUTES = [
   ["mente", mind],
   ["envios", outbox],
   ["config", settings],
+  ["preferencias", preferences],
   ["leads", leads],
   ["guia", guide],
   ["claude", chat],
@@ -124,17 +126,74 @@ function watchLive() {
 
 let sidebar;
 
+// "Suas funções" (igual AiApply): cada função tem CV, preferências, buscas, funil e painel próprios
+const CV_FIELDS = ["name", "headline", "email", "phone", "about", "skills", "experiences", "education", "languages", "links", "city", "state", "letter", "template"];
+const PREF_FIELDS = ["prefs", "answers", "countries", "workplace", "salary", "seniority", "sendMode", "threshold", "dailyCap", "kind"];
+
+async function newFunction() {
+  const current = ctx.profile;
+  const name = h("input", { required: true, maxLength: 60, placeholder: "Ex.: Editor de Vídeo, Designer Gráfico" });
+  const check = (label, on) => h("label", { className: "check" }, h("input", { type: "checkbox", checked: on }), h("span", {}, label));
+  const prefs = check("Preferências (modo, locais, salário, respostas)", true);
+  const cv = check("Currículo", true);
+  const dialog = h(
+    "dialog",
+    { className: "confirm" },
+    h(
+      "form",
+      { method: "dialog" },
+      h("p", {}, h("strong", {}, "Nova função"), h("br"), h("small", {}, "Se candidata a mais de um tipo de vaga? Crie uma função pra cada uma e tenha resultados mais certeiros.")),
+      h("label", { className: "field" }, h("span", {}, "Nome da função"), name),
+      current ? h("div", { className: "field" }, h("span", {}, `O que copiar de ${current.label || "Principal"}?`), prefs, cv) : null,
+      h("div", { className: "confirm__actions" }, h("button", { className: "btn btn--ghost", value: "no", formNoValidate: true }, "Cancelar"), h("button", { className: "btn btn--primary", value: "yes" }, "Criar")),
+    ),
+  );
+  if (!(await modal(dialog, (value) => value === "yes"))) return;
+  const body = { label: name.value.trim(), kind: "pessoa", sendMode: "revisao", threshold: 70, dailyCap: 10 };
+  if (current) {
+    for (const key of prefs.querySelector("input").checked ? PREF_FIELDS : []) body[key] = current[key];
+    // cargos e rejeições são da função; o resto (locais, salário, respostas) vem junto
+    if (body.prefs) body.prefs = { ...body.prefs, roles: [], rejects: { roles: [], skills: [] } };
+    for (const key of cv.querySelector("input").checked ? CV_FIELDS : ["name", "email", "phone"]) body[key] = current[key];
+  }
+  // cargos da função nova saem do nome dela (Haiku, ~10 s); sem Claude, a pessoa preenche nas Preferências
+  if (!(await brainProblem())) {
+    toast("Montando os cargos da função com o Claude…");
+    const found = await askClaude("job_query", { text: `Vagas de ${body.label}`, perfil: { headline: current?.headline, skills: current?.skills } }, { timeout: 60_000 }).catch(() => null);
+    if (found) body.prefs = { ...(body.prefs ?? {}), roles: found.terms };
+  }
+  try {
+    const record = await create("profile", body);
+    useProfile(record.id);
+    location.hash = "#preferencias?aba=vaga";
+    location.reload();
+  } catch {
+    toast("Não deu pra criar a função.");
+  }
+}
+
 function mountProfiles() {
   const slot = $("[data-profiles]");
-  slot.hidden = ctx.profiles.length < 2;
-  const select = h(
-    "select",
-    { className: "side__profile", "aria-label": "Perfil ativo" },
-    ctx.profiles.map((item) => h("option", { value: item.id, selected: item.id === ctx.profile?.id }, item.name || "Sem nome")),
+  slot.hidden = false;
+  const label = (item) => item.label || "Principal";
+  const menu = h(
+    "div",
+    { className: "side__fn-menu" },
+    h("p", { className: "side__group" }, "Suas funções"),
+    ctx.profiles.map((item) =>
+      h(
+        "button",
+        // ponytail: trocar de função recarrega a página, mais simples que invalidar cada tela
+        { type: "button", className: "side__fn-item", "aria-current": String(item.id === ctx.profile?.id), onclick: () => (useProfile(item.id), location.reload()) },
+        h("span", {}, label(item)),
+        item.id === ctx.profile?.id ? icon("check") : null,
+      ),
+    ),
+    h("button", { type: "button", className: "side__fn-item side__fn-add", onclick: () => ((details.open = false), newFunction()) }, icon("plus"), h("span", {}, "Adicionar outra função")),
   );
-  // ponytail: trocar de perfil recarrega a página, mais simples que invalidar cada tela
-  select.addEventListener("change", () => (useProfile(select.value), location.reload()));
-  slot.replaceChildren(select);
+  const details = h("details", { className: "side__fn" }, h("summary", {}, h("small", {}, "Sua função"), h("span", { className: "side__fn-name" }, ctx.profile ? label(ctx.profile) : "Criar função"), icon("down")), menu);
+  addEventListener("click", (event) => details.open && !details.contains(event.target) && (details.open = false));
+  slot.replaceChildren(details);
 }
 
 function highlight(pattern) {
@@ -148,7 +207,8 @@ function initChrome() {
   const palette = createPalette({
     actions: [
       ["Ajustar meu perfil", () => welcome({ force: true }), "user"],
-      ["Novo perfil", () => welcome({ force: true, fresh: true }), "user"],
+      ["Nova função", () => newFunction(), "user"],
+      ["Preferências da função", () => (location.hash = "#preferencias"), "gear"],
       ["Alternar claro / escuro", () => window.radarTheme.set({ mode: document.documentElement.dataset.mode === "dark" ? "light" : "dark" }), "sparkle"],
       ["Configurações e temas", () => (location.hash = "#config"), "gear"],
     ],

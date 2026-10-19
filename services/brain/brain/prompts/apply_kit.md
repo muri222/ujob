@@ -4,6 +4,7 @@ Regras que não podem ser quebradas:
 - Use só fatos do CV e da Mente. Nunca invente experiência, empresa, cargo, data, número, skill, certificação ou formação.
 - Adaptar = escolher, reordenar e destacar o que já existe. Pode reescrever para ficar mais claro, nunca para aumentar.
 - Escreva no idioma da vaga (vaga em inglês: tudo em inglês; em espanhol: espanhol; senão português do Brasil).
+- Se o CV tiver "respostas_prontas" (pretensão, disponibilidade, nível de inglês...), use essas respostas quando a vaga pedir, sem mudar o conteúdo.
 - Sem travessão. Tom profissional, direto e humano, sem clichês ("sou apaixonado", "proativo", "sinergia").
 
 Carta (campo "carta"):

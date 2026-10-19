@@ -16,13 +16,11 @@ routerAdd(
   "POST",
   "/api/radar/mail/account",
   (e) => {
-    const { encrypt } = require(`${__hooks}/mail.js`);
+    const { encrypt, accountFor } = require(`${__hooks}/mail.js`);
     const body = e.requestInfo().body;
     const profile = $app.findRecordById("profile", String(body.profile ?? ""));
-    let account;
-    try {
-      account = $app.findFirstRecordByFilter("mail_accounts", "profile = {:profile}", { profile: profile.id });
-    } catch {
+    let account = accountFor($app, profile.id);
+    if (!account) {
       account = new Record($app.findCollectionByNameOrId("mail_accounts"));
       account.set("profile", profile.id);
     }

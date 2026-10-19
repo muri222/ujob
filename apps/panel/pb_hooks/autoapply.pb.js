@@ -41,6 +41,11 @@ onRecordAfterUpdateSuccess((e) => {
       return;
     }
     if (!job.getString("contactEmail")) return;
+    // Híbrido: para de preparar quando a fila de revisão enche (preferência "vagas aguardando revisão")
+    if (mode === "hibrido") {
+      const cap = (JSON.parse(profile.getString("prefs") || "{}") || {}).queueCap || 15;
+      if ($app.countRecords("messages", $dbx.exp("profile = {:p} AND status = 'pronta'", { p: profile.id })) >= cap) return;
+    }
     apply.prepare($app, profile, job, { auto: true });
   }
   // o envio automático da carta pronta fica no gancho do mail.pb.js (precisa rodar depois de a carta ficar "pronta")

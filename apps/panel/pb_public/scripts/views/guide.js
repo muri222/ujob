@@ -3,6 +3,15 @@ import { h, header, icon } from "../core/dom.js";
 // fluxos do app em passos curtos, cada passo leva pra tela certa
 const FLOWS = [
   {
+    title: "Uma função pra cada tipo de vaga",
+    lead: "Trabalha com mais de uma coisa? Cada função tem CV, preferências, buscas, funil e painel próprios.",
+    steps: [
+      ["Crie a função", "No topo do menu, Sua função → Adicionar outra função (ex.: Editor de Vídeo). O Claude já sugere os cargos.", "#inicio"],
+      ["Ajuste as preferências", "Cargos, locais, salário, empresas excluídas, modo de candidatura e respostas prontas.", "#preferencias"],
+      ["Monte o painel", "Na Visão geral, Personalizar painel: escolha o que aparece nessa função.", "#inicio"],
+    ],
+  },
+  {
     title: "Falar com o Claude",
     lead: "Igual ao app do Claude, mas ele já conhece seu currículo, funil, vagas e leads.",
     steps: [
@@ -25,12 +34,12 @@ const FLOWS = [
     lead: "Do radar até o e-mail enviado, com o Claude escrevendo por você.",
     steps: [
       ["Complete o currículo", "Importe seu PDF ou site. Use o Scanner ATS pra achar falhas e o Tradutor pra ter o CV em inglês.", "#curriculo"],
-      ["Busque do seu jeito", "Use a frase pronta ou descreva a vaga com suas palavras (ex.: \"character artist pra games, remoto\").", "#buscar"],
+      ["Busque do seu jeito", "Use a frase pronta ou escreva o que procura (ex.: \"character artist pra games, remoto\"), em Buscar ou direto em Vagas.", "#vagas"],
       ["Deixe o Claude dar nota", "Em Vagas, clique em Avaliar com Claude: ele lê a vaga e diz se vale aplicar.", "#vagas"],
       ["Prepare a candidatura", "Na vaga, Preparar candidatura: carta no idioma da vaga e CV adaptado, sem inventar nada.", "#vagas"],
       ["Revise e envie", "Em Prontas para enviar você edita e manda do seu e-mail, com teto por dia.", "#envios"],
       ["Acompanhe no funil", "Arraste entre Salvas, Candidatei, Entrevista... Follow-up vencido aparece no Hoje.", "#funil"],
-      ["Ou ligue o Auto Apply", "Em Configurações: Híbrido (o Claude prepara sozinho, você confirma) ou Automático (sai sozinho, com teto diário).", "#config"],
+      ["Ou ligue o Auto Apply", "Em Preferências: Híbrido (o Claude prepara sozinho, você confirma) ou Automático (sai sozinho, com teto diário).", "#config"],
     ],
   },
   {
@@ -55,7 +64,7 @@ const FLOWS = [
     title: "Configurar uma vez",
     lead: "Tudo fica só neste PC.",
     steps: [
-      ["E-mail de envio", "Seu e-mail + senha de app. O servidor é detectado sozinho.", "#config"],
+      ["E-mail de envio", "Em Config. da conta: seu e-mail + senha de app. Vale pra todas as funções.", "#config"],
       ["Apify (opcional)", "Cole o token pra buscar leads no Google Maps.", "#config"],
       ["Tema", "Claro, escuro e 6 paletas de cor.", "#config"],
     ],

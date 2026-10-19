@@ -22,12 +22,8 @@ function prepare(app, profile, job, { auto = false } = {}) {
 function send(app, message, { subject, body, auto = false } = {}) {
   if (message.getString("status") !== "pronta" || message.getString("channel") !== "email") return { ok: false, status: 409, error: "Essa mensagem não está pronta pra envio." };
   const profile = app.findRecordById("profile", message.getString("profile"));
-  let account;
-  try {
-    account = app.findFirstRecordByFilter("mail_accounts", "profile = {:p}", { p: profile.id });
-  } catch {
-    return { ok: false, status: 400, error: "Configure o e-mail de envio primeiro." };
-  }
+  const account = require(`${__hooks}/mail.js`).accountFor(app, profile.id);
+  if (!account) return { ok: false, status: 400, error: "Configure o e-mail de envio primeiro." };
   if (!account.getString("verifiedAt")) return { ok: false, status: 400, error: "Teste a conexão do e-mail antes de enviar." };
 
   const cap = profile.getInt("dailyCap") || 10;

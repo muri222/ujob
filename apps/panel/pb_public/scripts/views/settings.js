@@ -1,6 +1,6 @@
-import { api, list, update } from "../core/api.js";
-import { brainProblem, ctx, mine } from "../core/context.js";
-import { h, header, icon, toast } from "../core/dom.js";
+import { api, list, remove } from "../core/api.js";
+import { brainProblem, ctx, useProfile } from "../core/context.js";
+import { confirm, h, header, icon, toast } from "../core/dom.js";
 import { segmented } from "../core/ui.js";
 import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
@@ -43,10 +43,11 @@ function appearance() {
 
 export default async function settings(root, { signal }) {
   if (!ctx.profile) {
-    root.append(header("Configurações", null), h("div", { className: "empty card" }, h("strong", {}, "Crie seu perfil primeiro"), "Cada perfil tem o próprio e-mail de envio."));
+    root.append(header("Config. da conta", null), h("div", { className: "empty card" }, h("strong", {}, "Crie sua primeira função"), "Use o seletor no topo do menu."));
     return;
   }
-  const { items } = await list("mail_accounts", { filter: mine(), perPage: 1 }).catch(() => ({ items: [] }));
+  // e-mail é da conta: serve pra todas as funções
+  const { items } = await list("mail_accounts", { sort: "-verifiedAt", perPage: 1 }).catch(() => ({ items: [] }));
   const account = items[0] ?? {};
 
   const field = (label, input) => h("label", { className: "field" }, h("span", {}, label), input);
@@ -95,7 +96,7 @@ export default async function settings(root, { signal }) {
         "ai_tasks",
         async ({ record }) => {
           if (record.id !== task || !["done", "failed"].includes(record.status)) return;
-          const { items: fresh } = await list("mail_accounts", { filter: mine(), perPage: 1 });
+          const { items: fresh } = await list("mail_accounts", { sort: "-verifiedAt", perPage: 1 });
           paintState(fresh[0] ?? {});
           save.disabled = false;
         },
@@ -107,48 +108,59 @@ export default async function settings(root, { signal }) {
     }
   });
 
-  // Auto Apply (igual AiApply): Revisão = só clique; Híbrido = Claude prepara sozinho, você envia; Automático = sai sozinho
-  const MODES = {
-    revisao: "Você escolhe a vaga, o Claude prepara, você revisa e envia. Nada sai sozinho.",
-    hibrido: "A cada 30 min o Radar avalia vagas novas com e-mail da sua área. As que passam do limiar viram candidatura pronta em Prontas para enviar; você só confirma.",
-    auto: "Igual ao Híbrido, mas a candidatura sai sozinha do seu e-mail, dentro do teto diário. Tudo fica registrado.",
-  };
-  const modeHelp = h("p", { className: "settings__help" }, MODES[ctx.profile.sendMode || "revisao"]);
-  const saveProfile = async (patch, message) => {
-    ctx.profile = await update("profile", ctx.profile.id, patch).catch(() => ctx.profile);
-    if (message) toast(message);
-  };
-  const mode = segmented(
-    [["revisao", "Revisão"], ["hibrido", "Híbrido"], ["auto", "Automático"]],
-    ctx.profile.sendMode || "revisao",
-    (value) => {
-      modeHelp.textContent = MODES[value];
-      saveProfile({ sendMode: value }, value === "auto" ? "Automático ligado. Confira o teto diário e o limiar." : "Modo salvo.");
-    },
-    "Modo de envio",
+  // funções: renomear fica nas Preferências; aqui lista e apaga
+  const functions = h(
+    "ul",
+    { className: "rejects" },
+    ctx.profiles.map((item) =>
+      h(
+        "li",
+        {},
+        h("span", {}, item.label || "Principal", item.id === ctx.profile.id ? h("span", { className: "tag tag--ok" }, " ativa") : ""),
+        h("small", {}, item.headline || ""),
+        ctx.profiles.length > 1
+          ? h(
+              "button",
+              {
+                type: "button",
+                className: "icon-btn",
+                "aria-label": "Apagar função",
+                onclick: async () => {
+                  if (!(await confirm(`Apagar a função ${item.label || "Principal"}? Some o funil, as buscas, os leads e as conversas dela. Não dá pra desfazer.`, { confirmLabel: "Apagar" }))) return;
+                  await remove("profile", item.id);
+                  if (item.id === ctx.profile.id) useProfile(ctx.profiles.find((other) => other.id !== item.id).id);
+                  location.reload();
+                },
+              },
+              icon("close"),
+            )
+          : null,
+      ),
+    ),
   );
-  const threshold = h("input", { type: "range", min: 50, max: 95, step: 5, value: ctx.profile.threshold || 70 });
-  const thresholdLabel = h("strong", { className: "num" }, `${ctx.profile.threshold || 70}`);
-  threshold.addEventListener("input", () => (thresholdLabel.textContent = threshold.value));
-  threshold.addEventListener("change", () => saveProfile({ threshold: Number(threshold.value) }, `Só vagas com nota ${threshold.value}+ do Claude.`));
-  const runNow = h("button", { type: "button", className: "btn btn--soft" }, icon("radar"), "Rodar agora");
-  runNow.addEventListener("click", async () => {
-    if ((ctx.profile.sendMode || "revisao") === "revisao") return toast("Escolha Híbrido ou Automático primeiro.");
-    runNow.disabled = true;
+
+  // exportar: tudo da função ativa num JSON (igual "Exportar dados" do AiApply)
+  const exportGo = h("button", { type: "button", className: "btn btn--soft" }, icon("upload"), "Baixar meus dados");
+  exportGo.addEventListener("click", async () => {
+    exportGo.disabled = true;
     try {
-      const { queued } = await api("radar/autoapply/run", { method: "POST" });
-      toast(queued ? `${queued} vagas novas na fila de avaliação do Claude.` : "Nenhuma vaga nova com e-mail na sua área agora.");
+      const of = (name) => list(name, { filter: `profile = '${ctx.profile.id}'`, perPage: 500 }).then((page) => page.items).catch(() => []);
+      const names = ["applications", "searches", "mind_facts", "messages", "leads", "campaigns", "conversations"];
+      const data = { exportado: new Date().toISOString(), funcao: ctx.profile, ...Object.fromEntries(await Promise.all(names.map(async (name) => [name, await of(name)]))) };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+      h("a", { href: url, download: `radar-${(ctx.profile.label || "funcao").normalize("NFD").replace(/[^\w]+/g, "-")}.json` }).click();
     } finally {
-      runNow.disabled = false;
+      exportGo.disabled = false;
     }
   });
 
-  const cap = h("input", { type: "number", min: 1, max: 500, value: ctx.profile.dailyCap || 10 });
-  cap.addEventListener("change", async () => {
-    const value = Math.max(1, Math.min(500, Number(cap.value) || 10));
-    ctx.profile = await update("profile", ctx.profile.id, { dailyCap: value }).catch(() => ctx.profile);
-    toast(`Teto: ${value} envios por dia.`);
-  });
+  const FAQ = [
+    ["Como funcionam as funções?", "Cada função (ex.: 3D Generalista, Editor de Vídeo) tem currículo, preferências, buscas, funil, leads e painel próprios. Troque no topo do menu. O e-mail de envio e o tema valem pra todas."],
+    ["Como o Auto Apply decide pra quais vagas enviar?", "A cada 30 min ele pega vagas novas com e-mail da área e dos cargos da função, tira as empresas excluídas e pede a nota do Claude. Só as com nota acima da mínima viram candidatura. No Híbrido você confirma; no Automático sai sozinho até o limite diário."],
+    ["Quanto da minha assinatura do Claude isso gasta?", "Nota de vaga usa o Sonnet (pouco); carta e CV adaptado usam o Opus (mais). Busca de leads na web com Claude é o que mais gasta. O resto (coleta, filtro, leitura de sites) roda no PC sem IA."],
+    ["Meus dados saem do PC?", "Não. Banco, coleta e IA rodam aqui. Só sai o que você manda: e-mails de candidatura e as perguntas ao Claude da sua conta."],
+  ];
+  const support = h("div", { className: "answers" }, FAQ.map(([question, answer]) => h("details", { className: "answer" }, h("summary", {}, h("strong", {}, question)), h("p", { className: "settings__help" }, answer))));
 
   // Apify: opcional, pra buscar leads no Google Maps com os créditos da própria pessoa
   const apifyToken = h("input", { type: "password", placeholder: "apify_api_...", autocomplete: "off" });
@@ -173,7 +185,7 @@ export default async function settings(root, { signal }) {
   brainProblem(true).then((problem) => claude.replaceChildren(problem ? h("span", { className: "tag tag--down" }, problem) : h("span", { className: "tag tag--ok" }, icon("check"), "Claude Code logado e pronto")));
 
   root.append(
-    header("Configurações", `Perfil: ${ctx.profile.name || "sem nome"}. Tudo fica só neste PC.`),
+    header("Config. da conta", "Vale pra todas as funções. Tudo fica só neste PC.", h("a", { className: "btn btn--soft", href: "#preferencias" }, icon("gear"), "Preferências da função")),
     appearance(),
     h(
       "section",
@@ -187,18 +199,13 @@ export default async function settings(root, { signal }) {
     h(
       "section",
       { className: "panel settings" },
-      h("header", { className: "section__head" }, h("h2", {}, "Envio e Auto Apply"), h("small", {}, "Você escolhe quanto o Radar faz sozinho")),
-      h("div", { className: "import__row" }, mode, runNow),
-      modeHelp,
-      h("div", { className: "resume__grid" }, field("Máximo de envios por dia", cap), h("label", { className: "field" }, h("span", {}, "Nota mínima do Claude pra candidatar sozinho: ", thresholdLabel), threshold)),
-    ),
-    h(
-      "section",
-      { className: "panel settings" },
       h("header", { className: "section__head" }, h("h2", {}, "Apify (opcional)"), h("small", {}, "Busca leads no Google Maps com os seus créditos")),
       h("p", { className: "settings__help" }, "Crie uma conta grátis na Apify (US$ 5 de crédito por mês) e cole o token de API.", h("a", { href: "https://console.apify.com/settings/integrations", target: "_blank", rel: "noopener noreferrer" }, "Pegar meu token", icon("external"))),
       h("div", { className: "import__row" }, apifyToken, apifySave, apifyState),
     ),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "IA"), h("small", {}, "Usa o Claude Code logado neste PC, na sua assinatura")), claude),
+    h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Suas funções"), h("small", {}, "Renomeie em Preferências")), functions),
+    h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Exportar dados"), h("small", {}, "Tudo da função ativa num arquivo JSON")), h("div", { className: "import__row" }, exportGo)),
+    h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Suporte"), h("a", { href: "#guia" }, "Como usar ", icon("arrow"))), support),
   );
 }

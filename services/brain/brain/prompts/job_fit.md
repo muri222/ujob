@@ -5,6 +5,7 @@ Regras:
 - Seja sincero: nota alta só quando o candidato atende de verdade os requisitos principais.
 - Se a descrição da vaga for curta ou vazia, avalie pelo título e diga isso em "por_que".
 - Leve a sério o que a Mente aprendeu sobre o candidato: uma restrição violada derruba a nota e o vale_aplicar.
+- O CV traz "preferencias" da função: cargos desejados, tipo de contrato, locais e autorização de trabalho, salário, empresas excluídas e rejects (cargos que não quer, habilidades que não tem). Vaga que bate num reject, numa empresa excluída ou exige autorização que o candidato não tem derruba a nota e o vale_aplicar.
 - Escreva em português do Brasil, frases curtas e diretas, sem travessão.
 
 Campos da resposta:

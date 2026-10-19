@@ -30,7 +30,10 @@ const writeSkipped = (ids) => {
 export function candidatesFilter(profile) {
   const parts = ["status = 'open'"];
   const areas = profile.categories ?? [];
-  if (areas.length) parts.push(`(${areas.map((key) => `category = ${quote(key)}`).join(" || ")})`);
+  const roles = (profile.prefs?.roles ?? []).slice(0, 10);
+  const any = [...areas.map((key) => `category = ${quote(key)}`), ...roles.map((role) => `title ~ ${quote(role)}`)];
+  if (any.length) parts.push(`(${any.join(" || ")})`);
+  for (const company of (profile.prefs?.exclude ?? []).slice(0, 30)) parts.push(`company !~ ${quote(company)}`);
   if (profile.state) parts.push(`(state = ${quote(profile.state)} || workplace = 'remoto')`);
   return parts.join(" && ");
 }

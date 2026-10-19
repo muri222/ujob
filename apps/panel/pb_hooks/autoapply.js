@@ -4,18 +4,17 @@
 const PER_RUN = 12;
 
 function scan(app) {
-  const { cvOf, vagaOf, menteOf } = require(`${__hooks}/payload.js`);
+  const { cvOf, vagaOf, menteOf, scopeOf } = require(`${__hooks}/payload.js`);
   const profiles = app.findRecordsByFilter("profile", "sendMode = 'hibrido' || sendMode = 'auto'", "", 20, 0);
   const since = new Date(Date.now() - 2 * 864e5).toISOString().replace("T", " ");
   let queued = 0;
   for (const profile of profiles) {
-    const areas = JSON.parse(profile.getString("categories") || "[]") || [];
-    const areaFilter = areas.length ? ` && (${areas.map((_, i) => `category = {:a${i}}`).join(" || ")})` : "";
-    const params = { since, p: profile.id, ...Object.fromEntries(areas.map((area, i) => [`a${i}`, area])) };
-    // vaga nova, com e-mail, da área do perfil, que ainda não foi avaliada nem está no funil
+    const scope = scopeOf(profile);
+    const params = { since, p: profile.id, ...scope.params };
+    // vaga nova, com e-mail, da área ou cargo da função, fora das empresas excluídas, ainda não avaliada nem no funil
     const jobs = app.findRecordsByFilter(
       "jobs",
-      `status = 'open' && contactEmail != '' && firstSeenAt >= {:since}${areaFilter}`,
+      `status = 'open' && contactEmail != '' && firstSeenAt >= {:since}${scope.filter}`,
       "-firstSeenAt",
       80,
       0,

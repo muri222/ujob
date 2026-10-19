@@ -2,13 +2,13 @@ import { quote } from "./api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES, WORKPLACES } from "./catalog.js";
 import { since } from "./format.js";
 
-export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad"];
+export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad", "terms", "q"];
 
 export function fromParams(params) {
   const query = {};
   for (const field of FIELDS) {
     const value = params.get(field);
-    if (value) query[field] = value.slice(0, 80);
+    if (value) query[field] = value.slice(0, field === "terms" || field === "q" ? 500 : 80);
   }
   return query;
 }
@@ -28,7 +28,8 @@ export function toFilter(query) {
     parts.push(words.map((word) => `(title ~ ${quote(word)} || company ~ ${quote(word)})`).join(" && "));
   }
   // busca descrita: qualquer um dos termos que o Claude sugeriu (PT e EN)
-  if (!query.term && Array.isArray(query.terms) && query.terms.length) parts.push(`(${query.terms.slice(0, 8).map((term) => `title ~ ${quote(term)}`).join(" || ")})`);
+  const terms = typeof query.terms === "string" ? query.terms.split("|").filter(Boolean) : query.terms;
+  if (!query.term && Array.isArray(terms) && terms.length) parts.push(`(${terms.slice(0, 8).map((term) => `title ~ ${quote(term)}`).join(" || ")})`);
   if (CATEGORIES[query.category]) parts.push(`category = ${quote(query.category)}`);
   if (STATES[query.state]) parts.push(`state = ${quote(query.state)}`);
   if (query.city) parts.push(`city ~ ${quote(query.city)}`);

@@ -1,15 +1,14 @@
-import { count, list } from "../core/api.js";
+import { count, list, update } from "../core/api.js";
 import { CATEGORIES, STAGES, STATES, WORKPLACES } from "../core/catalog.js";
 import { asMap, ctx, mine, stats } from "../core/context.js";
 import { flowChart, hbars, stackBar, brazilMap } from "../core/charts.js";
-import { cat, h, icon, logo } from "../core/dom.js";
+import { cat, h, icon, logo, modal } from "../core/dom.js";
 import { ago, greeting, number, today } from "../core/format.js";
 import { blurText, reveal, tilt } from "../core/fx.js";
 import { countUp } from "../core/motion.js";
 import { listen } from "../core/realtime.js";
 import { candidatesFilter } from "./marathon.js";
 import { runSearch } from "./search.js";
-import { welcome } from "./welcome.js";
 
 const card = (title, href, ...content) =>
   h("section", { className: "panel" }, h("header", { className: "section__head" }, h("h2", {}, title), href && h("a", { href }, "Ver tudo", icon("arrow"))), content);
@@ -52,16 +51,52 @@ async function todayPlan(profile) {
   );
 }
 
+// cada função escolhe o que aparece no painel dela
+const WIDGETS = [
+  ["chegando", "Chegando agora"],
+  ["hoje", "Hoje (filas do dia)"],
+  ["fluxo", "Entrada e saída de vagas"],
+  ["areas", "Áreas que mais contratam"],
+  ["mapa", "Onde estão as vagas"],
+  ["modalidade", "Como trabalhar e funil"],
+  ["empresas", "Empresas com mais vagas"],
+];
+
+async function customize(profile) {
+  const hidden = new Set(profile.dashboard?.hidden ?? []);
+  const boxes = WIDGETS.map(([key, text]) => h("label", { className: "check" }, h("input", { type: "checkbox", value: key, checked: !hidden.has(key) }), h("span", {}, text)));
+  const dialog = h(
+    "dialog",
+    { className: "confirm" },
+    h(
+      "form",
+      { method: "dialog" },
+      h("p", {}, h("strong", {}, `Painel de ${profile.label || "Principal"}`), h("br"), h("small", {}, "Escolha o que aparece. Cada função tem o seu.")),
+      h("div", { className: "field" }, boxes),
+      h("div", { className: "confirm__actions" }, h("button", { className: "btn btn--ghost", value: "no", formNoValidate: true }, "Cancelar"), h("button", { className: "btn btn--primary", value: "yes" }, "Salvar")),
+    ),
+  );
+  if (!(await modal(dialog, (value) => value === "yes"))) return;
+  const off = boxes.map((box) => box.querySelector("input")).filter((input) => !input.checked).map((input) => input.value);
+  ctx.profile = await update("profile", profile.id, { dashboard: { ...(profile.dashboard ?? {}), hidden: off } });
+  dispatchEvent(new HashChangeEvent("hashchange"));
+}
+
 export default async function overview(root, { signal }) {
   const profile = ctx.profile ?? {};
+  const hidden = new Set(profile.dashboard?.hidden ?? []);
+  const show = (key, node) => (hidden.has(key) ? null : node);
+  // "Chegando agora" da função: só vagas da área/cargos dela (sem função configurada, mostra tudo)
+  const scoped = profile.id && (profile.categories?.length || profile.prefs?.roles?.length);
+  const arrivalsFilter = scoped ? candidatesFilter(profile) : "status = 'open'";
   const [data, arrivals] = await Promise.all([
     stats(true),
-    list("jobs", { filter: "status = 'open'", sort: "-firstSeenAt", perPage: 14, expand: "source", fields: "id,title,company,companyLogo,city,state,workplace,firstSeenAt,expand.source.name,expand.source.logoUrl" }),
+    list("jobs", { filter: arrivalsFilter, sort: "-firstSeenAt", perPage: 14, expand: "source", fields: "id,title,company,companyLogo,city,state,workplace,firstSeenAt,expand.source.name,expand.source.logoUrl" }),
   ]);
 
   const big = h("strong", { className: "hello__number num" }, "0");
   const radar = [
-    profile.categories?.length ? profile.categories.map((key) => CATEGORIES[key]).join(", ") : "todas as áreas",
+    profile.prefs?.roles?.length ? profile.prefs.roles.slice(0, 3).join(", ") : profile.categories?.length ? profile.categories.map((key) => CATEGORIES[key]).join(", ") : "todas as áreas",
     profile.city || STATES[profile.state] || "todo o Brasil",
     WORKPLACES[profile.workplace],
   ].filter(Boolean);
@@ -93,13 +128,14 @@ export default async function overview(root, { signal }) {
       h(
         "aside",
         { className: "hello__radar" },
-        h("p", { className: "eyebrow" }, icon("radar"), "Seu radar"),
+        h("p", { className: "eyebrow" }, icon("radar"), profile.label ? `Função: ${profile.label}` : "Seu radar"),
         h("p", { className: "hello__profile" }, radar.join(" · ")),
         h(
           "div",
           { className: "hello__actions" },
           h("button", { className: "btn btn--primary", onclick: () => runSearch({ category: profile.categories?.[0], state: profile.state, city: profile.city, workplace: profile.workplace }) }, icon("radar"), "Buscar agora"),
-          h("button", { className: "btn btn--ghost", onclick: () => welcome({ force: true }) }, icon("edit"), "Ajustar"),
+          h("a", { className: "btn btn--ghost", href: "#preferencias?aba=vaga" }, icon("edit"), "Ajustar"),
+          profile.id ? h("button", { className: "btn btn--ghost", onclick: () => customize(profile) }, icon("gear"), "Personalizar painel") : null,
         ),
       ),
     ),
@@ -108,37 +144,37 @@ export default async function overview(root, { signal }) {
 
   const rail = h("div", { className: "arrivals-rail" }, arrivals.items.map(arrivalCard));
   root.append(
-    h(
+    show("chegando", h(
       "section",
       { className: "section" },
       h("header", { className: "section__head" }, h("h2", {}, h("i", { className: "dot dot--live" }), " Chegando agora"), h("a", { href: "#ao-vivo" }, "Ao vivo", icon("arrow"))),
-      arrivals.items.length ? rail : h("div", { className: "empty card" }, h("strong", {}, "O radar está esquentando"), "A primeira coleta traz as vagas em alguns minutos."),
-    ),
+      arrivals.items.length ? rail : h("div", { className: "empty card" }, h("strong", {}, "O radar está esquentando"), scoped ? "Nenhuma vaga nova da sua função ainda. Rode uma busca ou ajuste os cargos nas Preferências." : "A primeira coleta traz as vagas em alguns minutos."),
+    )),
   );
 
   const workplace = asMap(data.workplace);
   const stages = asMap(data.stage);
   const plan = await todayPlan(profile);
-  if (plan) root.append(plan);
+  if (plan && !hidden.has("hoje")) root.append(plan);
   root.append(
     h(
       "div",
       { className: "dash" },
-      card("Entrada e saída de vagas", "#historico", flowChart(data.opened, data.closed)),
-      card(
+      show("fluxo", card("Entrada e saída de vagas", "#historico", flowChart(data.opened, data.closed))),
+      show("areas", card(
         "Áreas que mais contratam",
         "#areas",
         hbars(data.category.filter((row) => row.key), {
           href: (row) => `#vagas?category=${row.key}`,
           render: (row) => h("span", { className: "hbars__label" }, cat(row.key, 26), CATEGORIES[row.key] ?? row.key),
         }),
-      ),
-      card(
+      )),
+      show("mapa", card(
         "Onde estão as vagas",
         "#areas",
         brazilMap(asMap(data.state), { onPick: (code) => (location.hash = `#vagas?state=${code}`) }),
-      ),
-      card(
+      )),
+      show("modalidade", card(
         "Como trabalhar",
         "#vagas",
         stackBar(Object.entries(WORKPLACES).map(([key, label]) => ({ label, total: workplace[key] ?? 0 }))),
@@ -147,8 +183,8 @@ export default async function overview(root, { signal }) {
           { className: "funnel-mini" },
           STAGES.slice(0, 5).map(([key, label]) => h("a", { href: "#funil" }, h("strong", { className: "num" }, number(stages[key] ?? 0)), h("span", {}, label))),
         ),
-      ),
-      card(
+      )),
+      show("empresas", card(
         "Empresas com mais vagas",
         "#empresas",
         h(
@@ -158,7 +194,7 @@ export default async function overview(root, { signal }) {
             h("li", { style: { "--i": index } }, h("a", { href: `#vagas?company=${encodeURIComponent(company.name)}`, title: company.name }, logo(company.name, company.logo, "lg"), h("span", {}, company.name), h("b", { className: "num" }, number(company.total)))),
           ),
         ),
-      ),
+      )),
     ),
     h(
       "p",
@@ -178,7 +214,7 @@ export default async function overview(root, { signal }) {
       if (!record.created) return;
       const fresh = await stats(true).catch(() => null);
       if (fresh) countUp(big, fresh.open);
-      const { items } = await list("jobs", { filter: "status = 'open'", sort: "-firstSeenAt", perPage: 6, expand: "source" }).catch(() => ({ items: [] }));
+      const { items } = await list("jobs", { filter: arrivalsFilter, sort: "-firstSeenAt", perPage: 6, expand: "source" }).catch(() => ({ items: [] }));
       const known = new Set([...rail.querySelectorAll("a")].map((node) => node.getAttribute("href")));
       for (const job of items.reverse()) {
         if (known.has(`#vaga/${job.id}`)) continue;

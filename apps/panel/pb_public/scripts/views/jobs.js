@@ -1,5 +1,5 @@
 import { list } from "../core/api.js";
-import { asMap, ctx, fitFor, requestFit, stats } from "../core/context.js";
+import { askClaude, asMap, brainProblem, ctx, fitFor, requestFit, stats } from "../core/context.js";
 import { h, icon, toast } from "../core/dom.js";
 import { match } from "../core/match.js";
 import { fromParams, toFilter, toParams } from "../core/query.js";
@@ -33,9 +33,37 @@ export default async function jobs(root, { query, signal }) {
 
   const sentence = createSentence({ query: state, counts, size: "sm", onChange: (next) => apply(Object.fromEntries(SENTENCE.map((key) => [key, next[key] ?? ""]))) });
   const chips = h("div", { className: "quick" });
+
+  // busca escrita: o Claude (Haiku) vira o texto em cargos PT/EN e filtros; sem Claude, vira busca por palavra
+  const described = h("input", { type: "search", maxLength: 500, placeholder: "Ou escreva o que procura: \"editor de vídeo pra YouTube, remoto, freela\"", "aria-label": "Descreva a vaga" });
+  const describeGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Buscar");
+  async function submitDescribed() {
+    const text = described.value.trim();
+    if (!text) return described.focus();
+    describeGo.disabled = true;
+    try {
+      if (await brainProblem()) return apply({ term: text.slice(0, 80), terms: "", q: "", category: "" });
+      const found = await askClaude("job_query", { text, perfil: { headline: ctx.profile?.headline, skills: ctx.profile?.skills, cargos: ctx.profile?.prefs?.roles } }, { timeout: 60_000 });
+      const next = { term: "", category: "", terms: found.terms.join("|"), q: text, workplace: found.workplace, contract: found.contract, state: found.state, city: found.city };
+      sentence.set({ ...state, ...next });
+      apply(next);
+      toast(found.explicacao);
+    } catch (error) {
+      toast(error.message);
+    } finally {
+      describeGo.disabled = false;
+    }
+  }
+  describeGo.addEventListener("click", submitDescribed);
+  described.addEventListener("keydown", (event) => event.key === "Enter" && (event.preventDefault(), submitDescribed()));
   const status = segmented([["open", "Abertas"], ["closed", "Encerradas"]], state.status === "closed" ? "closed" : "open", (value) => apply({ status: value === "closed" ? "closed" : "" }), "Situação");
   const hunt = h("button", { className: "btn btn--soft", title: "Buscar mais nos portais agora" }, icon("radar"), "Buscar mais nas fontes");
-  hunt.addEventListener("click", () => runSearch(state));
+  // a busca nos portais recebe os cargos como lista (igual à busca descrita)
+  const portalQuery = () => {
+    const { q, terms, ...rest } = state;
+    return terms ? { ...rest, terms: terms.split("|"), prompt: q } : rest;
+  };
+  hunt.addEventListener("click", () => runSearch(portalQuery()));
 
   // ponytail: a regra local filtra de graça; só as melhores acima de 50 vão pro Claude
   const judge = h("button", { className: "btn btn--soft", title: "Nota do Claude para as 20 melhores deste filtro" }, icon("sparkle"), "Avaliar com Claude");
@@ -69,6 +97,7 @@ export default async function jobs(root, { query, signal }) {
         const on = state[key] === value;
         return h("button", { className: "chip", "aria-pressed": String(on), onclick: () => apply({ [key]: on ? "" : value }) }, icon(iconName), text);
       }),
+      state.q ? h("button", { className: "chip", "aria-pressed": "true", title: (state.terms ?? "").split("|").join(", "), onclick: () => ((described.value = ""), apply({ q: "", terms: "" })) }, icon("sparkle"), `“${state.q.slice(0, 40)}”`, icon("close")) : "",
       state.company ? h("button", { className: "chip", "aria-pressed": "true", onclick: () => apply({ company: "" }) }, icon("building"), state.company, icon("close")) : "",
       state.seniority ? h("button", { className: "chip", "aria-pressed": "true", onclick: () => apply({ seniority: "" }) }, icon("level"), state.seniority, icon("close")) : "",
     );
@@ -76,7 +105,7 @@ export default async function jobs(root, { query, signal }) {
   paintChips();
 
   root.classList.add("view--flush");
-  const toolbar = h("div", { className: "explorer" }, h("div", { className: "explorer__top" }, sentence), h("div", { className: "explorer__bar" }, chips, status, judge, hunt));
+  const toolbar = h("div", { className: "explorer" }, h("div", { className: "explorer__top" }, sentence, h("div", { className: "explorer__describe" }, described, describeGo)), h("div", { className: "explorer__bar" }, chips, status, judge, hunt));
 
   const split = createSplit(root, {
     signal,
@@ -87,7 +116,7 @@ export default async function jobs(root, { query, signal }) {
         { className: "empty" },
         h("strong", {}, "Nenhuma vaga com esse filtro"),
         "Que tal buscar agora nos portais? Leva menos de um minuto.",
-        h("button", { className: "btn btn--primary", onclick: () => runSearch(state) }, icon("radar"), "Buscar nas fontes"),
+        h("button", { className: "btn btn--primary", onclick: () => runSearch(portalQuery()) }, icon("radar"), "Buscar nas fontes"),
       ),
     load: (page, perPage) => list("jobs", { filter: toFilter(state), sort: state.status === "closed" ? "-closedAt" : "-firstSeenAt", page, perPage, expand: "source" }),
   });

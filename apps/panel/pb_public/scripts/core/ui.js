@@ -41,3 +41,63 @@ export function toggle(labelText, checked, onChange) {
 export function skeletonRows(total, className = "skeleton-row") {
   return Array.from({ length: total }, (_, index) => h("li", { className, "aria-hidden": "true", style: { "--i": index } }, h("span", { className: "skeleton" }), h("span", { className: "skeleton" })));
 }
+
+// campo de etiquetas: Enter ou vírgula adiciona, clique remove; mexe direto no array e avisa onChange
+export function tags(list, onChange, { placeholder = "Digite e aperte Enter", suggestions = [], max = 40 } = {}) {
+  const fold = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const box = h("div", { className: "chips-input" });
+  const entry = h("input", { placeholder, maxLength: 80 });
+  const hints = h("div", { className: "chips-input__hints" });
+  const add = (value) => {
+    const clean = value.trim();
+    if (!clean || list.some((item) => fold(item) === fold(clean)) || list.length >= max) return;
+    list.push(clean);
+    onChange(list);
+  };
+  function draw() {
+    box.replaceChildren(...list.map((item, index) => h("button", { type: "button", className: "chip is-on", onclick: () => (list.splice(index, 1), onChange(list), draw()) }, item, " ×")), entry);
+    const term = fold(entry.value);
+    hints.replaceChildren(
+      ...suggestions
+        .filter((item) => !list.some((own) => fold(own) === fold(item)) && (!term || fold(item).includes(term)))
+        .slice(0, 12)
+        .map((item) => h("button", { type: "button", className: "chip", onclick: () => (add(item), draw(), entry.focus()) }, "+ ", item)),
+    );
+  }
+  entry.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      add(entry.value);
+      entry.value = "";
+      draw();
+    } else if (event.key === "Backspace" && !entry.value && list.length) {
+      list.pop();
+      onChange(list);
+      draw();
+    }
+  });
+  entry.addEventListener("input", draw);
+  // ponytail: texto digitado e não confirmado entra ao sair do campo, senão a pessoa perde
+  entry.addEventListener("blur", () => entry.value.trim() && (add(entry.value), (entry.value = ""), draw()));
+  box.addEventListener("click", (event) => event.target === box && entry.focus());
+  draw();
+  return h("div", { className: "tags" }, box, hints);
+}
+
+// várias opções marcáveis (setor, tipo de contrato...): mexe direto no array
+export function picks(entries, list, onChange) {
+  return h(
+    "div",
+    { className: "quick" },
+    entries.map(([value, text]) => {
+      const chip = h("button", { type: "button", className: "chip", "aria-pressed": String(list.includes(value)) }, text);
+      chip.addEventListener("click", () => {
+        const at = list.indexOf(value);
+        at >= 0 ? list.splice(at, 1) : list.push(value);
+        chip.setAttribute("aria-pressed", String(at < 0));
+        onChange(list);
+      });
+      return chip;
+    }),
+  );
+}
