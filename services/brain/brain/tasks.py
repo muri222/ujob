@@ -1,12 +1,12 @@
 """Uma função por tipo de tarefa: recebe a tarefa, devolve (resultado, log)."""
 
+import base64
 import json
+import re
+import unicodedata
 from collections.abc import Callable
 
 from pydantic import BaseModel, Field
-
-import re
-import unicodedata
 
 from . import claude, cvpdf, leads, mail, mind, read, site, transcribe as whisper
 from .prompts import render
@@ -320,6 +320,39 @@ def transcribe(task: dict) -> tuple[dict, list[dict]]:
         raise claude.TaskFailed(f"Não consegui transcrever o áudio: {error}"[:300], []) from error
 
 
+class Issue(BaseModel):
+    problema: str
+    correcao: str
+
+
+class CvScan(BaseModel):
+    nota: int = Field(ge=0, le=100)
+    resumo: str
+    fortes: list[str] = Field(max_length=5)
+    problemas: list[Issue] = Field(max_length=8)
+    palavras_chave: list[str]
+    secoes_faltando: list[str]
+
+
+def cv_scan(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("cv_scan", cv=json.dumps(payload["cv"], ensure_ascii=False), vaga=str(payload.get("vaga") or "(sem vaga, avaliação geral)")[:6000])
+    value, log = claude.complete("cv_scan", prompt, CvScan, "best")
+    return value.model_dump(), log
+
+
+LANGUAGES = {"en": "inglês", "es": "espanhol", "pt": "português do Brasil"}
+
+
+def cv_translate(task: dict) -> tuple[dict, list[dict]]:
+    """Traduz e já devolve o PDF (base64) gerado no PC, pronto pra baixar."""
+    payload = task["payload"]
+    lang = payload.get("lang") if payload.get("lang") in LANGUAGES else "en"
+    value, log = claude.complete("cv_translate", render("cv_translate", idioma=LANGUAGES[lang], cv=json.dumps(payload["cv"], ensure_ascii=False)), Resume, "best")
+    cv = value.model_dump()
+    return {"lang": lang, "cv": cv, "pdf": base64.b64encode(cvpdf.build(cv, lang)).decode()}, log
+
+
 # tarefas sem IA rodam mesmo com o Claude fora
 LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich", "transcribe"}
 # pista própria pro chat: não espera atrás de campanha grande
@@ -342,5 +375,7 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "lead_pack": lead_pack,
     "chat_title": chat_title,
     "transcribe": transcribe,
+    "cv_scan": cv_scan,
+    "cv_translate": cv_translate,
     "chat_reply": None,  # tratado no worker (precisa mandar texto parcial)
 }

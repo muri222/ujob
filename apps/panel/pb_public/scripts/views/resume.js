@@ -1,6 +1,6 @@
 import { api, create, update } from "../core/api.js";
 import { CATEGORIES, SENIORITY, STATES } from "../core/catalog.js";
-import { brainProblem, ctx } from "../core/context.js";
+import { askClaude, brainProblem, ctx } from "../core/context.js";
 import { confirm, h, header, icon, toast } from "../core/dom.js";
 import { DEFAULT_LETTER } from "../core/letter.js";
 import { SKILLS } from "../core/match.js";
@@ -281,6 +281,56 @@ export default async function resume(root, { signal }) {
   }
   importIdle();
 
+  // Scanner ATS (igual AiApply): nota do CV, problemas com correção e palavras-chave que faltam
+  const scanBox = h("div", { className: "import" });
+  const scanJob = h("textarea", { rows: 2, placeholder: "Cole a descrição de uma vaga pra comparar (opcional)" });
+  const scanGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Escanear meu CV");
+  scanGo.addEventListener("click", async () => {
+    const problem = await brainProblem(true);
+    if (problem) return toast(problem);
+    scanGo.disabled = true;
+    scanBox.replaceChildren(h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Lendo seu CV como um ATS…"));
+    try {
+      const r = await askClaude("cv_scan", { cv: shape(), vaga: scanJob.value.trim() });
+      scanBox.replaceChildren(
+        h("p", { className: "fit__head" }, h("strong", { className: `num score score--lg score--${r.nota >= 80 ? "high" : r.nota >= 60 ? "mid" : "low"}` }, h("b", {}, r.nota), h("small", {}, "%")), h("span", {}, r.resumo)),
+        r.fortes.length ? h("p", { className: "fit__row" }, icon("check"), r.fortes.map((item) => h("span", { className: "tag tag--ok" }, item))) : null,
+        h("ol", { className: "scan__issues" }, r.problemas.map((item) => h("li", {}, h("strong", {}, item.problema), h("span", {}, item.correcao)))),
+        r.palavras_chave.length ? h("p", { className: "fit__row" }, h("span", {}, "Palavras-chave que faltam (só use se for verdade): "), r.palavras_chave.map((item) => h("span", { className: "tag" }, item))) : null,
+        r.secoes_faltando.length ? h("p", { className: "fit__why" }, `Seções pra reforçar: ${r.secoes_faltando.join(", ")}`) : null,
+      );
+    } catch (error) {
+      scanBox.replaceChildren(h("p", { className: "fit__err" }, error.message));
+    } finally {
+      scanGo.disabled = false;
+    }
+  });
+
+  // Tradutor de CV (igual AiApply): tradução fiel + PDF gerado no PC
+  const translateBox = h("div", { className: "import" });
+  const lang = h("select", {}, h("option", { value: "en" }, "Inglês"), h("option", { value: "es" }, "Espanhol"));
+  const translateGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Traduzir");
+  translateGo.addEventListener("click", async () => {
+    const problem = await brainProblem(true);
+    if (problem) return toast(problem);
+    translateGo.disabled = true;
+    translateBox.replaceChildren(h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Traduzindo sem mudar nenhum fato…"));
+    try {
+      const r = await askClaude("cv_translate", { cv: shape(), lang: lang.value }, { timeout: 180_000 });
+      const bytes = Uint8Array.from(atob(r.pdf), (char) => char.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      const fileName = `${(p.name || "curriculo").normalize("NFD").replace(/[^\w]+/g, "-")}-${r.lang}.pdf`;
+      translateBox.replaceChildren(
+        h("div", { className: "import__row" }, h("a", { className: "btn btn--primary", href: url, download: fileName }, icon("upload"), "Baixar PDF"), h("button", { type: "button", className: "btn", onclick: () => navigator.clipboard.writeText(JSON.stringify(r.cv, null, 2)).then(() => toast("Copiado.")) }, icon("copy"), "Copiar texto")),
+        h("div", { className: "resume__paper translate__paper" }, paper(r.cv)),
+      );
+    } catch (error) {
+      translateBox.replaceChildren(h("p", { className: "fit__err" }, error.message));
+    } finally {
+      translateGo.disabled = false;
+    }
+  });
+
   const card = (title, lead, ...content) => h("section", { className: "panel resume__card" }, h("header", { className: "section__head" }, h("h2", {}, title), lead ? h("small", {}, lead) : null), content);
   const [skillsBox, skillsHints] = chipsInput("skills", areaSkills, "Digite e aperte Enter");
   const [langBox, langHints] = chipsInput("languages", ["Inglês básico", "Inglês intermediário", "Inglês fluente", "Espanhol básico", "Espanhol intermediário", "Espanhol fluente", "Libras"], "Ex.: Inglês intermediário");
@@ -302,6 +352,8 @@ export default async function resume(root, { signal }) {
         "div",
         { className: "resume__form" },
         card("Importar com Claude", "De um PDF ou do seu site/portfólio", importBox),
+        card("Scanner ATS", "Como um filtro de RH lê seu CV", scanJob, h("div", { className: "import__row" }, scanGo), scanBox),
+        card("Traduzir CV", "Mesmo conteúdo, outro idioma, PDF pronto", h("div", { className: "import__row" }, lang, translateGo), translateBox),
         card(
           "Sobre você",
           null,
