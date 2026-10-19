@@ -124,7 +124,7 @@ routerAdd(
     const body = e.requestInfo().body;
     const profile = $app.findRecordById("profile", String(body.profile ?? ""));
     const pack = $app.findRecordById("segment_packs", String(body.pack ?? ""));
-    const source = ["osm", "apify", "claude"].includes(body.source) ? body.source : "osm";
+    const source = ["osm", "apify", "claude", "instagram", "tiktok"].includes(body.source) ? body.source : "osm";
     // mundo todo: país (ISO) + região/estado + cidade; no Brasil o estado é a sigla
     const { COUNTRIES } = require(`${__hooks}/countries.js`);
     const country = COUNTRIES[String(body.country ?? "BR").toUpperCase()] && body.country !== "WW" ? String(body.country ?? "BR").toUpperCase() : "BR";
@@ -133,7 +133,7 @@ routerAdd(
     const city = String(body.city ?? "").trim().slice(0, 80);
     const limit = Math.min(source === "claude" ? 30 : 200, Math.max(1, parseInt(body.limit, 10) || 30));
     if (source === "osm" && !state && !region && !city) return e.json(400, { message: country === "BR" ? "No OpenStreetMap, escolha pelo menos o estado." : "No OpenStreetMap, diga a cidade ou a região (o país inteiro é grande demais pro mapa)." });
-    if (source === "apify") {
+    if (["apify", "instagram", "tiktok"].includes(source)) {
       try {
         $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
       } catch {
@@ -173,7 +173,9 @@ onRecordAfterUpdateSuccess((e) => {
       if (!lead.getString("email")) lead.set("email", String(first(result.emails)).slice(0, 160));
       if (!lead.getString("phone")) lead.set("phone", String(first(result.phones)).slice(0, 30));
       if (!lead.getString("instagram")) lead.set("instagram", String(result.socials?.instagram ?? "").slice(0, 80));
-      lead.load({ signals: result, status: "enriquecido" });
+      // junta com o que a rede social já tinha trazido (bio, seguidores)
+      const before = JSON.parse(lead.getString("signals") || "{}") || {};
+      lead.load({ signals: { ...before, ...result, description: result.description || before.description, socials: { ...(before.socials || {}), ...(result.socials || {}) } }, status: "enriquecido" });
     } else {
       lead.load({ signals: { error: task.getString("error").slice(0, 300) }, status: "sem_site" });
     }
@@ -210,7 +212,8 @@ onRecordAfterUpdateSuccess((e) => {
     const domain = domainOf(website);
     const phone = digits(place.phone);
     const instagram = handle(place.instagram);
-    if (!name || seen("domain", domain) || seen("phone", phone) || seen("instagram", instagram)) continue;
+    const externalId = String(place.externalId ?? "").slice(0, 120);
+    if (!name || seen("domain", domain) || seen("phone", phone) || seen("instagram", instagram) || seen("externalId", externalId)) continue;
     const lead = new Record(leads);
     lead.load({
       profile: profileId,
@@ -227,8 +230,10 @@ onRecordAfterUpdateSuccess((e) => {
       country: campaign.getString("country") || "BR",
       address: String(place.address ?? "").slice(0, 240),
       origin: String(place.origin ?? campaign.getString("source")).slice(0, 160),
-      externalId: String(place.externalId ?? "").slice(0, 120),
+      externalId,
       status: website ? "enriquecendo" : "sem_site",
+      // perfil de rede social: bio, seguidores e TikTok já vêm da busca (o site, se houver, completa depois)
+      signals: place.bio || place.followers || place.tiktok ? { description: String(place.bio ?? "").slice(0, 600), followers: Number(place.followers) || 0, socials: place.tiktok ? { tiktok: String(place.tiktok).slice(0, 80) } : {} } : null,
     });
     try {
       $app.save(lead);

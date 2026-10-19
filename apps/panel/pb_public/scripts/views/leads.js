@@ -13,7 +13,9 @@ const CLAUDE_TOKENS_PER_COMPANY = 3000; // medido: ~2,5 mil por empresa com WebS
 const JOB_FIT_TOKENS = 6000;
 
 const CAMPAIGN = { buscando: ["Buscando…", "tag tag--brand"], enriquecendo: ["Lendo os sites…", "tag tag--brand"], pronta: ["Pronta", "tag tag--ok"], erro: ["Falhou", "tag tag--down"] };
-const SOURCE = { osm: "OpenStreetMap", apify: "Google Maps (Apify)", claude: "Claude na web" };
+const SOURCE = { osm: "OpenStreetMap", apify: "Google Maps (Apify)", claude: "Claude na web", instagram: "Instagram (Apify)", tiktok: "TikTok (Apify)" };
+// Instagram: busca + posts de hashtag + perfil completo ≈ 4 itens cobrados por lead achado
+const APIFY_USD_PER_PROFILE = { instagram: 0.01, tiktok: 0.009 };
 
 export default async function leads(root, { signal }) {
   if (!ctx.profile) {
@@ -179,6 +181,8 @@ export default async function leads(root, { signal }) {
     const choices = [
       ["osm", "OpenStreetMap", "Grátis, roda no seu PC. Funciona no mundo todo; bom pra comércio e indústria que aparecem no mapa.", true],
       ["apify", "Google Maps via Apify", integrations.apify?.connected ? `Usa seus créditos da Apify (o plano grátis dá US$ 5 por mês). Estimativa: ≈ US$ ${(n * APIFY_USD_PER_PLACE).toFixed(2)}.` : "Conecte sua conta da Apify em Config. da conta pra usar.", integrations.apify?.connected],
+      ["instagram", "Perfis do Instagram", integrations.apify?.connected ? `Busca perfis e quem posta nas hashtags do segmento (quem cita a cidade vem primeiro). Traz bio, link, e-mail comercial e telefone quando estão no perfil. ≈ US$ ${(n * APIFY_USD_PER_PROFILE.instagram).toFixed(2)} dos seus créditos da Apify.` : "Conecte sua conta da Apify em Config. da conta pra usar.", integrations.apify?.connected],
+      ["tiktok", "Perfis do TikTok", integrations.apify?.connected ? `Busca perfis pelo segmento. Traz bio, link da bio e seguidores. ≈ US$ ${(n * APIFY_USD_PER_PROFILE.tiktok).toFixed(2)} dos seus créditos da Apify.` : "Conecte sua conta da Apify em Config. da conta pra usar.", integrations.apify?.connected],
       ["claude", "Claude pesquisando na web", `Gasta bastante da sua assinatura: ≈ ${number(Math.min(n, 30) * CLAUDE_TOKENS_PER_COMPANY)} tokens (umas ${Math.round((Math.min(n, 30) * CLAUDE_TOKENS_PER_COMPANY) / JOB_FIT_TOKENS)} notas de vaga). Use quando o mapa não achar. Máximo 30.`, true],
     ];
     options.replaceChildren(
@@ -293,6 +297,8 @@ export default async function leads(root, { signal }) {
       lead.email && h("a", { className: "tag", href: `mailto:${lead.email}` }, icon("mail"), lead.email),
       lead.phone && h("span", { className: "tag" }, icon("phone"), lead.phone),
       lead.instagram && h("a", { className: "tag", href: `https://instagram.com/${lead.instagram}`, target: "_blank", rel: "noopener noreferrer" }, "@", lead.instagram),
+      s.socials?.tiktok && h("a", { className: "tag", href: `https://www.tiktok.com/@${s.socials.tiktok}`, target: "_blank", rel: "noopener noreferrer" }, "TikTok"),
+      s.followers ? h("span", { className: "tag" }, `${number(s.followers)} seguidores`) : null,
       s.socials?.linkedin && h("a", { className: "tag", href: `https://linkedin.com/${s.socials.linkedin}`, target: "_blank", rel: "noopener noreferrer" }, "LinkedIn"),
       s.careers && h("a", { className: "tag tag--brand", href: s.careers, target: "_blank", rel: "noopener noreferrer" }, "Carreiras"),
     ].filter(Boolean);

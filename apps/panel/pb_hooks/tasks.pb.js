@@ -50,7 +50,7 @@ routerAdd(
           continue;
         }
       }
-      if (out.type === "leads_discover" && out.payload.source === "apify") {
+      if (out.type === "leads_discover" && ["apify", "instagram", "tiktok"].includes(out.payload.source)) {
         try {
           const apify = $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
           out.apifyToken = $security.decrypt(apify.getString("secret"), $os.getenv("RADAR_SECRET"));

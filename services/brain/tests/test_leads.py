@@ -41,3 +41,20 @@ def test_osm_filter_whitelist_blocks_injection():
 def test_overpass_query_world_city():
     query = leads.overpass_query(['["craft"="brewery"]'], "", "Lisboa", 10, "PT", "")
     assert 'area["ISO3166-1"="PT"]["admin_level"="2"]' in query and '"name"="Lisboa"' in query
+
+
+
+def test_social_contact_from_bio():
+    assert leads._contact("Orçamentos: contato@estudio.com.br | (11) 98888-7777") == ("contato@estudio.com.br", "11988887777")
+    payload = {"searches": ["estúdio de games", "game studio"], "pack": "Estúdios de games", "city": "São Paulo"}
+    assert leads._queries(payload) == ["estúdio de games", "game studio"]
+    places = [
+        {"name": "Paulo Dybala", "bio": "adidas football", "address": ""},
+        {"name": "Kota", "bio": "Game studio em São Paulo", "address": ""},
+        {"name": "Pixel Lab", "bio": "Estúdio de games indie", "address": ""},
+    ]
+    assert [place["name"] for place in leads._relevant(places, payload)] == ["Kota", "Pixel Lab"]
+
+
+def test_hashtags_from_terms():
+    assert leads._hashtags({"searches": ["estúdio de games", "game dev brasil"], "pack": "x"}) == ["estudiodegames", "gamedevbrasil"]

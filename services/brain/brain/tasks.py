@@ -276,7 +276,15 @@ class Places(BaseModel):
 def leads_discover(task: dict) -> tuple[dict, list[dict]]:
     payload = task["payload"]
     try:
-        places = leads.apify(payload, task["apifyToken"]) if payload["source"] == "apify" else leads.osm(payload)
+        source = payload["source"]
+        if source == "apify":
+            places = leads.apify(payload, task["apifyToken"])
+        elif source == "instagram":
+            places = leads.instagram(payload, task["apifyToken"])
+        elif source == "tiktok":
+            places = leads.tiktok(payload, task["apifyToken"])
+        else:
+            places = leads.osm(payload)
     except Exception as error:  # rede, cota, região não achada: mensagem clara na campanha
         raise claude.TaskFailed(f"Busca falhou: {error}"[:400], []) from error
     return {"places": places}, []
