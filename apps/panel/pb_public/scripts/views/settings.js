@@ -107,6 +107,42 @@ export default async function settings(root, { signal }) {
     }
   });
 
+  // Auto Apply (igual AiApply): Revisão = só clique; Híbrido = Claude prepara sozinho, você envia; Automático = sai sozinho
+  const MODES = {
+    revisao: "Você escolhe a vaga, o Claude prepara, você revisa e envia. Nada sai sozinho.",
+    hibrido: "A cada 30 min o Radar avalia vagas novas com e-mail da sua área. As que passam do limiar viram candidatura pronta em Prontas para enviar; você só confirma.",
+    auto: "Igual ao Híbrido, mas a candidatura sai sozinha do seu e-mail, dentro do teto diário. Tudo fica registrado.",
+  };
+  const modeHelp = h("p", { className: "settings__help" }, MODES[ctx.profile.sendMode || "revisao"]);
+  const saveProfile = async (patch, message) => {
+    ctx.profile = await update("profile", ctx.profile.id, patch).catch(() => ctx.profile);
+    if (message) toast(message);
+  };
+  const mode = segmented(
+    [["revisao", "Revisão"], ["hibrido", "Híbrido"], ["auto", "Automático"]],
+    ctx.profile.sendMode || "revisao",
+    (value) => {
+      modeHelp.textContent = MODES[value];
+      saveProfile({ sendMode: value }, value === "auto" ? "Automático ligado. Confira o teto diário e o limiar." : "Modo salvo.");
+    },
+    "Modo de envio",
+  );
+  const threshold = h("input", { type: "range", min: 50, max: 95, step: 5, value: ctx.profile.threshold || 70 });
+  const thresholdLabel = h("strong", { className: "num" }, `${ctx.profile.threshold || 70}`);
+  threshold.addEventListener("input", () => (thresholdLabel.textContent = threshold.value));
+  threshold.addEventListener("change", () => saveProfile({ threshold: Number(threshold.value) }, `Só vagas com nota ${threshold.value}+ do Claude.`));
+  const runNow = h("button", { type: "button", className: "btn btn--soft" }, icon("radar"), "Rodar agora");
+  runNow.addEventListener("click", async () => {
+    if ((ctx.profile.sendMode || "revisao") === "revisao") return toast("Escolha Híbrido ou Automático primeiro.");
+    runNow.disabled = true;
+    try {
+      const { queued } = await api("radar/autoapply/run", { method: "POST" });
+      toast(queued ? `${queued} vagas novas na fila de avaliação do Claude.` : "Nenhuma vaga nova com e-mail na sua área agora.");
+    } finally {
+      runNow.disabled = false;
+    }
+  });
+
   const cap = h("input", { type: "number", min: 1, max: 500, value: ctx.profile.dailyCap || 10 });
   cap.addEventListener("change", async () => {
     const value = Math.max(1, Math.min(500, Number(cap.value) || 10));
@@ -151,8 +187,10 @@ export default async function settings(root, { signal }) {
     h(
       "section",
       { className: "panel settings" },
-      h("header", { className: "section__head" }, h("h2", {}, "Envio"), h("small", {}, "Modo Revisão: nada sai sem o seu clique")),
-      h("div", { className: "resume__grid" }, field("Máximo de envios por dia", cap)),
+      h("header", { className: "section__head" }, h("h2", {}, "Envio e Auto Apply"), h("small", {}, "Você escolhe quanto o Radar faz sozinho")),
+      h("div", { className: "import__row" }, mode, runNow),
+      modeHelp,
+      h("div", { className: "resume__grid" }, field("Máximo de envios por dia", cap), h("label", { className: "field" }, h("span", {}, "Nota mínima do Claude pra candidatar sozinho: ", thresholdLabel), threshold)),
     ),
     h(
       "section",

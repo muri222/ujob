@@ -56,69 +56,24 @@ routerAdd(
   "POST",
   "/api/radar/apply/prepare",
   (e) => {
-    const { cvOf, vagaOf, menteOf } = require(`${__hooks}/payload.js`);
     const body = e.requestInfo().body;
     const profile = $app.findRecordById("profile", String(body.profile ?? ""));
     const job = $app.findRecordById("jobs", String(body.job ?? ""));
-    try {
-      const open = $app.findFirstRecordByFilter("messages", "profile = {:p} && job = {:j} && (status = 'gerando' || status = 'pronta' || status = 'enviando')", { p: profile.id, j: job.id });
-      return e.json(200, { message: open.id, reused: true });
-    } catch {}
-
-    const to = job.getString("contactEmail");
-    const message = new Record($app.findCollectionByNameOrId("messages"));
-    message.load({ profile: profile.id, job: job.id, channel: to ? "email" : "manual", to, status: "gerando" });
-    $app.save(message);
-    const task = new Record($app.findCollectionByNameOrId("ai_tasks"));
-    task.load({ type: "apply_kit", profile: profile.id, ref: message.id, status: "queued", payload: { vaga: vagaOf(job), cv: cvOf(profile), mente: menteOf($app, profile.id) }, attempts: 0 });
-    $app.save(task);
-    return e.json(200, { message: message.id, reused: false });
+    const { message, reused } = require(`${__hooks}/apply.js`).prepare($app, profile, job);
+    return e.json(200, { message: message.id, reused });
   },
   $apis.requireSuperuserAuth(),
 );
 
-// envio: só por clique (modo Revisão), respeitando o teto diário do perfil
+// envio por clique (Revisão/Híbrido), respeitando o teto diário do perfil
 routerAdd(
   "POST",
   "/api/radar/messages/{id}/send",
   (e) => {
     const message = $app.findRecordById("messages", e.request.pathValue("id"));
-    if (message.getString("status") !== "pronta" || message.getString("channel") !== "email") return e.json(409, { message: "Essa mensagem não está pronta pra envio." });
-    const profile = $app.findRecordById("profile", message.getString("profile"));
-    let account;
-    try {
-      account = $app.findFirstRecordByFilter("mail_accounts", "profile = {:p}", { p: profile.id });
-    } catch {
-      return e.json(400, { message: "Configure o e-mail de envio primeiro." });
-    }
-    if (!account.getString("verifiedAt")) return e.json(400, { message: "Teste a conexão do e-mail antes de enviar." });
-
-    const cap = profile.getInt("dailyCap") || 10;
-    const since = new Date(Date.now() - 864e5).toISOString().replace("T", " ");
-    const sent = $app.countRecords("messages", $dbx.exp("profile = {:p} AND status = 'enviada' AND sentAt >= {:since}", { p: profile.id, since }));
-    if (sent >= cap) return e.json(429, { message: `Teto de ${cap} envios em 24h atingido. Ajuste no perfil se quiser mais.` });
-
     const body = e.requestInfo().body;
-    message.load({
-      subject: String(body.subject ?? message.getString("subject")).slice(0, 200),
-      body: String(body.body ?? message.getString("body")).slice(0, 8000),
-      status: "enviando",
-      error: "",
-    });
-    $app.save(message);
-    const job = message.getString("job") ? $app.findRecordById("jobs", message.getString("job")) : null;
-    const task = new Record($app.findCollectionByNameOrId("ai_tasks"));
-    task.load({
-      type: "mail_send",
-      profile: profile.id,
-      ref: message.id,
-      status: "queued",
-      payload: { to: message.getString("to"), subject: message.getString("subject"), body: message.getString("body"), cv: message.get("cv"), lang: message.getString("lang"), company: job ? job.getString("company") : "" },
-      attempts: 0,
-    });
-    $app.save(task);
-    require(`${__hooks}/mail_audit.js`)($app, profile.id, "envio_pedido", message.getString("to"), { message: message.id, sentToday: sent + 1, cap });
-    return e.json(200, { ok: true, sentToday: sent + 1, cap });
+    const result = require(`${__hooks}/apply.js`).send($app, message, { subject: body.subject, body: body.body });
+    return result.ok ? e.json(200, result) : e.json(result.status, { message: result.error });
   },
   $apis.requireSuperuserAuth(),
 );
@@ -146,6 +101,15 @@ onRecordAfterUpdateSuccess((e) => {
   if (type === "apply_kit") {
     message.load(status === "done" ? { subject: String(result.assunto ?? "").slice(0, 200), body: String(result.carta ?? "").slice(0, 8000), lang: String(result.idioma ?? "").slice(0, 10), cv: result.cv ?? null, status: "pronta" } : { status: "erro", error: error.slice(0, 1000) });
     $app.save(message);
+    // Auto Apply no modo Automático: carta pronta sai sozinha, dentro do teto e com audit
+    const payload = JSON.parse(task.getString("payload") || "{}") || {};
+    if (status === "done" && payload.auto && message.getString("channel") === "email" && $app.findRecordById("profile", message.getString("profile")).getString("sendMode") === "auto") {
+      const sent = require(`${__hooks}/apply.js`).send($app, message, { auto: true });
+      if (!sent.ok) {
+        message.set("error", `Envio automático não saiu: ${sent.error}`);
+        $app.save(message);
+      }
+    }
     return;
   }
 
