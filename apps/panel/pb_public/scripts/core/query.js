@@ -2,7 +2,7 @@ import { quote } from "./api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES, WORKPLACES } from "./catalog.js";
 import { since } from "./format.js";
 
-export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status"];
+export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad"];
 
 export function fromParams(params) {
   const query = {};
@@ -37,6 +37,8 @@ export function toFilter(query) {
   if (PERIODS[query.period]) parts.push(`firstSeenAt >= ${since(PERIODS[query.period])}`);
   if (query.salary) parts.push("salaryMin > 0");
   if (query.contact) parts.push("(contactEmail != '' || contactWhatsapp != '' || contactPhone != '')");
+  // vaga gringa: sem estado brasileiro e com país que não é o Brasil (inclui remoto "worldwide")
+  if (query.abroad) parts.push("state = '' && country != '' && country !~ 'brasil' && country !~ 'brazil'");
   if (query.group) parts.push(`source.group = ${quote(query.group)}`);
   return parts.join(" && ");
 }

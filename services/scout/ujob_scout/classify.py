@@ -10,7 +10,8 @@ CATEGORIES = [
                    "engineering manager|web development|\\bfde\\b|site reliability|computer vision|ai engineer|ml engineer|\\bai\\b.*engineer"),
     ("dados", "dados|\\bdata\\b|analytics|\\bbi\\b|business intelligence|power bi|machine learning|\\bml\\b|\\bia\\b|\\bai\\b|inteligencia artificial|estatistic|scientist|cientista"),
     ("produto", "product manager|product owner|product system|gerente de produto|\\bpo\\b|scrum|agilista|agile coach|produtos e operacoes"),
-    ("design", "designer|\\bux\\b|\\bui\\b|design|diretor de arte|motion|ilustrador"),
+    ("design", "designer|\\bux\\b|\\bui\\b|design|diretor de arte|motion|ilustrador|\\bartist|artista|\\b3d\\b|\\bvfx\\b|\\bcg\\b|animator|animador|animacao|animation|"
+               "modeler|modelador|modelagem|concept art|texture|textura|rigging|technical artist|compositor|lighting|render|environment art|character art|game art"),
     ("marketing", "marketing|social media|conteudo|content|copywriter|redator|\\bseo\\b|midia|media|trafego|growth|comunicacao|publicidade|branding|brand|influenc|jornalista|"
                   "assessoria de imprensa|creative|criativo|programmatic|strategist|community|social"),
     ("juridico", "juridico|advogad|paralegal|compliance|direito|\\blegal\\b|contracts? specialist|contratos"),

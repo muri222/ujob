@@ -1,0 +1,245 @@
+[
+ {
+  "slug": "greenhouse-riotgames",
+  "name": "Riot Games",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "riotgames",
+  "site": "https://riotgames.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=riotgames.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-epicgames",
+  "name": "Epic Games",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "epicgames",
+  "site": "https://epicgames.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=epicgames.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-bungie",
+  "name": "Bungie",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "bungie",
+  "site": "https://bungie.net",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=bungie.net&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-naughtydog",
+  "name": "Naughty Dog",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "naughtydog",
+  "site": "https://naughtydog.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=naughtydog.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-roblox",
+  "name": "Roblox",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "roblox",
+  "site": "https://roblox.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=roblox.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-rockstargames",
+  "name": "Rockstar Games",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "rockstargames",
+  "site": "https://rockstargames.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=rockstargames.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-scopely",
+  "name": "Scopely",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "scopely",
+  "site": "https://scopely.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=scopely.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-blurstudio",
+  "name": "Blur Studio",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "blurstudio",
+  "site": "https://blur.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=blur.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-sonyinteractiveentertainmentglobal",
+  "name": "PlayStation Studios",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "sonyinteractiveentertainmentglobal",
+  "site": "https://playstation.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=playstation.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-remedy",
+  "name": "Remedy Entertainment",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "remedy",
+  "site": "https://remedygames.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=remedygames.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-hasbro",
+  "name": "Hasbro",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "hasbro",
+  "site": "https://hasbro.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=hasbro.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-sonypicturesimageworks",
+  "name": "Sony Pictures Imageworks",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "sonypicturesimageworks",
+  "site": "https://imageworks.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=imageworks.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-wildlifestudios",
+  "name": "Wildlife Studios",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "wildlifestudios",
+  "site": "https://wildlifestudios.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=wildlifestudios.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-tripledotstudios",
+  "name": "Tripledot Studios",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "tripledotstudios",
+  "site": "https://tripledotstudios.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=tripledotstudios.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-krafton",
+  "name": "KRAFTON",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "krafton",
+  "site": "https://krafton.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=krafton.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-mobilityware",
+  "name": "MobilityWare",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "mobilityware",
+  "site": "https://mobilityware.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=mobilityware.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-crytek",
+  "name": "Crytek",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "crytek",
+  "site": "https://crytek.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=crytek.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-avalanchestudios",
+  "name": "Avalanche Studios",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "avalanchestudios",
+  "site": "https://avalanchestudios.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=avalanchestudios.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-larian",
+  "name": "Larian Studios",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "larian",
+  "site": "https://larian.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=larian.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-jamcity",
+  "name": "Jam City",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "jamcity",
+  "site": "https://jamcity.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=jamcity.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-runway",
+  "name": "Runway",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "runway",
+  "site": "https://runwayml.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=runwayml.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-pika",
+  "name": "Pika",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "pika",
+  "site": "https://pika.art",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=pika.art&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-midjourney",
+  "name": "Midjourney",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "midjourney",
+  "site": "https://midjourney.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=midjourney.com&sz=128",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "artstation",
+  "name": "ArtStation Jobs",
+  "kind": "artstation",
+  "group": "remoto",
+  "target": "",
+  "site": "https://www.artstation.com/jobs",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=artstation.com&sz=128",
+  "intervalMinutes": 720,
+  "config": {
+   "max": 200
+  }
+ }
+]

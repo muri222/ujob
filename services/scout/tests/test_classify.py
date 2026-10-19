@@ -22,6 +22,10 @@ from ujob_scout import classify
         ("Mechanical Engineer", "engenharia"),
         ("Vigilante Patrimonial", "seguranca"),
         ("Assistente Administrativo", "administrativo"),
+        ("Lead VFX Artist", "design"),
+        ("Artista 3D Pleno", "design"),
+        ("Senior Character Animator", "design"),
+        ("Environment Artist (Unreal)", "design"),
     ],
 )
 def test_category(title, expected):

@@ -14,6 +14,7 @@ const QUICK = [
   ["salary", "1", "money", "Com salário"],
   ["contact", "1", "whatsapp", "Contato direto"],
   ["workplace", "remoto", "laptop", "Remoto"],
+  ["abroad", "1", "globe", "Fora do Brasil"],
 ];
 
 export default async function jobs(root, { query, signal }) {
