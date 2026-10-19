@@ -46,9 +46,12 @@ class WorkableSearch(Source):
     """Busca global do Workable (todas as empresas que usam Workable), por termo."""
 
     def start(self):
-        location = self.config.get("location", "Brazil")
-        for term in self.config.get("terms") or []:
-            yield self.request(f"https://jobs.workable.com/api/v1/jobs?query={quote(term)}&location={quote(location)}", self.parse, meta={"term": term})
+        countries = (self.config.get("countries") or [{"code": "BR", "name": "Brazil"}])[:4]
+        for term in (self.config.get("terms") or [])[:6]:
+            for country in countries:
+                where = "" if country["code"] == "WW" else f"&location={quote(country['name'])}"
+                remote = "&workplace=remote" if country["code"] == "WW" else ""
+                yield self.request(f"https://jobs.workable.com/api/v1/jobs?query={quote(term)}{where}{remote}", self.parse, meta={"term": term})
 
     def parse(self, response):
         for item in json.loads(response.text).get("jobs", []):

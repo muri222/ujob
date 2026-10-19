@@ -5,7 +5,8 @@ import re
 
 import requests
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+# servidor principal + espelho: o principal às vezes fica lento e estoura o tempo
+OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 APIFY_ACTOR = "compass~crawler-google-places"
 UA = {"User-Agent": "Radar/0.1 (app local de prospeccao)"}
 # só colchetes chave/valor: nada que feche a query e injete outra coisa no Overpass
@@ -16,14 +17,20 @@ def _quote(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def overpass_query(filters: list[str], state: str, city: str, limit: int) -> str:
-    area = f'area["ISO3166-2"="BR-{state}"]->.s;'
+def overpass_query(filters: list[str], state: str, city: str, limit: int, country: str = "BR", region: str = "") -> str:
+    # Brasil: estado pela sigla; resto do mundo: país pelo ISO e, dentro dele, região e/ou cidade pelo nome
+    if country == "BR" or state:
+        area = f'area["ISO3166-2"="BR-{state}"]->.s;' if state else 'area["ISO3166-1"="BR"]->.s;'
+    else:
+        area = f'area["ISO3166-1"="{country}"]["admin_level"="2"]->.s;'
+        if region:
+            area += f' rel(area.s)["boundary"="administrative"]["name"="{_quote(region)}"]; map_to_area->.s;'
     if city:
         area += f' rel(area.s)["boundary"="administrative"]["name"="{_quote(city)}"]; map_to_area->.a;'
     else:
         area += " .s->.a;"
     body = " ".join(f"nwr{f}(area.a);" for f in filters)
-    return f"[out:json][timeout:90]; {area} ({body}); out center tags {limit};"
+    return f"[out:json][timeout:180]; {area} ({body}); out center tags {limit};"
 
 
 def _tag(tags: dict, *keys: str) -> str:
@@ -34,9 +41,15 @@ def osm(payload: dict) -> list[dict]:
     filters = [f for f in payload["osm"] if OSM_FILTER.match(f)]
     if not filters:
         raise ValueError("esse segmento não tem filtro do OpenStreetMap; use Apify ou Claude")
-    query = overpass_query(filters, payload["state"], payload.get("city", ""), payload["limit"] * 2)
-    response = requests.post(OVERPASS, data={"data": query}, headers=UA, timeout=120)
-    response.raise_for_status()
+    query = overpass_query(filters, payload.get("state", ""), payload.get("city", ""), payload["limit"] * 2, payload.get("country", "BR"), payload.get("region", ""))
+    for index, url in enumerate(OVERPASS):
+        try:
+            response = requests.post(url, data={"data": query}, headers=UA, timeout=200)
+            response.raise_for_status()
+            break
+        except (requests.Timeout, requests.ConnectionError, requests.HTTPError):
+            if index == len(OVERPASS) - 1:
+                raise
     places = []
     for element in response.json().get("elements", []):
         tags = element.get("tags") or {}
@@ -51,7 +64,7 @@ def osm(payload: dict) -> list[dict]:
             "email": _tag(tags, "email", "contact:email"),
             "instagram": _tag(tags, "contact:instagram", "instagram"),
             "city": tags.get("addr:city") or payload.get("city", ""),
-            "state": payload["state"],
+            "state": payload.get("state", ""),
             "address": street,
             "externalId": f"osm:{element['type']}/{element['id']}",
             "origin": "OpenStreetMap",
@@ -61,12 +74,12 @@ def osm(payload: dict) -> list[dict]:
 
 def apify(payload: dict, token: str) -> list[dict]:
     searches = payload["searches"] or [payload["pack"]]
-    where = ", ".join(filter(None, [payload.get("city"), payload.get("state"), "Brasil"]))
+    where = ", ".join(filter(None, [payload.get("city"), payload.get("state") or payload.get("region"), payload.get("countryName") or "Brazil"]))
     body = {
         "searchStringsArray": searches,
         "locationQuery": where,
         "maxCrawledPlacesPerSearch": math.ceil(payload["limit"] / len(searches)),
-        "language": "pt-BR",
+        "language": "pt-BR" if payload.get("country", "BR") == "BR" else "en",
         "skipClosedPlaces": True,
     }
     url = f"https://api.apify.com/v2/acts/{APIFY_ACTOR}/run-sync-get-dataset-items"

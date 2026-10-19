@@ -27,6 +27,18 @@ function scopeOf(profile) {
   const params = {};
   const any = [...areas.map((area, i) => ((params[`a${i}`] = area), `category = {:a${i}}`)), ...roles.map((role, i) => ((params[`r${i}`] = role), `title ~ {:r${i}}`))];
   let filter = any.length ? ` && (${any.join(" || ")})` : "";
+  // países da função (mesma regra do painel): Brasil tem estado; os outros vêm no texto do país; WW = remoto de fora
+  const { COUNTRIES } = require(`${__hooks}/countries.js`);
+  const codes = (JSON.parse(profile.getString("countries") || "[]") || []).map((place) => place && place.code).filter((code) => COUNTRIES[code]);
+  if (prefs.worldwide && !codes.includes("WW")) codes.push("WW");
+  const places = codes.map((code, i) => {
+    if (code === "BR") return "(state != '' || country ~ 'bra')";
+    if (code === "WW") return "(workplace = 'remoto' && state = '')";
+    params[`c${i}`] = COUNTRIES[code].en;
+    params[`p${i}`] = COUNTRIES[code].pt;
+    return `(state = '' && (country ~ {:c${i}} || country ~ {:p${i}}))`;
+  });
+  if (places.length) filter += ` && (${places.join(" || ")})`;
   for (const [i, company] of exclude.entries()) {
     params[`x${i}`] = company;
     filter += ` && company !~ {:x${i}}`;

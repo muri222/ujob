@@ -60,6 +60,7 @@ class VagasSpider(Spider):
             config["pages"] = 1
             return {**record, "config": config}
         config["terms"] = self.search["terms"]
+        config["countries"] = self.search.get("countries") or [{"code": "BR", "name": "Brazil"}]
         if self.search.get("city") and self.search.get("state"):
             config["place"] = {"city": self.search["city"], "state": self.search["state"]}
         config["budget"] = SEARCH_BUDGET
@@ -91,6 +92,13 @@ class VagasSpider(Spider):
             matches = all(word in text for word in term.split())
         else:
             matches = not self.search.get("category") or job.category == self.search["category"]
+        countries = self.search.get("countries") or [{"code": "BR", "name": "Brazil"}]
+        if not any(country["code"] == "BR" for country in countries):
+            # busca fora do Brasil: país da vaga tem que bater (ou remota, se aceita mundo todo)
+            worldwide = any(country["code"] == "WW" for country in countries)
+            place = fold(job.country)
+            in_country = not job.state and any(fold(country["name"]) in place for country in countries if country["code"] != "WW")
+            return matches and (in_country or (worldwide and job.workplace == "remoto" and not job.state))
         if job.workplace == "remoto":
             return matches
         state, city = self.search.get("state"), fold(self.search.get("city", ""))

@@ -125,10 +125,14 @@ routerAdd(
     const profile = $app.findRecordById("profile", String(body.profile ?? ""));
     const pack = $app.findRecordById("segment_packs", String(body.pack ?? ""));
     const source = ["osm", "apify", "claude"].includes(body.source) ? body.source : "osm";
-    const state = /^[A-Z]{2}$/.test(body.state) ? body.state : "";
+    // mundo todo: país (ISO) + região/estado + cidade; no Brasil o estado é a sigla
+    const { COUNTRIES } = require(`${__hooks}/countries.js`);
+    const country = COUNTRIES[String(body.country ?? "BR").toUpperCase()] && body.country !== "WW" ? String(body.country ?? "BR").toUpperCase() : "BR";
+    const state = country === "BR" && /^[A-Z]{2}$/.test(body.state) ? body.state : "";
+    const region = country === "BR" ? "" : String(body.region ?? "").trim().slice(0, 80);
     const city = String(body.city ?? "").trim().slice(0, 80);
     const limit = Math.min(source === "claude" ? 30 : 200, Math.max(1, parseInt(body.limit, 10) || 30));
-    if (source === "osm" && !state) return e.json(400, { message: "No OpenStreetMap, escolha pelo menos o estado." });
+    if (source === "osm" && !state && !region && !city) return e.json(400, { message: country === "BR" ? "No OpenStreetMap, escolha pelo menos o estado." : "No OpenStreetMap, diga a cidade ou a região (o país inteiro é grande demais pro mapa)." });
     if (source === "apify") {
       try {
         $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
@@ -137,7 +141,7 @@ routerAdd(
       }
     }
     const campaign = new Record($app.findCollectionByNameOrId("campaigns"));
-    campaign.load({ profile: profile.id, pack: pack.id, name: `${pack.getString("name")} · ${city || state || "Brasil"}`, state, city, source, limit, status: "buscando", found: 0 });
+    campaign.load({ profile: profile.id, pack: pack.id, name: `${pack.getString("name")} · ${[city, state || region, COUNTRIES[country].pt].filter(Boolean).join(", ")}`, state, region, country, city, source, limit, status: "buscando", found: 0 });
     $app.save(campaign);
     const task = new Record($app.findCollectionByNameOrId("ai_tasks"));
     task.load({
@@ -145,7 +149,7 @@ routerAdd(
       profile: profile.id,
       ref: campaign.id,
       status: "queued",
-      payload: { source, state, city, limit, pack: pack.getString("name"), description: pack.getString("description"), osm: JSON.parse(pack.getString("osm") || "[]"), searches: JSON.parse(pack.getString("searches") || "[]") },
+      payload: { source, state, region, country, countryName: COUNTRIES[country].en, city, limit, pack: pack.getString("name"), description: pack.getString("description"), osm: JSON.parse(pack.getString("osm") || "[]"), searches: JSON.parse(pack.getString("searches") || "[]") },
       attempts: 0,
     });
     $app.save(task);
@@ -195,7 +199,8 @@ onRecordAfterUpdateSuccess((e) => {
   const leads = $app.findCollectionByNameOrId("leads");
   const tasks = $app.findCollectionByNameOrId("ai_tasks");
   const domainOf = (url) => String(url || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[/?#]/)[0].slice(0, 120);
-  const digits = (phone) => String(phone || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "").slice(0, 30);
+  const brazil = (campaign.getString("country") || "BR") === "BR";
+  const digits = (phone) => (brazil ? String(phone || "").replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "") : String(phone || "").replace(/[^\d+]/g, "")).slice(0, 30);
   const handle = (value) => String(value || "").toLowerCase().replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/^@/, "").split(/[/?#]/)[0].slice(0, 80);
   const seen = (field, value) => value && $app.countRecords("leads", $dbx.exp(`profile = {:p} AND ${field} = {:v}`, { p: profileId, v: value })) > 0;
   let created = 0;
@@ -217,7 +222,9 @@ onRecordAfterUpdateSuccess((e) => {
       instagram,
       email: String(place.email ?? "").slice(0, 160),
       city: String(place.city ?? "").slice(0, 80),
-      state: /^[A-Z]{2}$/.test(place.state) ? place.state : campaign.getString("state"),
+      state: campaign.getString("country") === "BR" && /^[A-Z]{2}$/.test(place.state) ? place.state : campaign.getString("state"),
+      region: String(place.region || campaign.getString("region")).slice(0, 80),
+      country: campaign.getString("country") || "BR",
       address: String(place.address ?? "").slice(0, 240),
       origin: String(place.origin ?? campaign.getString("source")).slice(0, 160),
       externalId: String(place.externalId ?? "").slice(0, 120),

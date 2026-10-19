@@ -17,7 +17,7 @@ const SCALARS = ["name", "headline", "email", "phone", "city", "state", "about",
 const LISTS = ["skills", "languages", "links"];
 
 // junta o CV importado: "fill" só completa o vazio, "replace" troca pelo importado (sem apagar o que veio vazio)
-function mergeResume(p, cv, mode) {
+export function mergeResume(p, cv, mode) {
   const has = (value) => (Array.isArray(value) ? value.length : Boolean(value));
   for (const key of SCALARS) if (has(cv[key]) && (mode === "replace" || !has(p[key]))) p[key] = cv[key];
   for (const key of LISTS) p[key] = mode === "replace" && has(cv[key]) ? cv[key] : [...new Set([...(p[key] ?? []), ...(cv[key] ?? [])])].slice(0, 40);

@@ -8,6 +8,7 @@ import { blurText, reveal, tilt } from "../core/fx.js";
 import { countUp } from "../core/motion.js";
 import { listen } from "../core/realtime.js";
 import { candidatesFilter } from "./marathon.js";
+import { countryLabel, profileCountries } from "../core/countries.js";
 import { runSearch } from "./search.js";
 
 const card = (title, href, ...content) =>
@@ -159,7 +160,7 @@ export default async function overview(root, { signal }) {
   const big = h("strong", { className: "hello__number num" }, "0");
   const radar = [
     profile.prefs?.roles?.length ? profile.prefs.roles.slice(0, 3).join(", ") : profile.categories?.length ? profile.categories.map((key) => CATEGORIES[key]).join(", ") : "todas as áreas",
-    profile.city || STATES[profile.state] || "todo o Brasil",
+    profile.city || STATES[profile.state] || profileCountries(profile).map((code) => countryLabel(code)).join(", "),
     WORKPLACES[profile.workplace],
   ].filter(Boolean);
 

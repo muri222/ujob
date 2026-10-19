@@ -3,6 +3,7 @@ import { CATEGORIES, CONTRACTS, SENIORITY, STATES } from "../core/catalog.js";
 import { askClaude, brainProblem, ctx } from "../core/context.js";
 import { h, header, icon, toast } from "../core/dom.js";
 import { picks, segmented, tags } from "../core/ui.js";
+import { AUTH, COUNTRIES, COUNTRY, countryLabel } from "../core/countries.js";
 
 // Preferências da função ativa, nas mesmas abas do AiApply. Tudo entra na nota do Claude, no Auto Apply e nas candidaturas.
 const TABS = [
@@ -28,7 +29,6 @@ const SITUATIONS = [
   ["freela", "Procurando freelas e projetos"],
 ];
 
-const AUTH = [["", "Selecione…"], ["cidadao", "Cidadão"], ["residente", "Residente permanente"], ["visto", "Tenho visto de trabalho"], ["patrocinio", "Preciso de patrocínio de visto"], ["nao", "Ainda não autorizado"]];
 const UNSAID = [["", "Prefiro não dizer"]];
 const IDENTITY = [
   ["race", "Como você se identifica (raça/cor)?", [...UNSAID, ["branca", "Branca"], ["preta", "Preta"], ["parda", "Parda"], ["amarela", "Amarela"], ["indigena", "Indígena"]]],
@@ -228,21 +228,30 @@ export default async function preferences(root, { query }) {
     ];
   }
 
+  // países da função (lista fixa com código ISO: é o que a busca e o filtro entendem)
   function placesBox() {
     const wrap = h("div", { className: "places" });
     const changed = () => save({ countries: places });
     function draw() {
+      const free = COUNTRIES.filter(([code]) => code !== "WW" && !places.some((place) => place.code === code));
+      const adder = select([["", "+ Adicionar país…"], ...free.map(([code]) => [code, countryLabel(code)])], "", (code) => {
+        if (!code) return;
+        places.push({ code, cities: [], modes: ["remoto"], auth: code === "BR" ? "cidadao" : "" });
+        changed();
+        draw();
+      });
       wrap.replaceChildren(
-        ...places.map((place, index) =>
+        ...places.filter((place) => COUNTRY[place.code]).map((place) =>
           h(
             "div",
             { className: "place" },
-            h("div", { className: "import__row" }, input(place.country, (value) => ((place.country = value), changed()), { placeholder: "País (ex.: Brasil, Worldwide)" }), h("button", { type: "button", className: "icon-btn", "aria-label": "Remover", onclick: () => (places.splice(index, 1), changed(), draw()) }, icon("close"))),
+            h("div", { className: "import__row" }, h("strong", { className: "pref__country" }, countryLabel(place.code)), h("button", { type: "button", className: "icon-btn", "aria-label": "Remover", onclick: () => (places.splice(places.indexOf(place), 1), changed(), draw()) }, icon("close"))),
             input((place.cities ?? []).join(", "), (value) => ((place.cities = value.split(",").map((city) => city.trim()).filter(Boolean)), changed()), { placeholder: "Cidades (opcional, separadas por vírgula)" }),
             picks([["remoto", "Remoto"], ["presencial", "Presencial / Híbrido"]], (place.modes ??= ["remoto"]), changed),
           ),
         ),
-        h("button", { type: "button", className: "btn btn--soft", onclick: () => (places.push({ country: "", cities: [], modes: ["remoto"] }), draw()) }, icon("plus"), "Adicionar país"),
+        h("label", { className: "check" }, h("input", { type: "checkbox", checked: Boolean(prefs.worldwide), onchange: (event) => ((prefs.worldwide = event.target.checked), savePrefs()) }), h("span", {}, "🌍 Aceito vaga remota de qualquer lugar do mundo")),
+        adder,
       );
     }
     draw();
@@ -250,12 +259,12 @@ export default async function preferences(root, { query }) {
   }
 
   function eligibility() {
-    const named = places.filter((place) => place.country);
+    const named = places.filter((place) => COUNTRY[place.code]);
     if (!named.length) return h("small", {}, "Adicione países em \"Onde gostaria de trabalhar\".");
     return h(
       "div",
       { className: "places" },
-      named.map((place) => h("div", { className: "import__row" }, h("span", { className: "pref__country" }, place.country), select(AUTH, place.auth, (value) => ((place.auth = value), save({ countries: places }))))),
+      named.map((place) => h("div", { className: "import__row" }, h("span", { className: "pref__country" }, countryLabel(place.code)), select(AUTH, place.auth, (value) => ((place.auth = value), save({ countries: places }))))),
     );
   }
 

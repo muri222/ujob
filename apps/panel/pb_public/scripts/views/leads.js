@@ -1,7 +1,8 @@
-import { api, create, list, quote, update } from "../core/api.js";
+import { api, create, list, quote, remove, update } from "../core/api.js";
 import { STATES } from "../core/catalog.js";
 import { askClaude, brainProblem, ctx, mine } from "../core/context.js";
-import { confirm, h, header, icon, toast } from "../core/dom.js";
+import { confirm, h, header, icon, modal, toast } from "../core/dom.js";
+import { COUNTRIES, countryLabel, profileCountries } from "../core/countries.js";
 import { ago, number } from "../core/format.js";
 import { loadCities } from "../core/places.js";
 import { listen } from "../core/realtime.js";
@@ -21,51 +22,73 @@ export default async function leads(root, { signal }) {
   }
   const [{ items: packs }, integrations] = await Promise.all([list("segment_packs", { sort: "name", perPage: 100, filter: `profile = '' || profile = ${quote(ctx.profile.id)}` }), api("radar/integrations").catch(() => ({ apify: {} }))]);
 
-  // segmento: os de fábrica + os que a pessoa criou; "personalizado" abre o montador com IA
-  const CUSTOM = "__custom";
-  const pack = h("select", { "aria-label": "Segmento" });
-  const paintPacks = (selectedId) => {
-    pack.replaceChildren(
-      h("optgroup", { label: "Prontos" }, packs.filter((item) => !item.profile).map((item) => h("option", { value: item.id, selected: item.id === selectedId }, item.name))),
-      packs.some((item) => item.profile) ? h("optgroup", { label: "Seus segmentos" }, packs.filter((item) => item.profile).map((item) => h("option", { value: item.id, selected: item.id === selectedId }, item.name))) : null,
-      h("option", { value: CUSTOM }, "+ Criar segmento personalizado…"),
-    );
-  };
-  paintPacks();
-
+  // segmento: cartões com os prontos + os da pessoa (editar/excluir); "Criar segmento" abre o montador com IA
+  let packId = packs.find((item) => item.profile)?.id ?? packs[0]?.id ?? "";
+  const packGrid = h("div", { className: "packs" });
   const builderText = h("textarea", { rows: 2, maxLength: 500, placeholder: "Descreva quem você quer prospectar. Ex.: escritórios de arquitetura que fazem projeto residencial de alto padrão" });
   const builderGo = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Montar com IA");
   const builderOut = h("div", { className: "packer__out" });
   const builder = h("div", { className: "packer", hidden: true }, h("div", { className: "hero__describe-row" }, builderText, builderGo), builderOut);
-  const ownActions = h("div", { className: "packer__own" });
+  const lines = (node) => node.value.split("\n").map((line) => line.trim()).filter(Boolean);
 
-  function paintOwn() {
-    const current = packs.find((item) => item.id === pack.value);
-    builder.hidden = pack.value !== CUSTOM;
-    ownActions.replaceChildren(
-      current?.profile
-        ? h(
-            "button",
-            {
-              type: "button",
-              className: "btn btn--ghost",
-              onclick: async () => {
-                if (!(await confirm(`Excluir o segmento "${current.name}"?`, { confirmLabel: "Excluir" }))) return;
-                await api(`collections/segment_packs/records/${current.id}`, { method: "DELETE" }).catch(() => toast("Não deu pra excluir."));
-                packs.splice(packs.indexOf(current), 1);
-                paintPacks();
-                paintOwn();
-              },
-            },
-            icon("trash"),
-            "Excluir segmento",
-          )
-        : current
-          ? h("small", {}, current.description)
-          : "",
+  async function editPack(item) {
+    const name = h("input", { value: item.name, maxLength: 80, required: true });
+    const description = h("input", { value: item.description ?? "", maxLength: 300 });
+    const searches = h("textarea", { rows: 4, value: (item.searches ?? []).join("\n") });
+    const osm = h("textarea", { rows: 3, value: (item.osm ?? []).join("\n"), spellcheck: false });
+    const dialog = h(
+      "dialog",
+      { className: "confirm kit__new" },
+      h(
+        "form",
+        { method: "dialog" },
+        h("p", {}, h("strong", {}, "Editar segmento")),
+        h("label", { className: "field" }, h("span", {}, "Nome"), name),
+        h("label", { className: "field" }, h("span", {}, "Descrição"), description),
+        h("label", { className: "field" }, h("span", {}, "Buscas no Google Maps (Apify) e na web, uma por linha"), searches),
+        h("label", { className: "field" }, h("span", {}, "Filtros do OpenStreetMap (avançado), um por linha"), osm),
+        h("div", { className: "confirm__actions" }, h("button", { className: "btn btn--ghost", value: "no", formNoValidate: true }, "Cancelar"), h("button", { className: "btn btn--primary", value: "yes" }, icon("check"), "Salvar")),
+      ),
+    );
+    if (!(await modal(dialog, (value) => value === "yes"))) return;
+    try {
+      const saved = await update("segment_packs", item.id, { name: name.value.trim() || item.name, description: description.value.trim(), searches: lines(searches).slice(0, 6), osm: lines(osm).slice(0, 5) });
+      packs.splice(packs.indexOf(item), 1, saved);
+      paintPacks();
+      toast("Segmento salvo.");
+    } catch {
+      toast('Não deu pra salvar. Confira os filtros do mapa (formato ["chave"="valor"]).');
+    }
+  }
+
+  async function deletePack(item) {
+    if (!(await confirm(`Excluir o segmento "${item.name}"? As campanhas já feitas continuam.`, { confirmLabel: "Excluir" }))) return;
+    try {
+      await remove("segment_packs", item.id);
+      packs.splice(packs.indexOf(item), 1);
+      if (packId === item.id) packId = packs[0]?.id ?? "";
+      paintPacks();
+    } catch {
+      toast("Não deu pra excluir.");
+    }
+  }
+
+  function paintPacks() {
+    const card = (item) =>
+      h(
+        "div",
+        { className: "pack", "aria-pressed": String(item.id === packId && builder.hidden) },
+        h("button", { type: "button", className: "pack__pick", onclick: () => ((packId = item.id), (builder.hidden = true), paintPacks()) }, h("strong", {}, item.name), h("small", {}, item.description || (item.searches ?? []).slice(0, 3).join(", "))),
+        item.profile
+          ? h("span", { className: "pack__actions" }, h("button", { type: "button", className: "icon-btn", title: "Editar", "aria-label": "Editar segmento", onclick: () => editPack(item) }, icon("edit")), h("button", { type: "button", className: "icon-btn", title: "Excluir", "aria-label": "Excluir segmento", onclick: () => deletePack(item) }, icon("trash")))
+          : h("span", { className: "tag pack__tag" }, "Pronto"),
+      );
+    packGrid.replaceChildren(
+      ...packs.filter((item) => item.profile).map(card),
+      ...packs.filter((item) => !item.profile).map(card),
+      h("button", { type: "button", className: "pack pack--new", "aria-pressed": String(!builder.hidden), onclick: () => ((builder.hidden = !builder.hidden), paintPacks(), builder.hidden || builderText.focus()) }, icon("plus"), h("strong", {}, "Criar segmento"), h("small", {}, "Descreva e o Claude monta as buscas")),
     );
   }
-  pack.addEventListener("change", paintOwn);
 
   builderGo.addEventListener("click", async () => {
     const text = builderText.value.trim();
@@ -81,18 +104,15 @@ export default async function leads(root, { signal }) {
       const osm = h("textarea", { rows: 3, value: found.osm.join("\n"), spellcheck: false });
       const save = h("button", { type: "button", className: "btn btn--primary" }, icon("check"), "Salvar segmento");
       save.addEventListener("click", async () => {
-        const lines = (node) => node.value.split("\n").map((line) => line.trim()).filter(Boolean);
         try {
-          const record = await api("collections/segment_packs/records", {
-            method: "POST",
-            body: { profile: ctx.profile.id, slug: `p-${Date.now().toString(36)}`, name: name.value.trim() || found.name, description: found.description, searches: lines(searches).slice(0, 6), osm: lines(osm).slice(0, 5) },
-          });
+          const record = await create("segment_packs", { profile: ctx.profile.id, slug: `p-${Date.now().toString(36)}`, name: name.value.trim() || found.name, description: found.description, searches: lines(searches).slice(0, 6), osm: lines(osm).slice(0, 5) });
           packs.push(record);
-          paintPacks(record.id);
+          packId = record.id;
+          builder.hidden = true;
           builderText.value = "";
           builderOut.replaceChildren();
-          paintOwn();
-          toast("Segmento salvo. Ele fica na lista pra próximas campanhas.");
+          paintPacks();
+          toast("Segmento salvo. Dá pra editar ou excluir no cartão dele.");
         } catch {
           toast("Não deu pra salvar o segmento.");
         }
@@ -101,7 +121,7 @@ export default async function leads(root, { signal }) {
         h("p", { className: "settings__help" }, found.description),
         h("label", { className: "field" }, h("span", {}, "Nome do segmento"), name),
         h("label", { className: "field" }, h("span", {}, "Buscas no Google Maps (Apify), uma por linha"), searches),
-        h("details", {}, h("summary", {}, "Filtros do OpenStreetMap (avançado)"), osm, found.osm.length ? null : h("small", {}, "Sem filtro bom no mapa pra esse segmento: use Apify ou Claude.")),
+        h("details", {}, h("summary", {}, "Filtros do OpenStreetMap (avançado)"), h("label", { className: "field" }, osm), found.osm.length ? null : h("small", {}, "Sem filtro bom no mapa pra esse segmento: use Apify ou Claude.")),
         save,
       );
     } catch (error) {
@@ -110,12 +130,17 @@ export default async function leads(root, { signal }) {
       builderGo.disabled = false;
     }
   });
+
+  // onde: país (os da função primeiro), estado (Brasil) ou região (resto do mundo) e cidade
+  const mineCountries = profileCountries(ctx.profile).filter((code) => code !== "WW");
+  const ordered = [...mineCountries, ...COUNTRIES.map(([code]) => code).filter((code) => code !== "WW" && !mineCountries.includes(code))];
+  const country = h("select", { "aria-label": "País" }, ordered.map((code) => h("option", { value: code }, countryLabel(code))));
   const state = h("select", { "aria-label": "Estado" }, h("option", { value: "" }, "Todo o Brasil"), Object.entries(STATES).map(([code, label]) => h("option", { value: code, selected: code === ctx.profile.state }, label)));
-  const city = h("input", { placeholder: "Cidade (opcional)", list: "leads-cities", maxLength: 80 });
+  const region = h("input", { placeholder: "Ex.: Lisboa, Califórnia, Baviera", maxLength: 80 });
+  const city = h("input", { placeholder: "Opcional", list: "leads-cities", maxLength: 80 });
   const cities = h("datalist", { id: "leads-cities" });
-  const fillCities = async () => cities.replaceChildren(...(await loadCities()).filter((item) => !state.value || item.state === state.value).slice(0, 900).map((item) => h("option", { value: item.name })));
-  state.addEventListener("change", () => ((city.value = ""), fillCities()));
-  fillCities();
+  const regionField = h("label", { className: "field" });
+  const fillCities = async () => cities.replaceChildren(...(country.value === "BR" ? (await loadCities()).filter((item) => !state.value || item.state === state.value).slice(0, 900).map((item) => h("option", { value: item.name })) : []));
   const limit = h("input", { type: "number", min: 1, max: 200, value: 30 });
 
   let source = "osm";
@@ -124,8 +149,8 @@ export default async function leads(root, { signal }) {
   function paintSources() {
     const n = Math.max(1, Number(limit.value) || 30);
     const choices = [
-      ["osm", "OpenStreetMap", "Grátis, roda no seu PC. Bom pra indústria e comércio que aparecem no mapa. Pode achar menos empresas.", true],
-      ["apify", "Google Maps via Apify", integrations.apify?.connected ? `Usa seus créditos da Apify (o plano grátis dá US$ 5 por mês). Estimativa: ≈ US$ ${(n * APIFY_USD_PER_PLACE).toFixed(2)}.` : "Conecte sua conta da Apify em Configurações pra usar.", integrations.apify?.connected],
+      ["osm", "OpenStreetMap", "Grátis, roda no seu PC. Funciona no mundo todo; bom pra comércio e indústria que aparecem no mapa.", true],
+      ["apify", "Google Maps via Apify", integrations.apify?.connected ? `Usa seus créditos da Apify (o plano grátis dá US$ 5 por mês). Estimativa: ≈ US$ ${(n * APIFY_USD_PER_PLACE).toFixed(2)}.` : "Conecte sua conta da Apify em Config. da conta pra usar.", integrations.apify?.connected],
       ["claude", "Claude pesquisando na web", `Gasta bastante da sua assinatura: ≈ ${number(Math.min(n, 30) * CLAUDE_TOKENS_PER_COMPANY)} tokens (umas ${Math.round((Math.min(n, 30) * CLAUDE_TOKENS_PER_COMPANY) / JOB_FIT_TOKENS)} notas de vaga). Use quando o mapa não achar. Máximo 30.`, true],
     ];
     options.replaceChildren(
@@ -138,22 +163,32 @@ export default async function leads(root, { signal }) {
         ),
       ),
     );
-    estimate.textContent = source === "osm" && !state.value ? "No OpenStreetMap escolha pelo menos o estado." : "";
+    const br = country.value === "BR";
+    const missing = br ? !state.value && !city.value.trim() : !region.value.trim() && !city.value.trim();
+    estimate.textContent = source === "osm" && missing ? (br ? "No OpenStreetMap escolha pelo menos o estado." : "No OpenStreetMap diga a cidade ou a região.") : "";
   }
+  const paintRegion = () => {
+    regionField.replaceChildren(h("span", {}, country.value === "BR" ? "Estado" : "Região / estado (opcional)"), country.value === "BR" ? state : region);
+    fillCities();
+    paintSources();
+  };
+  state.addEventListener("change", () => ((city.value = ""), fillCities(), paintSources()));
+  country.addEventListener("change", () => ((city.value = ""), paintRegion()));
   limit.addEventListener("input", paintSources);
-  state.addEventListener("change", paintSources);
-  paintSources();
+  region.addEventListener("input", paintSources);
+  city.addEventListener("input", paintSources);
+  paintPacks();
 
   const go = h("button", { className: "btn btn--primary" }, icon("radar"), "Buscar empresas");
   go.addEventListener("click", async () => {
-    if (pack.value === CUSTOM) return toast("Salve o segmento personalizado primeiro.");
+    if (!packId) return toast("Escolha ou crie um segmento.");
     if (source === "claude") {
       const problem = await brainProblem(true);
       if (problem) return toast(problem);
     }
     go.disabled = true;
     try {
-      const { campaign } = await api("radar/campaigns", { method: "POST", body: { profile: ctx.profile.id, pack: pack.value, state: state.value, city: city.value.trim(), source, limit: limit.value } });
+      const { campaign } = await api("radar/campaigns", { method: "POST", body: { profile: ctx.profile.id, pack: packId, country: country.value, state: country.value === "BR" ? state.value : "", region: region.value.trim(), city: city.value.trim(), source, limit: limit.value } });
       selected = campaign;
       await loadCampaigns();
     } catch (error) {
@@ -179,7 +214,7 @@ export default async function leads(root, { signal }) {
     if (lead.aiStatus === "gerando") return h("p", { className: "fit__ai" }, h("span", { className: "spinner" }), "Claude montando o dossiê e a abordagem…");
     if (!lead.dossier || d.error)
       return h("div", { className: "lead__detail" }, d.error ? h("p", { className: "fit__err" }, d.error) : null, h("button", { className: "btn btn--soft", onclick: () => dossier(lead) }, icon("sparkle"), d.error ? "Tentar de novo" : "Gerar dossiê e abordagem"));
-    const phone = (lead.signals?.socials?.whatsapp || (lead.phone ? `55${lead.phone}` : "")).replace(/\D/g, "");
+    const phone = (lead.signals?.socials?.whatsapp || (lead.phone ? `${!lead.country || lead.country === "BR" ? "55" : ""}${lead.phone}` : "")).replace(/\D/g, "");
     const dmButtons = (o.dms ?? []).map((dm, index) =>
       h(
         "div",
@@ -314,9 +349,12 @@ export default async function leads(root, { signal }) {
       "section",
       { className: "panel" },
       h("header", { className: "section__head" }, h("h2", {}, "Nova campanha"), h("small", {}, "Contatos saem do site de cada empresa, lidos no seu PC sem gastar token")),
-      h("div", { className: "leads__form" }, pack, state, city, cities, h("label", { className: "leads__limit" }, "até", limit, "empresas")),
-      ownActions,
+      h("p", { className: "leads__label" }, "1. Quem você quer prospectar"),
+      packGrid,
       builder,
+      h("p", { className: "leads__label" }, "2. Onde"),
+      h("div", { className: "leads__where" }, h("label", { className: "field" }, h("span", {}, "País"), country), regionField, h("label", { className: "field" }, h("span", {}, "Cidade"), city, cities), h("label", { className: "field" }, h("span", {}, "Até quantas empresas"), limit)),
+      h("p", { className: "leads__label" }, "3. De onde buscar"),
       options,
       h("div", { className: "import__row" }, go, estimate),
     ),
@@ -327,6 +365,6 @@ export default async function leads(root, { signal }) {
   const soon = () => (clearTimeout(timer), (timer = setTimeout(loadCampaigns, 800)));
   listen("campaigns", ({ record }) => record.profile === ctx.profile.id && soon(), signal);
   listen("leads", ({ record }) => record.campaign === selected && soon(), signal);
-  paintOwn();
+  paintRegion();
   await loadCampaigns();
 }

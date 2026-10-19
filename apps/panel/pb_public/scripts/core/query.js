@@ -1,8 +1,9 @@
 import { quote } from "./api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES, WORKPLACES } from "./catalog.js";
 import { since } from "./format.js";
+import { COUNTRY, countryFilter } from "./countries.js";
 
-export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad", "terms", "q"];
+export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad", "terms", "q", "country"];
 
 export function fromParams(params) {
   const query = {};
@@ -41,13 +42,18 @@ export function toFilter(query) {
   if (query.salary) parts.push("salaryMin > 0");
   if (query.contact) parts.push("(contactEmail != '' || contactWhatsapp != '' || contactPhone != '')");
   // vaga gringa: sem estado brasileiro e com país que não é o Brasil (inclui remoto "worldwide")
+  if (COUNTRY[query.country] && !query.state) parts.push(countryFilter(query.country, quote));
+  else if (Array.isArray(query.countries) && query.countries.length && !query.state) parts.push(countriesFilter(query.countries));
   if (query.abroad) parts.push("state = '' && country != '' && country !~ 'brasil' && country !~ 'brazil'");
   if (query.group) parts.push(`source.group = ${quote(query.group)}`);
   return parts.join(" && ");
 }
 
+// vários países (busca da função): qualquer um deles
+export const countriesFilter = (codes) => `(${codes.filter((code) => COUNTRY[code]).map((code) => countryFilter(code, quote)).join(" || ")})`;
+
 export function describe(query) {
   const area = CATEGORIES[query.category] ?? "qualquer área";
-  const place = query.city ? `${query.city}${query.state ? `/${query.state}` : ""}` : STATES[query.state] ?? "todo o Brasil";
+  const place = query.city ? `${query.city}${query.state ? `/${query.state}` : ""}` : STATES[query.state] ?? COUNTRY[query.country]?.pt ?? "qualquer lugar";
   return [query.term ? `“${query.term}”` : area, place, WORKPLACES[query.workplace]?.toLowerCase(), CONTRACTS[query.contract]].filter(Boolean).join(" · ");
 }

@@ -65,7 +65,7 @@ routerAdd(
   "/api/scout/searches/next",
   (e) => {
     const { now } = require(`${__hooks}/jobs.js`);
-    const { searchTerms, FILTERABLE, SEARCHABLE } = require(`${__hooks}/search.js`);
+    const { searchTerms, searchCountries, BR_ONLY, FILTERABLE, SEARCHABLE } = require(`${__hooks}/search.js`);
 
     $app
       .db()
@@ -98,10 +98,13 @@ routerAdd(
     }
     if (!search) return e.json(200, { now: now(), search: null, sources: [] });
 
+    const countries = searchCountries(search);
+    const wantsBrazil = countries.some((country) => country.code === "BR");
     const kinds = [...SEARCHABLE, ...FILTERABLE].map((kind) => `kind = '${kind}'`).join(" || ");
     const sources = $app
       .findRecordsByFilter("sources", `(${kinds}) && slug !~ 'gupy-estado-'`, "name", 0, 0)
-      .filter((source) => ["gupy_search", "jsonld", "card_listing"].includes(source.getString("kind")) || source.getBool("active"));
+      .filter((source) => ["gupy_search", "jsonld", "card_listing"].includes(source.getString("kind")) || source.getBool("active"))
+      .filter((source) => wantsBrazil || !BR_ONLY.includes(source.getString("kind")));
 
     const terms = searchTerms(search);
     const { inject } = require(`${__hooks}/feeds.js`);
@@ -119,7 +122,7 @@ routerAdd(
     }));
     return e.json(200, {
       now: now(),
-      search: { id: search.id, term: search.getString("term"), terms, state: search.getString("state"), city: search.getString("city"), category: search.getString("category") },
+      search: { id: search.id, countries, term: search.getString("term"), terms, state: search.getString("state"), city: search.getString("city"), category: search.getString("category") },
       sources: inject($app, rows, { search: true, terms: terms.length }),
     });
   },

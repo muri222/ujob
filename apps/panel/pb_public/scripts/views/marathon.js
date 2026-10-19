@@ -1,3 +1,4 @@
+import { countryFilter, profileCountries } from "../core/countries.js";
 import { list, quote } from "../core/api.js";
 import { CATEGORIES, WORKPLACES } from "../core/catalog.js";
 import { applicationFor, ctx, track, untrack } from "../core/context.js";
@@ -34,7 +35,10 @@ export function candidatesFilter(profile) {
   const any = [...areas.map((key) => `category = ${quote(key)}`), ...roles.map((role) => `title ~ ${quote(role)}`)];
   if (any.length) parts.push(`(${any.join(" || ")})`);
   for (const company of (profile.prefs?.exclude ?? []).slice(0, 30)) parts.push(`company !~ ${quote(company)}`);
-  if (profile.state) parts.push(`(state = ${quote(profile.state)} || workplace = 'remoto')`);
+  // países da função: Brasil respeita o estado de casa (ou remoto); os outros pelo nome do país; WW = remoto de fora
+  const codes = profileCountries(profile);
+  const places = codes.map((code) => (code === "BR" && profile.state ? `(state = ${quote(profile.state)} || (workplace = 'remoto' && (state != '' || country ~ 'bra')))` : countryFilter(code, quote)));
+  if (places.length) parts.push(`(${places.join(" || ")})`);
   return parts.join(" && ");
 }
 

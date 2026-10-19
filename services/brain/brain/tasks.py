@@ -232,7 +232,7 @@ def leads_discover(task: dict) -> tuple[dict, list[dict]]:
 def leads_discover_claude(task: dict) -> tuple[dict, list[dict]]:
     """Claude navegando na web: acha o que o mapa não tem, mas gasta bem mais da assinatura."""
     payload = task["payload"]
-    regiao = ", ".join(filter(None, [payload.get("city"), payload.get("state")])) or "Brasil"
+    regiao = ", ".join(filter(None, [payload.get("city"), payload.get("state") or payload.get("region"), payload.get("countryName") or "Brazil"]))
     prompt = render("leads_discover_claude", limit=str(payload["limit"]), pack=payload["pack"], description=payload.get("description", ""), regiao=regiao, buscas=", ".join(payload.get("searches") or []))
     value, log = claude.complete("leads_discover_claude", prompt, Places, "best", tools="WebSearch,WebFetch")
     return {"places": [place.model_dump() for place in value.places[: payload["limit"]]]}, log

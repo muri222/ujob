@@ -7,14 +7,14 @@ import { createSentence } from "../core/sentence.js";
 import { createSplit } from "../core/split.js";
 import { segmented } from "../core/ui.js";
 import { runSearch } from "./search.js";
+import { countryLabel, profileCountries } from "../core/countries.js";
 
-const SENTENCE = ["term", "category", "state", "city", "workplace", "contract"];
+const SENTENCE = ["term", "category", "state", "city", "workplace", "contract", "country"];
 const QUICK = [
   ["period", "24h", "sparkle", "Novas de hoje"],
   ["salary", "1", "money", "Com salário"],
   ["contact", "1", "whatsapp", "Contato direto"],
   ["workplace", "remoto", "laptop", "Remoto"],
-  ["abroad", "1", "globe", "Fora do Brasil"],
 ];
 
 export default async function jobs(root, { query, signal }) {
@@ -96,6 +96,11 @@ export default async function jobs(root, { query, signal }) {
       ...QUICK.map(([key, value, iconName, text]) => {
         const on = state[key] === value;
         return h("button", { className: "chip", "aria-pressed": String(on), onclick: () => apply({ [key]: on ? "" : value }) }, icon(iconName), text);
+      }),
+      // países da função: um clique filtra (Brasil, Portugal, Mundo todo...)
+      ...profileCountries(ctx.profile).map((code) => {
+        const on = state.country === code;
+        return h("button", { className: "chip", "aria-pressed": String(on), onclick: () => (apply({ country: on ? "" : code, state: "", city: "" }), sentence.set({ country: on ? "" : code, state: "", city: "" })) }, countryLabel(code));
       }),
       state.q ? h("button", { className: "chip", "aria-pressed": "true", title: (state.terms ?? "").split("|").join(", "), onclick: () => ((described.value = ""), apply({ q: "", terms: "" })) }, icon("sparkle"), `“${state.q.slice(0, 40)}”`, icon("close")) : "",
       state.company ? h("button", { className: "chip", "aria-pressed": "true", onclick: () => apply({ company: "" }) }, icon("building"), state.company, icon("close")) : "",

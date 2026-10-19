@@ -34,11 +34,14 @@ class ApifySource(Source):
         token = self.config.get("token")
         if not token:
             return
+        countries = [country for country in (self.config.get("countries") or [{"code": "BR", "name": "Brazil"}]) if self.supports(country["code"])][:4]
+        self.per_country = max(5, self.limit // max(1, len(countries)))
         for term in (self.config.get("terms") or [])[: int(self.config.get("max_terms", 3))]:
+          for country in countries:
             yield Request(
                 f"https://api.apify.com/v2/acts/{ACTORS[self.record['kind']]}/run-sync-get-dataset-items?timeout=240",
                 method="POST",
-                body=json.dumps(self.body(term)),
+                body=json.dumps(self.body(term, country)),
                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
                 callback=self.parse,
                 errback=self.spider.failed,
@@ -46,8 +49,12 @@ class ApifySource(Source):
                 dont_filter=True,
             )
 
-    @property
-    def where(self) -> str:
+    def supports(self, code: str) -> bool:
+        return True
+
+    def where(self, country: dict) -> str:
+        if country["code"] != "BR":
+            return "Worldwide" if country["code"] == "WW" else country["name"]
         place_config = self.config.get("place") or {}
         return ", ".join(filter(None, [place_config.get("city"), place_config.get("state")])) or "Brazil"
 
@@ -58,8 +65,8 @@ class ApifySource(Source):
 
 @register("apify_linkedin")
 class LinkedIn(ApifySource):
-    def body(self, term):
-        return {"keywords": term, "location": self.where, "limit": self.limit, "datePosted": "r604800"}
+    def body(self, term, country):
+        return {"keywords": term, "location": self.where(country), "limit": self.per_country, "datePosted": "r604800"}
 
     def parse(self, response):
         for item in json.loads(response.text):
@@ -81,9 +88,14 @@ class LinkedIn(ApifySource):
 
 @register("apify_indeed")
 class Indeed(ApifySource):
-    def body(self, term):
-        place_config = self.config.get("place") or {}
-        return {"country": "br", "title": term, "location": place_config.get("city", ""), "limit": self.limit, "datePosted": "14"}
+    COUNTRIES = {"ar", "au", "at", "be", "br", "ca", "cl", "co", "cr", "cz", "dk", "fi", "fr", "de", "ie", "il", "in", "it", "jp", "kr", "lu", "mx", "nl", "nz", "no", "pe", "pl", "pt", "ro", "sg", "za", "es", "se", "ch", "ae", "gb", "us", "uy"}
+
+    def supports(self, code):
+        return code.lower() in self.COUNTRIES
+
+    def body(self, term, country):
+        place_config = self.config.get("place") or {} if country["code"] == "BR" else {}
+        return {"country": country["code"].lower(), "title": term, "location": place_config.get("city", ""), "limit": self.per_country, "datePosted": "14"}
 
     def parse(self, response):
         for item in json.loads(response.text):
@@ -115,8 +127,13 @@ class Indeed(ApifySource):
 
 @register("apify_google")
 class GoogleJobs(ApifySource):
-    def body(self, term):
-        return {"query": term, "location": self.where, "country": "br", "language": "pt", "google_domain": "google.com.br", "num_results": self.limit, "max_pagination": 1, "posted_within": "7d"}
+    def supports(self, code):
+        return code != "WW"
+
+    def body(self, term, country):
+        code = country["code"].lower()
+        portuguese = code in ("br", "pt")
+        return {"query": term, "location": self.where(country), "country": code, "language": "pt" if portuguese else "en", "google_domain": "google.com.br" if code == "br" else "google.com", "num_results": self.per_country, "max_pagination": 1, "posted_within": "7d"}
 
     def parse(self, response):
         for item in json.loads(response.text):

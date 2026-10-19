@@ -36,3 +36,8 @@ def test_osm_filter_whitelist_blocks_injection():
     assert OSM_FILTER.match('["office"="company"]["name"~"arquitet|architect",i]')
     assert not OSM_FILTER.match('["x"="1"]);out;(')
     assert not OSM_FILTER.match("office=architect")
+
+
+def test_overpass_query_world_city():
+    query = leads.overpass_query(['["craft"="brewery"]'], "", "Lisboa", 10, "PT", "")
+    assert 'area["ISO3166-1"="PT"]["admin_level"="2"]' in query and '"name"="Lisboa"' in query

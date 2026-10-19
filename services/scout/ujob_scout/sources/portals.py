@@ -8,6 +8,8 @@ from .. import jsonld
 from ..text import fold, money, url_hash
 from .base import Source, register
 
+# países que a API da Adzuna cobre
+ADZUNA = {"br", "gb", "us", "at", "au", "be", "ca", "ch", "de", "es", "fr", "in", "it", "mx", "nl", "nz", "pl", "sg", "za"}
 TRAMPOS_CONTRACT = {"estagio": "estagio", "freela": "freelancer", "trainee": "trainee", "emprego": "clt"}
 
 
@@ -136,9 +138,11 @@ class Adzuna(Source):
         app_key = self.config.get("app_key") or self.spider.settings.get("ADZUNA_APP_KEY")
         if not app_id:
             return
+        countries = [country["code"].lower() for country in self.config.get("countries") or [{"code": "BR"}] if country["code"].lower() in ADZUNA][:4] or ["br"]
         for term in self.config.get("terms", []):
+          for code in countries:
             yield self.request(
-                f"https://api.adzuna.com/v1/api/jobs/br/search/1?app_id={app_id}&app_key={app_key}"
+                f"https://api.adzuna.com/v1/api/jobs/{code}/search/1?app_id={app_id}&app_key={app_key}"
                 f"&results_per_page=50&what={term}&sort_by=date&content-type=application/json",
                 self.parse,
             )

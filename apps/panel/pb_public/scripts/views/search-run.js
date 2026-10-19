@@ -4,7 +4,7 @@ import { h, icon, logo, toast } from "../core/dom.js";
 import { mascot } from "../core/mascot.js";
 import { ago, number, stamp } from "../core/format.js";
 import { countUp } from "../core/motion.js";
-import { describe, toFilter } from "../core/query.js";
+import { countriesFilter, describe, toFilter } from "../core/query.js";
 import { listen } from "../core/realtime.js";
 import { createSentence } from "../core/sentence.js";
 import { createSplit } from "../core/split.js";
@@ -18,10 +18,13 @@ export default async function searchRun(root, { params, signal }) {
   let search = await get("searches", params.id);
   const query = Object.fromEntries(QUERY_KEYS.filter((key) => search[key]).map((key) => [key, search[key]]));
   if (search.terms?.length) query.terms = search.terms;
+  if (search.countries?.length === 1 && !search.state) query.country = search.countries[0];
+  else if (search.countries?.length && !search.state) query.countries = search.countries;
   const opened = stamp(new Date(Date.now() - 5000));
   // busca descrita: o que os portais devolverem também precisa bater com algum termo (portal devolve muita coisa solta)
   const termMatch = search.terms?.length ? ` && (${search.terms.map((term) => `title ~ ${quote(term)}`).join(" || ")})` : "";
-  const matches = `(${toFilter(query)}) || (status = 'open' && search_hits_via_job.search ?= ${quote(search.id)}${termMatch})`;
+  const countryMatch = search.countries?.length && !search.state ? ` && ${countriesFilter(search.countries)}` : "";
+  const matches = `(${toFilter(query)}) || (status = 'open' && search_hits_via_job.search ?= ${quote(search.id)}${termMatch}${countryMatch})`;
   let newest = opened;
 
   const sourceIds = () => Object.keys(search.progress ?? {});

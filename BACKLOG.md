@@ -85,6 +85,12 @@ Ordem de execução de cima para baixo. Cada item vira uma issue e uma branch. C
 - **Candidatura automática** (Revisão rápida + Suas vagas), **Kits de candidatura**, **Visão geral** com Sua semana.
 - **F2.1 Entrada** feita: IMAP sem IA, etiqueta por regra, ligação ao funil, resumo e resposta com Claude. Falta testar com e-mail real (precisa da senha de app).
 
+## Feito em 2026-10-19 (noite)
+
+- **Radar global:** países por função (com autorização de trabalho/visto), "mundo todo (remoto)", busca por país em Workable, Adzuna, LinkedIn, Indeed e Google; portais só-Brasil saem quando a busca não inclui o Brasil; filtro por país nas Vagas e na frase de busca.
+- **Configuração inicial em 6 passos** (igual AiApply) na primeira vez e em cada função nova: contato, currículo (PDF/site), cargos (Claude sugere), países e visto, salário, modo. Termina com a primeira busca salva.
+- **Leads no mundo todo** (país, região, cidade) e segmentos em cartões com editar/excluir.
+
 ## Próximos (F2)
 
 ### F2.1 Inbox de respostas (feito, ver acima)

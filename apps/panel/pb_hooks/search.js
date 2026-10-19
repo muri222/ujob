@@ -1,6 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 const SEARCHABLE = ["gupy_search", "jsonld", "card_listing", "adzuna", "jooble", "workable_search", "apify_linkedin", "apify_indeed", "apify_google"];
+// portais só do Brasil: ficam de fora quando a busca não inclui o Brasil
+const BR_ONLY = ["gupy_search", "jsonld", "card_listing", "jooble", "trampos", "programathor", "github"];
 const FILTERABLE = ["greenhouse", "lever", "ashby", "github", "remoteok", "himalayas", "jobicy", "arbeitnow", "wwr", "trampos", "programathor"];
 
 const AREA_TERMS = {
@@ -33,6 +35,7 @@ const clip = (value, max) => String(value ?? "").trim().replace(/\s+/g, " ").sli
 const pick = (value, allowed) => (allowed.includes(value) ? value : "");
 
 function normalizeQuery(body) {
+  const { cleanCountries } = require(`${__hooks}/countries.js`);
   const terms = (Array.isArray(body.terms) ? body.terms : []).map((term) => clip(term, 60)).filter(Boolean).slice(0, 8);
   return {
     term: clip(body.term, 80),
@@ -42,11 +45,12 @@ function normalizeQuery(body) {
     city: clip(body.city, 80),
     workplace: pick(body.workplace, ["remoto", "hibrido", "presencial"]),
     contract: pick(body.contract, ["clt", "pj", "estagio", "aprendiz", "trainee", "temporario", "freelancer"]),
+    countries: cleanCountries(body.countries),
   };
 }
 
 const searchKey = (query) =>
-  [query.term.toLowerCase(), query.terms.join(",").toLowerCase(), query.category, query.state, query.city.toLowerCase(), query.workplace, query.contract].join("|");
+  [query.term.toLowerCase(), query.terms.join(",").toLowerCase(), query.category, query.state, query.city.toLowerCase(), query.workplace, query.contract, query.countries.join(",")].join("|");
 
 function searchTerms(search) {
   const custom = JSON.parse(search.getString("terms") || "[]") || [];
@@ -58,4 +62,11 @@ function searchTerms(search) {
   return contract && !term ? [...terms.slice(0, 2), contract] : terms;
 }
 
-module.exports = { AREA_TERMS, FILTERABLE, SEARCHABLE, normalizeQuery, searchKey, searchTerms };
+// países da busca com o nome em inglês pro scout; sem país = Brasil (comportamento antigo)
+function searchCountries(search) {
+  const { COUNTRIES } = require(`${__hooks}/countries.js`);
+  const codes = (JSON.parse(search.getString("countries") || "[]") || []).filter((code) => COUNTRIES[code]);
+  return (codes.length ? codes : ["BR"]).map((code) => ({ code, name: COUNTRIES[code].en }));
+}
+
+module.exports = { AREA_TERMS, BR_ONLY, FILTERABLE, SEARCHABLE, searchCountries, normalizeQuery, searchKey, searchTerms };

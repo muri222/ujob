@@ -1,5 +1,5 @@
-import { count, create, list, SessionError, startSession } from "./core/api.js";
-import { askClaude, brainProblem, ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
+import { count, list, SessionError, startSession } from "./core/api.js";
+import { brainProblem, ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
 import { $, h, icon, isTyping, modal, toast } from "./core/dom.js";
 import { ago, parseDate } from "./core/format.js";
 import { clickSpark } from "./core/fx.js";
@@ -133,50 +133,9 @@ function watchLive() {
 let sidebar;
 
 // "Suas funções" (igual AiApply): cada função tem CV, preferências, buscas, funil e painel próprios
-const CV_FIELDS = ["name", "headline", "email", "phone", "about", "skills", "experiences", "education", "languages", "links", "city", "state", "letter", "template"];
-const PREF_FIELDS = ["prefs", "answers", "countries", "workplace", "salary", "seniority", "sendMode", "threshold", "dailyCap", "kind"];
 
-async function newFunction() {
-  const current = ctx.profile;
-  const name = h("input", { required: true, maxLength: 60, placeholder: "Ex.: Editor de Vídeo, Designer Gráfico" });
-  const check = (label, on) => h("label", { className: "check" }, h("input", { type: "checkbox", checked: on }), h("span", {}, label));
-  const prefs = check("Preferências (modo, locais, salário, respostas)", true);
-  const cv = check("Currículo", true);
-  const dialog = h(
-    "dialog",
-    { className: "confirm" },
-    h(
-      "form",
-      { method: "dialog" },
-      h("p", {}, h("strong", {}, "Nova função"), h("br"), h("small", {}, "Se candidata a mais de um tipo de vaga? Crie uma função pra cada uma e tenha resultados mais certeiros.")),
-      h("label", { className: "field" }, h("span", {}, "Nome da função"), name),
-      current ? h("div", { className: "field" }, h("span", {}, `O que copiar de ${current.label || "Principal"}?`), prefs, cv) : null,
-      h("div", { className: "confirm__actions" }, h("button", { className: "btn btn--ghost", value: "no", formNoValidate: true }, "Cancelar"), h("button", { className: "btn btn--primary", value: "yes" }, "Criar")),
-    ),
-  );
-  if (!(await modal(dialog, (value) => value === "yes"))) return;
-  const body = { label: name.value.trim(), kind: "pessoa", sendMode: "revisao", threshold: 70, dailyCap: 10 };
-  if (current) {
-    for (const key of prefs.querySelector("input").checked ? PREF_FIELDS : []) body[key] = current[key];
-    // cargos e rejeições são da função; o resto (locais, salário, respostas) vem junto
-    if (body.prefs) body.prefs = { ...body.prefs, roles: [], rejects: { roles: [], skills: [] } };
-    for (const key of cv.querySelector("input").checked ? CV_FIELDS : ["name", "email", "phone"]) body[key] = current[key];
-  }
-  // cargos da função nova saem do nome dela (Haiku, ~10 s); sem Claude, a pessoa preenche nas Preferências
-  if (!(await brainProblem())) {
-    toast("Montando os cargos da função com o Claude…");
-    const found = await askClaude("job_query", { text: `Vagas de ${body.label}`, perfil: { headline: current?.headline, skills: current?.skills } }, { timeout: 60_000 }).catch(() => null);
-    if (found) body.prefs = { ...(body.prefs ?? {}), roles: found.terms };
-  }
-  try {
-    const record = await create("profile", body);
-    useProfile(record.id);
-    location.hash = "#preferencias?aba=vaga";
-    location.reload();
-  } catch {
-    toast("Não deu pra criar a função.");
-  }
-}
+// função nova = configuração inicial completa (currículo, cargos, países, visto...), igual AiApply
+const newFunction = () => welcome({ fresh: true, force: true });
 
 function mountProfiles() {
   const slot = $("[data-profiles]");

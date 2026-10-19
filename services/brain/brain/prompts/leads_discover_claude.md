@@ -1,4 +1,4 @@
-Pesquise na web e liste até {limit} empresas reais deste segmento, nesta região do Brasil.
+Pesquise na web e liste até {limit} empresas reais deste segmento, nesta região.
 
 Segmento: {pack} ({description})
 Região: {regiao}
