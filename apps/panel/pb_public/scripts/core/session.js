@@ -1,5 +1,4 @@
 const KEY = `__pb_superusers__${location.pathname.replace(/\/[^/]*$/, "")}/_`;
-const IDLE_MS = 30 * 60_000;
 
 function read() {
   try {
@@ -20,8 +19,6 @@ function expiresAt(token) {
 export const session = {
   token: () => read().token ?? "",
 
-  user: () => read().record ?? null,
-
   valid() {
     const token = session.token();
     return Boolean(token) && expiresAt(token) > Date.now() + 60_000;
@@ -33,15 +30,5 @@ export const session = {
 
   clear() {
     localStorage.removeItem(KEY);
-  },
-
-  watchIdle(onIdle) {
-    let timer;
-    const reset = () => {
-      clearTimeout(timer);
-      timer = setTimeout(onIdle, IDLE_MS);
-    };
-    for (const type of ["pointerdown", "keydown", "scroll"]) addEventListener(type, reset, { passive: true });
-    reset();
   },
 };

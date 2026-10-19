@@ -6,7 +6,6 @@ dependencies = [
     "requests>=2.32",
     "pydantic>=2.8",
     "python-dotenv>=1.0",
-    "truststore>=0.10.5",
 ]
 
 [dependency-groups]

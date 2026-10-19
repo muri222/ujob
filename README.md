@@ -11,7 +11,8 @@ apps/panel        PocketBase com o painel (pb_public), regras e rotas (pb_hooks)
 services/scout    Coletor feito em Scrapy. Le os portais e manda as vagas pro painel
 services/scout/catalog   Lista de todas as fontes (o acervo)
 services/scout/tools     discover_gupy.py, que descobre empresas novas na Gupy
-infra             docker-compose e Caddy para colocar no ar
+services/brain    worker de IA: pega tarefas e chama o Claude Code do PC
+desktop           app Tauri que sobe tudo e abre a janela
 
 
 DE ONDE VEM AS VAGAS (1.042 fontes)
@@ -86,66 +87,48 @@ Atalhos: Ctrl K abre a busca rapida, B abre Buscar vagas.
 Na lista de vagas: J e K navegam, A candidata, S salva, O abre na fonte.
 
 
-COMO RODAR NO WINDOWS (LOCAL)
+COMO RODAR (TUDO NO SEU PC)
 
-1. Copie .env.example para .env e preencha SCOUT_PASSWORD
-   (python -c "import secrets; print(secrets.token_urlsafe(24))").
-   Para rodar local use PANEL_URL=http://127.0.0.1:8095
+O Radar nao tem servidor nem login: banco, coleta e IA rodam no PC de quem
+instalou. A IA usa o Claude Code logado nesse PC, na assinatura da pessoa.
 
-2. Painel
-   cd apps/panel
-   pocketbase.exe superuser upsert seu@email.com SUA_SENHA
-   pocketbase.exe serve --http=127.0.0.1:8095
-   (as variaveis do .env precisam estar no ambiente do terminal)
+Precisa ter instalado: uv (Python) e Claude Code logado (claude auth login).
 
-3. Scout
-   cd services/scout
-   uv sync
-   uv run python -m ujob_scout.scheduler
+1. Duplo clique em Radar.lnk. Na primeira vez o app cria o .env com senhas
+   aleatorias, sobe o painel, o coletor e o brain, e abre a janela.
+2. No primeiro acesso o painel pergunta o segmento e a regiao.
+3. Fechar a janela encerra tudo.
 
-   Outros modos:
+Sem o app: INICIAR.bat abre no navegador (precisa do .env ja criado).
+
+Coletor, outros modos (em services/scout):
    uv run python -m ujob_scout.scheduler --sync     so atualiza o catalogo
    uv run python -m ujob_scout.scheduler --once     uma rodada da base
    uv run python -m ujob_scout.scheduler --only gupy-lojasrenner,bne
 
-4. Abra http://127.0.0.1:8095 e entre com o superusuario.
-   No primeiro acesso o painel pergunta o segmento e a regiao.
-
-Testes do scout: uv run --group dev pytest
-
-
-COLOCAR NO AR (SERVIDOR COM DOCKER)
-
-1. Copie o projeto para o servidor e crie o .env (PANEL_DOMAIN, ACME_EMAIL,
-   SCOUT_PASSWORD e PANEL_ALLOWED_IPS se quiser travar por IP).
-2. Aponte o DNS do dominio para o servidor.
-3. cd infra
-   docker compose up -d --build
-4. Crie o login:
-   docker compose exec panel pocketbase superuser upsert seu@email.com SUA_SENHA --dir=/panel/pb_data
-5. O banco fica em infra/data/panel. Faca backup dessa pasta.
+Testes: uv run --group dev pytest (em services/scout e services/brain)
 
 
 SEGURANCA
 
-- So o painel do ujob responde. O painel cru do PocketBase (/_/) e rotas de
-  ataque comuns (wp-admin, .env, .git) caem numa armadilha, ficam registradas
-  e recebem uma resposta engracada.
+- O painel so escuta em 127.0.0.1: nada fica exposto na rede.
+- A sessao local so e entregue pra propria pagina do Radar, nunca pra outro
+  site aberto no navegador.
 - API com lista do que pode passar. Todo o resto responde 404.
-- Login com campo-armadilha, 5 tentativas e 1 minuto de castigo,
-  sessao de 8 horas e saida automatica apos 30 minutos parado.
-- O coletor tem conta propria que so manda vagas, sem ver candidaturas.
+- Coletor e brain tem contas proprias: o coletor so manda vagas, o brain so
+  pega e devolve tarefas de IA.
 - Cabecalhos de seguranca e CSP restrita em todas as paginas.
 - Descricoes de vaga passam por limpeza antes de aparecer no painel.
-- Em producao o Caddy bloqueia as rotas do coletor por fora e pode limitar
-  o painel a IPs conhecidos.
 
 
 VARIAVEIS DO .env
 
-PANEL_URL             endereco do painel visto pelo scout
-SCOUT_EMAIL           conta do coletor
-SCOUT_PASSWORD        senha do coletor (12 caracteres ou mais)
+PANEL_URL             endereco do painel visto pelo scout e pelo brain
+SCOUT_EMAIL/PASSWORD  conta do coletor (gerada sozinha)
+BRAIN_EMAIL/PASSWORD  conta do brain (gerada sozinha)
+CLAUDE_MODEL_TOP      modelo das tarefas pesadas (padrao opus)
+CLAUDE_MODEL_BEST     modelo de julgamento, ex. nota de vaga (padrao sonnet)
+CLAUDE_MODEL_CHEAP    modelo de extracao em lote (padrao haiku)
 SCOUT_LOOP_MINUTES    ritmo da base (padrao 15)
 SCOUT_DETAIL_BUDGET   quantas paginas de detalhe por fonte por rodada
 JOB_STALE_HOURS       horas sem aparecer para fechar a vaga (padrao 96)
@@ -154,7 +137,4 @@ SEARCH_CACHE_MINUTES  tempo que uma busca pronta e reaproveitada (padrao 180)
 GITHUB_TOKEN          opcional, aumenta o limite das comunidades
 ADZUNA_APP_ID/KEY     opcional, liga a Adzuna
 JOOBLE_KEY            opcional, liga a Jooble
-PANEL_DOMAIN          dominio do painel em producao
-ACME_EMAIL            e-mail para o certificado HTTPS
-PANEL_ALLOWED_IPS     IPs liberados (0.0.0.0/0 ::/0 libera geral)
 PB_DASHBOARD          1 reabre o painel cru do PocketBase para manutencao

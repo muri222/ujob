@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 
-from . import providers
+from . import claude
 from .prompts import render
 
 
@@ -13,8 +13,8 @@ class Echo(BaseModel):
     echo: str
 
 
-def echo(task: dict, ready: dict) -> tuple[dict, list[dict]]:
-    value, log = providers.complete("echo", render("echo", msg=str(task["payload"].get("msg", ""))), Echo, "cheap", ready)
+def echo(task: dict) -> tuple[dict, list[dict]]:
+    value, log = claude.complete("echo", render("echo", msg=str(task["payload"].get("msg", ""))), Echo, "cheap")
     return value.model_dump(), log
 
 
@@ -28,11 +28,11 @@ class JobFit(BaseModel):
     motivo: str
 
 
-def job_fit(task: dict, ready: dict) -> tuple[dict, list[dict]]:
+def job_fit(task: dict) -> tuple[dict, list[dict]]:
     payload = task["payload"]
     prompt = render("job_fit", vaga=json.dumps(payload["vaga"], ensure_ascii=False), cv=json.dumps(payload["cv"], ensure_ascii=False))
-    value, log = providers.complete("job_fit", prompt, JobFit, "best", ready)
+    value, log = claude.complete("job_fit", prompt, JobFit, "best")
     return value.model_dump(), log
 
 
-TASKS: dict[str, Callable[[dict, dict], tuple[dict, list[dict]]]] = {"echo": echo, "job_fit": job_fit}
+TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {"echo": echo, "job_fit": job_fit}

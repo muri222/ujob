@@ -6,7 +6,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from . import providers
+from . import claude
 from .panel import Panel
 from .tasks import TASKS
 
@@ -15,7 +15,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s brain %(message)s")
 log = logging.getLogger(__name__)
 
 IDLE_SECONDS = 3
-CHECK_EVERY = 300  # checar provedores roda claude auth status, então sem pressa
+CHECK_EVERY = 300  # roda claude auth status, então sem pressa
+RECHECK_EVERY = 30  # Claude fora: checa mais vezes pra voltar logo que o usuário logar
 REPORT_EVERY = 60  # o painel guarda o status só em memória: reenviar sempre
 
 
@@ -28,16 +29,16 @@ def connect() -> Panel:
             time.sleep(10)
 
 
-def run(panel: Panel, task: dict, ready: dict) -> None:
+def run(panel: Panel, task: dict) -> None:
     handler = TASKS.get(task["type"])
     if not handler:
         panel.result(task["id"], error=f"tipo de tarefa desconhecido: {task['type']}")
         return
     try:
-        result, entries = handler(task, ready)
+        result, entries = handler(task)
         panel.result(task["id"], result=result, log=entries)
         log.info("%s %s pronta", task["type"], task["id"])
-    except providers.TaskFailed as error:
+    except claude.TaskFailed as error:
         panel.result(task["id"], error=str(error), log=error.log)
         log.warning("%s %s falhou: %s", task["type"], task["id"], error)
     except Exception as error:  # tarefa quebrada não derruba o worker
@@ -47,18 +48,19 @@ def run(panel: Panel, task: dict, ready: dict) -> None:
 
 def main() -> None:
     panel = connect()
-    ready, checked, reported = {}, 0.0, 0.0
+    problem, checked, reported = None, 0.0, 0.0
     while True:
         try:
-            if time.monotonic() - checked > CHECK_EVERY:
-                ready, checked, reported = providers.status(), time.monotonic(), 0.0
-                log.info("provedores: %s", {name: problem or "ok" for name, problem in ready.items()})
+            if time.monotonic() - checked > (RECHECK_EVERY if problem else CHECK_EVERY):
+                problem, checked, reported = claude.problem(), time.monotonic(), 0.0
+                log.info("claude: %s", problem or "pronto")
             if time.monotonic() - reported > REPORT_EVERY:
-                panel.status(ready)
+                panel.status(problem)
                 reported = time.monotonic()
-            task = panel.next_task()
+            # sem Claude, as tarefas esperam na fila; a tela mostra o motivo
+            task = None if problem else panel.next_task()
             if task:
-                run(panel, task, ready)
+                run(panel, task)
                 continue
         except requests.RequestException as error:
             log.warning("painel fora do ar: %s", error)

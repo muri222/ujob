@@ -178,12 +178,6 @@
   height: 17px;
 }
 
-.brand--gate {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-
 .mascot-slot {
   display: grid;
   justify-items: center;

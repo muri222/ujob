@@ -24,11 +24,11 @@ Ordem de execução de cima para baixo. Cada item vira uma issue e uma branch. C
 - Rotas `/api/radar/tasks/next` e `/api/radar/tasks/:id/result`, liberadas no guard.
 - **Aceite:** criar tarefa pela API, o worker pega, devolve resultado, realtime atualiza a tela.
 
-### F0.4 Serviço brain: provedores
-- `services/brain` com uv. `providers.py` com adapter único e 3 implementações: Claude Code (`claude -p --output-format json`), OpenRouter (API OpenAI compatível) e Ollama.
-- Detectar se o Claude Code está instalado e logado; se não, avisar na interface e cair no próximo provedor configurado.
+### F0.4 Serviço brain: Claude do usuário
+- `services/brain` com uv. `brain/claude.py`: só o Claude Code logado no PC (`claude -p --output-format json --json-schema`), na assinatura de quem instalou. Sem outros provedores.
+- Detectar se o Claude Code está instalado e logado; se não, avisar na interface e segurar as tarefas na fila até voltar.
 - Validação com pydantic, 1 retry com o erro, registro em `ai_log`.
-- **Aceite:** teste que roda o mesmo prompt nos 3 provedores e valida o schema.
+- **Aceite:** teste que roda um prompt real no Claude e valida o schema.
 
 ### F0.5 Nota real de vaga (substitui a 93% fixa)
 - Tarefa `job_fit`: entra CV mestre + vaga, sai `{score, por_que, atende[], parcial[], falta[], vale_aplicar, motivo}`.
@@ -37,7 +37,7 @@ Ordem de execução de cima para baixo. Cada item vira uma issue e uma branch. C
 - **Aceite:** 20 vagas avaliadas com notas variadas e justificativas que você concorda em pelo menos 15.
 
 ### F0.6 Shell desktop
-- `desktop/` com Tauri 2: janela abrindo 127.0.0.1, sobe e derruba PocketBase, scout e brain junto com o app, ícone na bandeja.
+- `desktop/` com Tauri 2: janela abrindo 127.0.0.1, sobe e derruba PocketBase, scout e brain junto com o app, ícone na bandeja. Sem login: primeira execução cria o `.env` e o dono local sozinhos.
 - **Aceite:** um duplo clique abre tudo; fechar o app encerra os processos.
 
 ## F1 · MVP de prospecção (semanas 2 a 4)

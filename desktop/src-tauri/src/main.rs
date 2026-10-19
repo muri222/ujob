@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::collections::hash_map::RandomState;
 use std::fs::{self, File};
+use std::hash::{BuildHasher, Hasher};
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::os::windows::process::CommandExt;
@@ -23,6 +25,28 @@ fn home() -> PathBuf {
         .map(PathBuf::from)
         // sem canonicalize: o caminho \\?\ dele quebra o SQLite do PocketBase
         .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf())
+}
+
+// 32 hex com semente aleatória do sistema (RandomState); serve pras contas locais do scout e do brain
+fn secret() -> String {
+    (0..2).map(|i| { let mut h = RandomState::new().build_hasher(); h.write_u8(i); format!("{:016x}", h.finish()) }).collect()
+}
+
+// primeira execução: cria o .env a partir do exemplo, com senhas novas
+fn ensure_env(root: &Path) {
+    let path = root.join(".env");
+    if path.exists() {
+        return;
+    }
+    let example = fs::read_to_string(root.join(".env.example")).unwrap_or_default();
+    let filled: Vec<String> = example
+        .lines()
+        .map(|line| match line {
+            "SCOUT_PASSWORD=" | "BRAIN_PASSWORD=" => format!("{line}{}", secret()),
+            _ => line.to_string(),
+        })
+        .collect();
+    let _ = fs::write(path, filled.join("\n") + "\n");
 }
 
 fn env_file(root: &Path) -> Vec<(String, String)> {
@@ -65,6 +89,7 @@ fn start_services() -> Vec<Child> {
         return vec![];
     }
     let root = home();
+    ensure_env(&root);
     let env = env_file(&root);
     let panel_exe = root.join("apps/panel/pocketbase.exe");
     let panel_exe = panel_exe.to_string_lossy();

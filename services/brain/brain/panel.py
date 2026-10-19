@@ -17,8 +17,8 @@ class Panel:
     def result(self, task_id: str, result: dict | None = None, error: str = "", log: list[dict] | None = None) -> dict:
         return self._call("POST", f"radar/tasks/{task_id}/result", json={"result": result, "error": error, "log": log or []})
 
-    def status(self, providers: dict[str, str | None]) -> dict:
-        return self._call("POST", "radar/brain/status", json={"providers": providers})
+    def status(self, problem: str | None) -> dict:
+        return self._call("POST", "radar/brain/status", json={"problem": problem})
 
     def _call(self, method: str, path: str, **kwargs) -> dict:
         response = self.http.request(method, f"{self.base_url}/api/{path}", timeout=kwargs.pop("timeout", 30), **kwargs)

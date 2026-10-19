@@ -1,13 +1,12 @@
-import { count, list, login, refresh, SessionError } from "./core/api.js";
-import { ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
+import { count, list, SessionError, startSession } from "./core/api.js";
+import { brainProblem, ctx, loadApplications, loadFits, mine, storedProfile, useProfile } from "./core/context.js";
 import { $, h, isTyping } from "./core/dom.js";
 import { ago, parseDate } from "./core/format.js";
-import { clickSpark, dotGrid } from "./core/fx.js";
+import { clickSpark } from "./core/fx.js";
 import { createPalette } from "./core/palette.js";
-import { busy as collecting, lookAt, mascot, mountBrand, shy } from "./core/mascot.js";
+import { busy as collecting, mascot, mountBrand } from "./core/mascot.js";
 import { listen } from "./core/realtime.js";
 import { createRouter } from "./core/router.js";
-import { session } from "./core/session.js";
 import { createSidebar } from "./core/sidebar.js";
 import areas from "./views/areas.js";
 import companies from "./views/companies.js";
@@ -27,8 +26,6 @@ import { welcome } from "./views/welcome.js";
 
 const POLL_MS = 60_000;
 const STALE_MINUTES = 45;
-const MAX_ATTEMPTS = 5;
-const LOCK_MS = 60_000;
 
 const ROUTES = [
   ["inicio", overview],
@@ -53,16 +50,18 @@ const lost = (root) =>
 
 const setCount = (key, value) => document.querySelectorAll(`[data-count="${key}"]`).forEach((node) => (node.textContent = value ? (value > 999 ? "999+" : value) : ""));
 
-function showLogin(message) {
-  session.clear();
-  $("[data-shell]").hidden = true;
-  $("[data-gate]").hidden = false;
-  $("[data-gate-message]").textContent = message ?? "";
-}
-
+// sessão local venceu (8h): pega outra e recarrega, sem pedir nada
 addEventListener("unhandledrejection", (event) => {
-  if (event.reason instanceof SessionError) showLogin("Sua sessão expirou. Entra de novo.");
+  if (event.reason instanceof SessionError) startSession().then(() => location.reload());
 });
+
+async function refreshClaude() {
+  const problem = await brainProblem(true).catch(() => "Não deu pra falar com o brain");
+  const node = $("[data-claude]");
+  node.classList.toggle("is-stale", Boolean(problem));
+  node.title = problem ?? "As funções de IA usam o Claude Code logado neste PC";
+  node.lastElementChild.textContent = problem ? "Claude indisponível" : "Claude pronto";
+}
 
 async function refreshCounts() {
   const since = `'${new Date(Date.now() - 864e5).toISOString().replace("T", " ")}'`;
@@ -134,7 +133,6 @@ function initChrome() {
     actions: [
       ["Ajustar meu perfil", () => welcome({ force: true }), "user"],
       ["Novo perfil", () => welcome({ force: true, fresh: true }), "user"],
-      ["Sair", () => showLogin("Até a próxima vaga."), "logout"],
     ],
   });
   sidebar = createSidebar();
@@ -156,97 +154,30 @@ function initChrome() {
 }
 
 async function open() {
-  $("[data-gate]").hidden = true;
   $("[data-shell]").hidden = false;
-  const email = session.user()?.email ?? "";
-  $("[data-user]").textContent = email;
-  $("[data-user-initial]").textContent = email.charAt(0).toUpperCase();
-
   ctx.profiles = (await list("profile", { perPage: 50 })).items;
   const profile = ctx.profiles.find((item) => item.id === storedProfile()) ?? ctx.profiles[0] ?? null;
   ctx.profile = profile;
   mountProfiles();
+  const name = profile?.name || "Seu perfil";
+  $("[data-user]").textContent = name;
+  document.querySelectorAll("[data-user-initial]").forEach((node) => (node.textContent = name.charAt(0).toUpperCase()));
   await Promise.all([loadApplications(), loadFits().catch(() => {})]);
   ctx.refreshCounts = () => refreshCounts().catch(() => {});
 
   initChrome();
   createRouter(ROUTES, $("[data-outlet]"), { fallback: lost, onChange: highlight }).start();
-  await Promise.all([refreshCounts(), refreshPulse()]);
+  await Promise.all([refreshCounts(), refreshPulse(), refreshClaude()]);
   watchLive();
   if (!profile) welcome();
 
   setInterval(() => {
-    if (!document.hidden) Promise.all([refreshCounts(), refreshPulse()]).catch(() => {});
+    if (!document.hidden) Promise.all([refreshCounts(), refreshPulse(), refreshClaude()]).catch(() => {});
   }, POLL_MS);
-  session.watchIdle(() => showLogin("Ficou 30 minutos parado. Por segurança, entra de novo."));
-}
-
-function watchEyes(form) {
-  const face = form.querySelector(".mascot");
-  if (!face) return;
-  const follow = () => {
-    const box = form.email.getBoundingClientRect();
-    lookAt(face, { x: box.left + Math.min(form.email.value.length * 8 + 12, box.width - 10), y: box.top + box.height / 2 });
-  };
-  form.email.addEventListener("focus", follow);
-  form.email.addEventListener("input", follow);
-  form.email.addEventListener("blur", () => lookAt(face, null));
-  form.password.addEventListener("focus", () => shy(face, true));
-  form.password.addEventListener("input", () => shy(face, true));
-  form.password.addEventListener("blur", () => shy(face, false));
-}
-
-function initLogin() {
-  const form = $("[data-login]");
-  const message = $("[data-gate-message]");
-  watchEyes(form);
-  const attempts = () => Number(sessionStorage.getItem("login:attempts") ?? 0);
-  const lockedUntil = () => Number(sessionStorage.getItem("login:locked") ?? 0);
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const button = form.querySelector("button");
-
-    if (lockedUntil() > Date.now()) {
-      message.textContent = `Calma. Respira. Tenta de novo em ${Math.ceil((lockedUntil() - Date.now()) / 1000)}s.`;
-      return;
-    }
-
-    button.disabled = true;
-    try {
-      if (form.company.value) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        throw new Error();
-      }
-      await login(form.email.value.trim(), form.password.value);
-      sessionStorage.removeItem("login:attempts");
-      location.reload();
-    } catch {
-      const tries = attempts() + 1;
-      sessionStorage.setItem("login:attempts", tries);
-      if (tries >= MAX_ATTEMPTS) {
-        sessionStorage.setItem("login:locked", Date.now() + LOCK_MS);
-        sessionStorage.removeItem("login:attempts");
-        message.textContent = "Errou demais. Um minuto de castigo.";
-      } else {
-        message.textContent = "E-mail ou senha não batem.";
-      }
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", () => showLogin("Até a próxima vaga.")));
 }
 
 mountBrand();
 clickSpark();
-dotGrid($("[data-gate]"));
-initLogin();
-if (session.valid()) {
-  refresh()
-    .then(open)
-    .catch(() => showLogin());
-} else {
-  showLogin();
-}
+startSession()
+  .then(open)
+  .catch(() => document.body.append(h("p", { className: "boot-error" }, "O painel do Radar não respondeu. Feche e abra o app de novo.")));

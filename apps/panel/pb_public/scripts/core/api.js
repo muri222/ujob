@@ -47,16 +47,7 @@ export const count = async (collection, filter) =>
 export const fileUrl = (record, name, thumb) =>
   new URL(`files/${record.collectionId}/${record.id}/${encodeURIComponent(name)}${thumb ? `?thumb=${thumb}` : ""}`, BASE).href;
 
-export async function login(identity, password) {
-  const result = await api("collections/_superusers/auth-with-password", {
-    method: "POST",
-    body: { identity, password },
-    auth: false,
-  });
-  session.save(result);
-  return result.record;
-}
-
-export async function refresh() {
-  session.save(await api("collections/_superusers/auth-refresh", { method: "POST" }));
+// sem tela de login: o Radar é local, a sessão vem do próprio painel
+export async function startSession() {
+  session.save(await api("radar/session", { auth: false }));
 }

@@ -10,7 +10,8 @@ Plano completo: doc "Planejamento: App de Prospecção Inteligente com IA". Este
 
 1. **Construir em cima do ujob, nunca do lado.** Antes de criar algo, procure se o ujob já faz. Reaproveite padrões, visual e helpers.
 2. **IA só onde precisa.** Tudo que dá para fazer com regra, SQL, regex ou biblioteca local é feito sem IA. IA entra para julgar, escrever e interpretar.
-3. **Claude primeiro.** Provedor padrão = Claude Code logado na máquina (`claude -p`). Alternativas pelo mesmo adapter: Codex CLI, Anthropic API, OpenRouter, DeepSeek, Ollama.
+3. **Só o Claude do usuário.** Toda IA usa o Claude Code logado no PC de quem instalou (`claude -p`), na assinatura dele. Sem API key, sem outro provedor.
+9. **Tudo local, sem servidor.** Banco, coleta e IA rodam no PC do usuário. Sem login, sem conta na nuvem, painel só em 127.0.0.1.
 4. **Nada sai sem o usuário saber.** Envio externo (e-mail, formulário) respeita o modo do perfil (Revisão, Híbrido, Auto), teto diário e fica registrado em `audit`.
 5. **Sem DM automática** em Instagram, WhatsApp, LinkedIn ou X. O app gera o texto e abre o link; o usuário envia.
 6. **Sem inventar.** Carta, CV e mensagem só usam fatos do CV mestre, da Mente ou da fonte. Nunca experiência ou skill inventada.
@@ -36,24 +37,17 @@ services/brain/        NOVO. Worker Python de IA: consome ai_tasks, chama proved
 services/hands/        NOVO (F2). Playwright + IMAP/SMTP: formulários ATS, envio e leitura de e-mail
 services/mcp/          NOVO (F2). Servidor MCP expondo o Radar para o Claude
 desktop/               NOVO. Shell Tauri: janela do painel + sobe PocketBase, scout, brain, hands
-infra/                 docker-compose e Caddy (ujob), mantidos para rodar em servidor
 ```
 
 ## Como rodar (Windows, local)
 
 Porta **8096** (a 8095 fica com o ujob antigo em Downloads).
 
-- Duplo clique em `Radar.lnk` (app Tauri em `desktop/`): sobe painel, scout e brain, abre a janela; fechar encerra tudo.
-- Ou `INICIAR.bat` (abre no navegador, processos ficam em janelas minimizadas).
+- Duplo clique em `Radar.lnk` (app Tauri em `desktop/`): na primeira vez cria o `.env` com senhas aleatórias; sobe painel, scout e brain, abre a janela; fechar encerra tudo.
+- Ou `INICIAR.bat` (abre no navegador; precisa do `.env` já criado).
 - Build do app: `cd desktop/src-tauri && cargo build --release`.
+- Sem login: a interface pega a sessão em `GET /api/radar/session`, que só responde pra própria página em 127.0.0.1/localhost. O superusuário `dono@radar.local` nasce sozinho com senha aleatória.
 
-Primeira vez:
-```
-copy .env.example .env        # preencher SCOUT_PASSWORD e BRAIN_PASSWORD (token_urlsafe(24))
-cd apps/panel && pocketbase.exe superuser upsert EMAIL SENHA
-cd services/scout && uv sync
-cd services/brain && uv sync
-```
 Testes: `uv run --group dev pytest` em cada serviço Python.
 
 ## Padrões do código
@@ -75,10 +69,12 @@ Testes: `uv run --group dev pytest` em cada serviço Python.
 - Fonte nova no scout: classe em `sources/`, entrada no `catalog/`, teste em `tests/`.
 
 **IA (services/brain)**
-- Toda chamada passa por `brain/providers.py` (`AIProvider.complete(task, prompt, schema)`).
+- Toda chamada passa por `brain/claude.py` (`complete(task, prompt, schema, tier)`), que roda `claude -p` sem ferramentas, MCP, skills nem CLAUDE.md (base ~1k tokens em vez de ~136k).
+- Níveis: `top` (opus) dossiê, conselheiro, simulador, carta · `best` (sonnet) julgar, nota de vaga · `cheap` (haiku) extração em lote, Mente, classificação.
+- Claude deslogado ou fora: as tarefas ficam na fila e a tela mostra o motivo. Limite da assinatura: tarefa falha com mensagem clara e botão de tentar de novo.
+- `cost` no `ai_log` é preço de tabela; na assinatura é consumo do limite, não cobrança. Não mostrar em reais/dólares como se fosse gasto.
 - Saída sempre JSON validado (pydantic). Falhou a validação: 1 nova tentativa com o erro, depois marca a tarefa como `failed`.
 - Prompts em `brain/prompts/*.md`, versionados, com variáveis explícitas. Nada de prompt espalhado no código.
-- Roteamento: tarefas pesadas (dossiê, conselheiro, simulador, carta) no melhor modelo; extração em lote (Mente, classificação) no mais barato.
 - Registrar provedor, modelo, tokens, custo e latência em `ai_log`.
 - Contexto da Mente montado por `brain/mind.py` com limite de tokens.
 
@@ -92,7 +88,7 @@ Novas: `profiles`, `segment_packs`, `campaigns`, `leads`, `lead_signals`, `dossi
 ## Segurança e dados
 
 - Nunca commitar `.env`, `pb_data/`, `.venv/`, `*.pyc`. Verificar `.gitignore` antes de todo commit.
-- Segredos de provedores (API keys, senha IMAP) no cofre do sistema via Tauri, nunca no banco em texto puro.
+- Segredos (senha IMAP/SMTP, chave do Google Places) no cofre do sistema via Tauri, nunca no banco em texto puro.
 - Leads: guardar só dado profissional e público, com `origem`. Botão "esquecer lead" apaga de verdade.
 - Respeitar robots.txt e o ritmo de coleta do scout. Não coletar LinkedIn, Indeed, Catho.
 

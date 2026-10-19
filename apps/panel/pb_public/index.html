@@ -127,19 +127,6 @@
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-2" /></symbol>
     </svg>
 
-    <section class="gate" hidden data-gate>
-      <form class="gate__card" data-login>
-        <div class="brand brand--gate" data-brand="full"></div>
-        <h1 class="sr-only">Entrar no ujob</h1>
-        <p class="gate__lead">As vagas não vão se encontrar sozinhas.</p>
-        <label class="field"><span>E-mail</span><input type="email" name="email" autocomplete="username" required /></label>
-        <label class="field"><span>Senha</span><input type="password" name="password" autocomplete="current-password" required /></label>
-        <input class="trap" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
-        <p class="gate__message" role="alert" data-gate-message></p>
-        <button class="btn btn--primary btn--lg">Entrar</button>
-      </form>
-    </section>
-
     <div class="shell" hidden data-shell>
       <header class="appbar">
         <a class="brand brand--bar" href="#inicio" aria-label="ujob, início" data-brand="mark"></a>
@@ -181,11 +168,11 @@
 
         <div class="side__foot">
           <p class="pulse" data-pulse><i></i><span>Conectando</span></p>
-          <div class="side__user">
+          <p class="pulse" data-claude><i></i><span>Checando o Claude</span></p>
+          <a class="side__user" href="#curriculo">
             <span class="side__avatar" data-user-initial></span>
             <span class="side__email" data-user></span>
-            <button class="side__logout" title="Sair" aria-label="Sair" data-logout><svg class="icon"><use href="#i-logout" /></svg></button>
-          </div>
+          </a>
         </div>
       </aside>
 

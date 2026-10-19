@@ -109,13 +109,12 @@ export async function requestFit(jobIds) {
 
 let brainCache = null;
 
-// motivo pelo qual a IA não vai responder, ou null se está tudo pronto
-export async function brainProblem() {
-  if (!brainCache || Date.now() - brainCache.at > 60_000) brainCache = { at: Date.now(), data: await api("radar/brain").catch(() => null) };
+// motivo pelo qual o Claude do PC não vai responder, ou null se está pronto
+export async function brainProblem(force = false) {
+  if (force || !brainCache || Date.now() - brainCache.at > 60_000) brainCache = { at: Date.now(), data: await api("radar/brain").catch(() => null) };
   const data = brainCache.data;
-  if (!data?.at || Date.now() - Date.parse(data.at) > 3 * 60_000) return "O brain está desligado. Abra o Radar pelo INICIAR.bat.";
-  const problems = Object.values(data.providers ?? {});
-  return problems.length && problems.every(Boolean) ? `Nenhuma IA disponível: ${problems[0]}` : null;
+  if (!data?.at || Date.now() - Date.parse(data.at) > 3 * 60_000) return "O serviço de IA do Radar está desligado. Feche e abra o app.";
+  return data.problem;
 }
 
 let statsCache = null;
