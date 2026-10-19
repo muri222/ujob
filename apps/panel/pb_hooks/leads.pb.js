@@ -28,12 +28,90 @@ routerAdd(
   "GET",
   "/api/radar/integrations",
   (e) => {
-    try {
-      const apify = $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
-      return e.json(200, { apify: { connected: true, verifiedAt: apify.getString("verifiedAt") } });
-    } catch {
-      return e.json(200, { apify: { connected: false } });
+    const { integration, apifyBudget, APIFY_KINDS } = require(`${__hooks}/feeds.js`);
+    const status = (kind) => {
+      const record = integration($app, kind);
+      return record ? { connected: true, verifiedAt: record.getString("verifiedAt") } : { connected: false };
+    };
+    const budget = apifyBudget($app);
+    const jobs = Object.fromEntries(
+      APIFY_KINDS.map((kind) => {
+        try {
+          return [kind, $app.findFirstRecordByFilter("sources", "kind = {:kind}", { kind }).getBool("active")];
+        } catch {
+          return [kind, false];
+        }
+      }),
+    );
+    const discovered = $app.countRecords("sources", $dbx.exp("config LIKE '%\"discovered\":true%'"));
+    return e.json(200, {
+      apify: { ...status("apify"), jobs, dailyItems: budget?.config.dailyItems ?? 300, usedToday: budget?.config.used ?? 0 },
+      adzuna: status("adzuna"),
+      jooble: status("jooble"),
+      discovered,
+    });
+  },
+  $apis.requireSuperuserAuth(),
+);
+
+// Adzuna e Jooble: chave grátis da própria pessoa, testada na hora
+routerAdd(
+  "POST",
+  "/api/radar/integrations/{kind}",
+  (e) => {
+    const kind = e.request.pathValue("kind");
+    const body = e.requestInfo().body;
+    let secret = "";
+    let test;
+    if (kind === "adzuna") {
+      const id = String(body.appId ?? "").trim();
+      const key = String(body.appKey ?? "").trim();
+      if (!/^[a-z0-9]{4,40}$/i.test(id) || !/^[a-z0-9]{8,80}$/i.test(key)) return e.json(400, { message: "Confira o App ID e a App Key da Adzuna." });
+      secret = `${id}:${key}`;
+      test = { url: `https://api.adzuna.com/v1/api/jobs/br/search/1?app_id=${id}&app_key=${key}&results_per_page=1&what=designer`, method: "GET", timeout: 20 };
+    } else if (kind === "jooble") {
+      const key = String(body.key ?? "").trim();
+      if (!/^[a-z0-9-]{8,80}$/i.test(key)) return e.json(400, { message: "Chave da Jooble inválida." });
+      secret = key;
+      test = { url: `https://br.jooble.org/api/${key}`, method: "POST", body: JSON.stringify({ keywords: "designer", location: "Brasil" }), headers: { "content-type": "application/json" }, timeout: 20 };
+    } else {
+      return e.json(404, { message: "Integração desconhecida." });
     }
+    const res = $http.send(test);
+    if (res.statusCode !== 200) return e.json(400, { message: `A ${kind === "adzuna" ? "Adzuna" : "Jooble"} recusou essa chave (${res.statusCode}).` });
+    let record;
+    try {
+      record = $app.findFirstRecordByFilter("integrations", "kind = {:kind}", { kind });
+    } catch {
+      record = new Record($app.findCollectionByNameOrId("integrations"));
+      record.set("kind", kind);
+    }
+    record.load({ secret: require(`${__hooks}/mail.js`).encrypt(secret), verifiedAt: new Date().toISOString().replace("T", " ") });
+    $app.save(record);
+    // a fonte roda já na próxima rodada
+    $app.db().newQuery("UPDATE sources SET runRequested = 1, active = 1 WHERE kind = {:kind}").bind({ kind }).execute();
+    return e.json(200, { ok: true });
+  },
+  $apis.requireSuperuserAuth(),
+);
+
+// LinkedIn / Indeed / Google Vagas via Apify: liga cada uma e define o teto diário de vagas (controla o gasto)
+routerAdd(
+  "POST",
+  "/api/radar/integrations/apify/jobs",
+  (e) => {
+    const { apifyBudget, APIFY_KINDS } = require(`${__hooks}/feeds.js`);
+    const budget = apifyBudget($app);
+    if (!budget) return e.json(400, { message: "Conecte a Apify primeiro." });
+    const body = e.requestInfo().body;
+    for (const kind of APIFY_KINDS) {
+      if (typeof body[kind] !== "boolean") continue;
+      $app.db().newQuery("UPDATE sources SET active = {:on} WHERE kind = {:kind}").bind({ on: body[kind], kind }).execute();
+    }
+    if (body.dailyItems !== undefined) budget.config.dailyItems = Math.max(0, Math.min(5000, parseInt(body.dailyItems, 10) || 0));
+    budget.record.set("config", budget.config);
+    $app.save(budget.record);
+    return e.json(200, { ok: true });
   },
   $apis.requireSuperuserAuth(),
 );
@@ -226,3 +304,19 @@ onRecordAfterUpdateSuccess((e) => {
   next.load({ type: "outreach", profile: task.getString("profile"), ref: lead.id, status: "queued", payload: { ...payload, dossie: result }, attempts: 0 });
   $app.save(next);
 }, "ai_tasks");
+
+// varre o acervo atrás de empresas em sistemas de vagas abertos (roda uma vez; a ingestão já faz pras vagas novas)
+routerAdd(
+  "POST",
+  "/api/radar/feeds/backfill",
+  (e) => {
+    const { findAts } = require(`${__hooks}/feeds.js`);
+    const rows = arrayOf(new DynamicModel({ url: "", applyUrl: "", company: "" }));
+    $app.db().newQuery("SELECT url, applyUrl, company FROM jobs WHERE url LIKE '%greenhouse%' OR url LIKE '%lever.co%' OR url LIKE '%ashbyhq%' OR url LIKE '%workable%' OR url LIKE '%smartrecruiters%' OR url LIKE '%recruitee%' OR url LIKE '%personio%' OR applyUrl LIKE '%greenhouse%' OR applyUrl LIKE '%lever.co%' OR applyUrl LIKE '%ashbyhq%' OR applyUrl LIKE '%workable%' OR applyUrl LIKE '%smartrecruiters%' OR applyUrl LIKE '%recruitee%' OR applyUrl LIKE '%personio%'").all(rows);
+    const { discover } = require(`${__hooks}/feeds.js`);
+    let created = 0;
+    for (let i = 0; i < rows.length; i += 200) created += discover($app, rows.slice(i, i + 200));
+    return e.json(200, { scanned: rows.length, created });
+  },
+  $apis.requireSuperuserAuth(),
+);

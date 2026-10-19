@@ -131,12 +131,14 @@ class CardListing(Source):
 @register("adzuna")
 class Adzuna(Source):
     def start(self):
-        settings = self.spider.settings
-        if not settings.get("ADZUNA_APP_ID"):
+        # chave vem do app (Config. da conta) ou do .env
+        app_id = self.config.get("app_id") or self.spider.settings.get("ADZUNA_APP_ID")
+        app_key = self.config.get("app_key") or self.spider.settings.get("ADZUNA_APP_KEY")
+        if not app_id:
             return
         for term in self.config.get("terms", []):
             yield self.request(
-                f"https://api.adzuna.com/v1/api/jobs/br/search/1?app_id={settings['ADZUNA_APP_ID']}&app_key={settings['ADZUNA_APP_KEY']}"
+                f"https://api.adzuna.com/v1/api/jobs/br/search/1?app_id={app_id}&app_key={app_key}"
                 f"&results_per_page=50&what={term}&sort_by=date&content-type=application/json",
                 self.parse,
             )
@@ -162,7 +164,7 @@ class Adzuna(Source):
 @register("jooble")
 class Jooble(Source):
     def start(self):
-        key = self.spider.settings.get("JOOBLE_KEY")
+        key = self.config.get("key") or self.spider.settings.get("JOOBLE_KEY")
         if not key:
             return
         for term in self.config.get("terms", []):

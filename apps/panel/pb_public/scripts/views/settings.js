@@ -1,7 +1,7 @@
 import { api, list, remove } from "../core/api.js";
 import { brainProblem, ctx, useProfile } from "../core/context.js";
 import { confirm, h, header, icon, toast } from "../core/dom.js";
-import { segmented } from "../core/ui.js";
+import { segmented, toggle } from "../core/ui.js";
 import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
 
@@ -181,6 +181,62 @@ export default async function settings(root, { signal }) {
     }
   });
 
+  // fontes de vagas: chaves grátis (Adzuna, Jooble) e LinkedIn / Indeed / Google Vagas via Apify
+  const keyBox = (kind, label, inputs, help, link) => {
+    const state = h("span", { className: "settings__state" }, integrations[kind]?.connected ? [h("span", { className: "tag tag--ok" }, icon("check"), "Conectada"), ` ${ago(integrations[kind].verifiedAt)}`] : h("span", { className: "tag" }, "Não conectada"));
+    const go = h("button", { type: "button", className: "btn btn--primary" }, icon("check"), "Conectar");
+    go.addEventListener("click", async () => {
+      go.disabled = true;
+      try {
+        await api(`radar/integrations/${kind}`, { method: "POST", body: Object.fromEntries(inputs.map(([key, node]) => [key, node.value])) });
+        inputs.forEach(([, node]) => (node.value = ""));
+        state.replaceChildren(h("span", { className: "tag tag--ok" }, icon("check"), "Conectada"), " as vagas chegam na próxima rodada");
+      } catch (error) {
+        state.replaceChildren(h("span", { className: "tag tag--down" }, error.message));
+      } finally {
+        go.disabled = false;
+      }
+    });
+    return h("div", { className: "answer" }, h("strong", {}, label), h("p", { className: "settings__help" }, help, " ", h("a", { href: link, target: "_blank", rel: "noopener noreferrer" }, "Pegar chave grátis", icon("external"))), h("div", { className: "import__row" }, ...inputs.map(([, node]) => node), go, state));
+  };
+  const apifyJobs = integrations.apify ?? {};
+  const BIG = [
+    ["apify_linkedin", "LinkedIn", "~US$ 0,40 por 1.000 vagas"],
+    ["apify_indeed", "Indeed", "~US$ 0,10 por 1.000 vagas"],
+    ["apify_google", "Google Vagas", "~US$ 0,09 por página de 10 (o mais caro)"],
+  ];
+  const bigToggles = BIG.map(([kind, label, price]) =>
+    h(
+      "div",
+      { className: "import__row" },
+      toggle(label, Boolean(apifyJobs.jobs?.[kind]), async (on) => {
+        if (!apifyJobs.connected) return toast("Conecte a Apify primeiro (seção abaixo).");
+        await api("radar/integrations/apify/jobs", { method: "POST", body: { [kind]: on } }).catch((error) => toast(error.message));
+        toast(on ? `${label} ligado. Entra nas suas buscas.` : `${label} desligado.`);
+      }),
+      h("strong", {}, label),
+      h("small", { className: "settings__help" }, price),
+    ),
+  );
+  const dailyItems = h("input", { type: "number", min: 0, max: 5000, step: 50, value: apifyJobs.dailyItems ?? 300 });
+  dailyItems.addEventListener("change", () => api("radar/integrations/apify/jobs", { method: "POST", body: { dailyItems: dailyItems.value } }).then(() => toast("Teto salvo.")).catch((error) => toast(error.message)));
+  const feeds = h(
+    "section",
+    { className: "panel settings" },
+    h("header", { className: "section__head" }, h("h2", {}, "Fontes de vagas"), h("small", {}, `${integrations.discovered ?? 0} empresas descobertas sozinhas`)),
+    h("p", { className: "settings__help" }, "O Radar já lê Gupy, Greenhouse, Lever, Ashby, Workable, Recruitee, Personio, Trampos, InfoJobs, Vagas.com, BNE e outros, de graça. Quando uma vaga aponta pra um sistema de vagas aberto, a empresa vira fonte sozinha."),
+    keyBox("adzuna", "Adzuna (grátis)", [["appId", h("input", { placeholder: "App ID", autocomplete: "off" })], ["appKey", h("input", { type: "password", placeholder: "App Key", autocomplete: "off" })]], "Agregador com milhares de vagas no Brasil. Cadastro grátis, 250 buscas por dia.", "https://developer.adzuna.com/signup"),
+    keyBox("jooble", "Jooble (grátis)", [["key", h("input", { type: "password", placeholder: "Chave da API", autocomplete: "off" })]], "Agregador que junta vagas de centenas de sites.", "https://jooble.org/api/about"),
+    h(
+      "div",
+      { className: "answer" },
+      h("strong", {}, "LinkedIn, Indeed e Google Vagas (via Apify)"),
+      h("p", { className: "settings__help" }, "Esses sites não têm API aberta: o Radar usa coletores da Apify com os seus créditos (US$ 5 grátis por mês) e só nas suas buscas, nunca em segundo plano. Os termos de uso do LinkedIn e do Indeed não permitem coleta automática; use por sua conta."),
+      ...bigToggles,
+      h("label", { className: "field" }, h("span", {}, `Máximo de vagas por dia somando as três (hoje: ${apifyJobs.usedToday ?? 0})`), dailyItems),
+    ),
+  );
+
   const claude = h("p", {}, "Checando…");
   brainProblem(true).then((problem) => claude.replaceChildren(problem ? h("span", { className: "tag tag--down" }, problem) : h("span", { className: "tag tag--ok" }, icon("check"), "Claude Code logado e pronto")));
 
@@ -203,6 +259,7 @@ export default async function settings(root, { signal }) {
       h("p", { className: "settings__help" }, "Crie uma conta grátis na Apify (US$ 5 de crédito por mês) e cole o token de API.", h("a", { href: "https://console.apify.com/settings/integrations", target: "_blank", rel: "noopener noreferrer" }, "Pegar meu token", icon("external"))),
       h("div", { className: "import__row" }, apifyToken, apifySave, apifyState),
     ),
+    feeds,
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "IA"), h("small", {}, "Usa o Claude Code logado neste PC, na sua assinatura")), claude),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Suas funções"), h("small", {}, "Renomeie em Preferências")), functions),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Exportar dados"), h("small", {}, "Tudo da função ativa num arquivo JSON")), h("div", { className: "import__row" }, exportGo)),

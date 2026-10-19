@@ -92,7 +92,9 @@ Novas: `profiles`, `segment_packs`, `campaigns`, `leads`, `lead_signals`, `dossi
 - Nunca commitar `.env`, `pb_data/`, `.venv/`, `*.pyc`. Verificar `.gitignore` antes de todo commit.
 - Segredos (senha IMAP/SMTP, chave do Google Places) no cofre do sistema via Tauri, nunca no banco em texto puro.
 - Leads: guardar só dado profissional e público, com `origem`. Botão "esquecer lead" apaga de verdade.
-- Respeitar robots.txt e o ritmo de coleta do scout. Não coletar LinkedIn, Indeed, Catho.
+- Respeitar robots.txt e o ritmo de coleta do scout. O scout nunca coleta LinkedIn, Indeed nem Catho direto.
+- LinkedIn, Indeed e Google Vagas só via Apify (`apify_*`), com o token e os créditos da pessoa, desligados por padrão, só em buscas (nunca na rodada de fundo) e com teto diário em `integrations.config`. Decisão do Murillo em 2026-10-19.
+- Fonte nova de empresa nasce sozinha: link de vaga pra Greenhouse/Lever/Ashby/Workable/Recruitee/Personio vira fonte (`pb_hooks/feeds.js`).
 
 ## Definição de pronto
 

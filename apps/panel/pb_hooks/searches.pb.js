@@ -103,21 +103,24 @@ routerAdd(
       .findRecordsByFilter("sources", `(${kinds}) && slug !~ 'gupy-estado-'`, "name", 0, 0)
       .filter((source) => ["gupy_search", "jsonld", "card_listing"].includes(source.getString("kind")) || source.getBool("active"));
 
+    const terms = searchTerms(search);
+    const { inject } = require(`${__hooks}/feeds.js`);
+    const rows = sources.map((source) => ({
+      id: source.id,
+      slug: source.getString("slug"),
+      name: source.getString("name"),
+      kind: source.getString("kind"),
+      group: source.getString("group"),
+      target: source.getString("target"),
+      site: source.getString("site"),
+      logoUrl: source.getString("logoUrl"),
+      config: JSON.parse(source.getString("config") || "{}") || {},
+      filtered: FILTERABLE.includes(source.getString("kind")),
+    }));
     return e.json(200, {
       now: now(),
-      search: { id: search.id, term: search.getString("term"), terms: searchTerms(search), state: search.getString("state"), city: search.getString("city"), category: search.getString("category") },
-      sources: sources.map((source) => ({
-        id: source.id,
-        slug: source.getString("slug"),
-        name: source.getString("name"),
-        kind: source.getString("kind"),
-        group: source.getString("group"),
-        target: source.getString("target"),
-        site: source.getString("site"),
-        logoUrl: source.getString("logoUrl"),
-        config: source.get("config") || {},
-        filtered: FILTERABLE.includes(source.getString("kind")),
-      })),
+      search: { id: search.id, term: search.getString("term"), terms, state: search.getString("state"), city: search.getString("city"), category: search.getString("category") },
+      sources: inject($app, rows, { search: true, terms: terms.length }),
     });
   },
   $apis.requireAuth("bots"),

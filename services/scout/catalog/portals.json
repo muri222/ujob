@@ -163,5 +163,54 @@
    "terms": "@geral"
   },
   "active": false
+ },
+ {
+  "slug": "workable-global",
+  "name": "Workable (todas as empresas)",
+  "kind": "workable_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://jobs.workable.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=jobs.workable.com&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "terms": "@geral"
+  }
+ },
+ {
+  "slug": "apify-linkedin",
+  "name": "LinkedIn (via Apify)",
+  "kind": "apify_linkedin",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.linkedin.com/jobs",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=linkedin.com&sz=128",
+  "intervalMinutes": 1440,
+  "active": false,
+  "config": {}
+ },
+ {
+  "slug": "apify-indeed",
+  "name": "Indeed (via Apify)",
+  "kind": "apify_indeed",
+  "group": "portal",
+  "target": "",
+  "site": "https://br.indeed.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=indeed.com&sz=128",
+  "intervalMinutes": 1440,
+  "active": false,
+  "config": {}
+ },
+ {
+  "slug": "apify-google",
+  "name": "Google Vagas (via Apify)",
+  "kind": "apify_google",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.google.com/search?q=vagas&ibp=htl;jobs",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=google.com&sz=128",
+  "intervalMinutes": 1440,
+  "active": false,
+  "config": {}
  }
 ]

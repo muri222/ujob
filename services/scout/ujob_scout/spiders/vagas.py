@@ -73,7 +73,7 @@ class VagasSpider(Spider):
         if run is None:
             return
         if failure.check(HttpError):
-            message = f"{failure.value.response.status} em {failure.request.url}"
+            message = f"{failure.value.response.status} em {failure.request.url.split('?')[0]}"
         else:
             message = f"{failure.type.__name__}: {failure.getErrorMessage()}"[:200]
         run["errors"].append(message)

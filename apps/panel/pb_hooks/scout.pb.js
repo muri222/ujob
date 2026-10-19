@@ -53,14 +53,15 @@ routerAdd(
         .db()
         .newQuery(
           `${columns}
-           WHERE active = 1 AND (runRequested = 1 OR lastRunAt = ''
+           WHERE active = 1 AND kind NOT LIKE 'apify_%' AND (runRequested = 1 OR lastRunAt = ''
              OR lastRunAt <= strftime('%Y-%m-%d %H:%M:%fZ', 'now', '-' || COALESCE(NULLIF(intervalMinutes, 0), 360) || ' minutes'))
            ORDER BY runRequested DESC, lastRunAt ASC`,
         )
         .all(rows);
     }
     const { now } = require(`${__hooks}/jobs.js`);
-    return e.json(200, { now: now(), sources: rows.map((row) => ({ ...row, config: row.config ? JSON.parse(row.config) : {} })) });
+    const { inject } = require(`${__hooks}/feeds.js`);
+    return e.json(200, { now: now(), sources: inject($app, rows.map((row) => ({ ...row, config: row.config ? JSON.parse(row.config) : {} }))) });
   },
   $apis.requireAuth("bots"),
 );

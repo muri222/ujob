@@ -126,6 +126,12 @@ function ingest(sourceId, rawJobs, searchId) {
     touch(app, untouched, stamp);
     remember(app, searchId, [...ids, ...untouched]);
   });
+  // vaga nova que aponta pra sistema de vagas aberto vira fonte daquela empresa
+  try {
+    result.discovered = require(`${__hooks}/feeds.js`).discover($app, [...unique.values()]);
+  } catch (error) {
+    console.log("descoberta de fontes falhou:", error);
+  }
   return result;
 }
 

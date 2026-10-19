@@ -1,0 +1,282 @@
+[
+ {
+  "slug": "greenhouse-discord",
+  "name": "Discord",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "discord",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-insomniac",
+  "name": "Insomniac Games",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "insomniac",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-2k",
+  "name": "2K",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "2k",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-laika",
+  "name": "LAIKA",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "laika",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-method",
+  "name": "Method Studios",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "method",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-gitlab",
+  "name": "GitLab",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "gitlab",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-figma",
+  "name": "Figma",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "figma",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-airbnb",
+  "name": "Airbnb",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "airbnb",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-duolingo",
+  "name": "Duolingo",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "duolingo",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "greenhouse-remote",
+  "name": "Remote",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "remote",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-palantir",
+  "name": "Palantir",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "palantir",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-binance",
+  "name": "Binance",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "binance",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-jumpcloud",
+  "name": "JumpCloud",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "jumpcloud",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "lever-ro",
+  "name": "Ro",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "ro",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-openai",
+  "name": "OpenAI",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "openai",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-notion",
+  "name": "Notion",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "notion",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-linear",
+  "name": "Linear",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "linear",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-ramp",
+  "name": "Ramp",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "ramp",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-supabase",
+  "name": "Supabase",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "supabase",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-plaid",
+  "name": "Plaid",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "plaid",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-replit",
+  "name": "Replit",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "replit",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-elevenlabs",
+  "name": "ElevenLabs",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "elevenlabs",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-synthesia",
+  "name": "Synthesia",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "synthesia",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-cursor",
+  "name": "Cursor",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "cursor",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-perplexity",
+  "name": "Perplexity",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "perplexity",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "ashby-krea",
+  "name": "Krea",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "krea",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "workable-huggingface",
+  "name": "Hugging Face",
+  "kind": "workable",
+  "group": "empresa",
+  "target": "huggingface",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ },
+ {
+  "slug": "recruitee-bunq",
+  "name": "bunq",
+  "kind": "recruitee",
+  "group": "empresa",
+  "target": "bunq",
+  "site": "",
+  "logoUrl": "",
+  "intervalMinutes": 720
+ }
+]

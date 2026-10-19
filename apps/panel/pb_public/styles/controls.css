@@ -1227,6 +1227,7 @@
 
 .pref__control :is(input:not([type="range"]):not([type="checkbox"]), select, textarea),
 .answer textarea,
+.answer .import__row input,
 .prefs__body > .import__row input {
   width: 100%;
   min-height: 36px;

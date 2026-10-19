@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-const SEARCHABLE = ["gupy_search", "jsonld", "card_listing", "adzuna", "jooble"];
+const SEARCHABLE = ["gupy_search", "jsonld", "card_listing", "adzuna", "jooble", "workable_search", "apify_linkedin", "apify_indeed", "apify_google"];
 const FILTERABLE = ["greenhouse", "lever", "ashby", "github", "remoteok", "himalayas", "jobicy", "arbeitnow", "wwr", "trampos", "programathor"];
 
 const AREA_TERMS = {
