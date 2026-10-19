@@ -44,7 +44,11 @@ routerAdd(
       }),
     );
     const discovered = $app.countRecords("sources", $dbx.exp("config LIKE '%\"discovered\":true%'"));
+    let ai = { provider: "claude", models: {}, hasKey: false };
+    const aiRecord = integration($app, "ai");
+    if (aiRecord) ai = { ...(JSON.parse(aiRecord.getString("config") || "{}") || {}), hasKey: Boolean(aiRecord.getString("secret")) };
     return e.json(200, {
+      ai,
       apify: { ...status("apify"), jobs, dailyItems: budget?.config.dailyItems ?? 300, usedToday: budget?.config.used ?? 0 },
       adzuna: status("adzuna"),
       jooble: status("jooble"),
@@ -331,4 +335,53 @@ routerAdd(
     return e.json(200, { scanned: rows.length, created });
   },
   $apis.requireSuperuserAuth(),
+);
+
+// IA escolhida (Config. da conta): Claude Code logado (padrão), ChatGPT/Codex logado ou API com chave
+routerAdd(
+  "POST",
+  "/api/radar/integrations/ai",
+  (e) => {
+    const PROVIDERS = ["claude", "codex", "openrouter", "deepseek", "openai"];
+    const body = e.requestInfo().body;
+    const provider = PROVIDERS.includes(body.provider) ? body.provider : "claude";
+    const clean = (value) => String(value ?? "").trim().slice(0, 120);
+    const models = { top: clean(body.models?.top), best: clean(body.models?.best), cheap: clean(body.models?.cheap) };
+    const baseUrl = /^https:\/\/[^\s"<>]{4,200}$/.test(String(body.baseUrl ?? "").trim()) ? String(body.baseUrl).trim() : "";
+    let record;
+    try {
+      record = $app.findFirstRecordByFilter("integrations", "kind = 'ai'", {});
+    } catch {
+      record = new Record($app.findCollectionByNameOrId("integrations"));
+      record.set("kind", "ai");
+    }
+    const key = String(body.key ?? "").trim();
+    if (key) {
+      if (!/^[\w.:\-]{8,300}$/.test(key)) return e.json(400, { message: "Chave da API com formato estranho." });
+      record.set("secret", require(`${__hooks}/mail.js`).encrypt(key));
+    }
+    if (["openrouter", "deepseek", "openai"].includes(provider) && !key && !record.getString("secret")) return e.json(400, { message: "Cole a chave da API." });
+    record.set("config", { provider, models, baseUrl });
+    record.set("verifiedAt", new Date().toISOString().replace("T", " "));
+    $app.save(record);
+    return e.json(200, { ok: true });
+  },
+  $apis.requireSuperuserAuth(),
+);
+
+// o serviço de IA (conta brain) lê a escolha com a chave decifrada; nunca vai pra tela
+routerAdd(
+  "GET",
+  "/api/radar/brain/ai",
+  (e) => {
+    try {
+      const record = $app.findFirstRecordByFilter("integrations", "kind = 'ai'", {});
+      const config = JSON.parse(record.getString("config") || "{}") || {};
+      const secret = record.getString("secret");
+      return e.json(200, { ...config, key: secret ? $security.decrypt(secret, $os.getenv("RADAR_SECRET")) : "" });
+    } catch {
+      return e.json(200, { provider: "claude" });
+    }
+  },
+  $apis.requireAuth("bots"),
 );

@@ -430,7 +430,7 @@ export default async function chat(root, { signal, query }) {
         { className: "chat__main" },
         h("header", { className: "chat__head" }, titleNode, h("div", { className: "import__row" }, finishButton, modelSelect)),
         scroller,
-        h("div", { className: "chat__composer" }, tray, h("div", { className: "chat__row" }, attachButton, input, micButton, sendButton), picker, h("small", { className: "chat__hint" }, "Usa o Claude Code logado neste PC, na sua assinatura. Pode pesquisar na web e ler seus anexos.")),
+        h("div", { className: "chat__composer" }, tray, h("div", { className: "chat__row" }, attachButton, input, micButton, sendButton), picker, h("small", { className: "chat__hint" }, "Usa a IA escolhida em Config. da conta (padrão: Claude Code logado). Pode pesquisar na web e ler seus anexos.")),
       ),
     ),
   );

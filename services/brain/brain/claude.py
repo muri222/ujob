@@ -1,4 +1,5 @@
-"""Toda IA do Radar passa por aqui: o Claude Code logado no PC do usuário (claude -p), na assinatura dele."""
+"""Toda IA do Radar passa por aqui. Padrão: o Claude Code logado no PC do usuário (claude -p), na assinatura dele.
+Se a pessoa escolheu outra IA em Config. da conta (ChatGPT/Codex, OpenRouter, DeepSeek...), providers.py atende."""
 
 import json
 import os
@@ -8,6 +9,8 @@ import time
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
+
+from . import providers
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -28,7 +31,9 @@ class TaskFailed(Exception):
 
 
 def problem() -> str | None:
-    """None se o Claude Code está pronto, senão o motivo em PT-BR pra mostrar na tela."""
+    """None se a IA escolhida está pronta, senão o motivo em PT-BR pra mostrar na tela."""
+    if providers.name() != "claude":
+        return providers.problem()
     if not shutil.which("claude"):
         return "Claude Code não está instalado neste PC"
     try:
@@ -51,6 +56,11 @@ def friendly(message: str) -> str:
 def ask(prompt: str, schema: dict, tier: str, tools: str = "") -> tuple[str, dict]:
     """Uma chamada crua. Sem MCP, skills nem CLAUDE.md: só o prompt (~1k tokens de base em vez de ~136k).
     tools="WebSearch,WebFetch" libera a web, e aí gasta bem mais da assinatura."""
+    if providers.name() != "claude":
+        try:
+            return providers.ask(prompt, schema, tier, tools, SYSTEM)
+        except providers.ProviderError as error:
+            raise TaskFailed(providers.friendly(str(error)), [{"provider": providers.name(), "ok": False, "error": str(error)[:2000]}]) from error
     command = [
         "claude", "-p", "--output-format", "json", "--model", TIERS[tier],
         "--tools", tools, *(["--allowedTools", tools] if tools else []), "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",

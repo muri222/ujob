@@ -8,7 +8,7 @@ import requests
 import truststore
 from dotenv import load_dotenv
 
-from . import chat, claude
+from . import chat, claude, providers
 from .panel import Panel
 from .tasks import CHAT, LOCAL, TASKS
 
@@ -57,9 +57,17 @@ state = {"problem": None}
 def lane(name: str, kinds: set[str], reports: bool) -> None:
     """Uma pista: pega tarefas só dos tipos dela. A geral também checa e reporta o Claude."""
     panel = connect()
-    checked, reported = 0.0, 0.0
+    checked, reported, configured = 0.0, 0.0, 0.0
     while True:
         try:
+            if reports and time.monotonic() - configured > RECHECK_EVERY:
+                # IA escolhida em Config. da conta: troca na hora, sem reiniciar
+                previous = providers.name()
+                providers.configure(panel.ai_config())
+                configured = time.monotonic()
+                if providers.name() != previous:
+                    log.info("IA: %s", providers.LABEL.get(providers.name(), providers.name()))
+                    checked = 0.0
             if reports and time.monotonic() - checked > (RECHECK_EVERY if state["problem"] else CHECK_EVERY):
                 state["problem"], checked, reported = claude.problem(), time.monotonic(), 0.0
                 log.info("claude: %s", state["problem"] or "pronto")

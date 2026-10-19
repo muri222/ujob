@@ -7,7 +7,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from . import claude
+from . import claude, providers
 from .prompts import render
 
 TOOLS = "Read,WebSearch,WebFetch"
@@ -37,6 +37,8 @@ def reply(task: dict, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]
     name = (payload["context"].get("perfil") or {}).get("nome") or "o usuário"
     files_dir = Path(payload["files_dir"])
     files_dir.mkdir(parents=True, exist_ok=True)
+    if providers.name() != "claude":
+        return reply_other(payload, tier, name, files_dir, on_text)
     command = [
         "claude", "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
         "--model", claude.TIERS[tier], "--tools", TOOLS, "--allowedTools", "WebSearch,WebFetch",
@@ -88,3 +90,18 @@ def reply(task: dict, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]
         raise claude.TaskFailed(claude.friendly(str(error)), [{**entry, "error": str(error)[:2000]}])
     answer = final.get("result") or text
     return {"text": answer, "model": entry["model"], "tokens": entry["tokensOut"]}, [entry]
+
+
+def reply_other(payload: dict, tier: str, name: str, files_dir: Path, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]:
+    """Chat com ChatGPT (Codex) ou API: sem a ferramenta Read, os anexos viram texto aqui no PC."""
+    names = [item for message in payload["history"] for item in message.get("files") or []]
+    attached, images = providers.attachments_text(files_dir, names)
+    history = {**payload, "history": [{**message, "files": []} for message in payload["history"]]}
+    prompt = build_prompt(history) + (f"\n\n<anexos>\n{attached}\n</anexos>" if attached else "")
+    try:
+        text, entry, stopped = providers.chat(system_prompt(payload, name), prompt, tier, images, on_text, str(files_dir))
+    except providers.ProviderError as error:
+        raise claude.TaskFailed(providers.friendly(str(error)), [{"provider": providers.name(), "ok": False, "error": str(error)[:2000]}]) from error
+    entry["ok"] = True
+    suffix = "\n\n*(resposta interrompida)*" if stopped else ""
+    return {"text": text.rstrip() + suffix, "model": entry["model"], "tokens": entry["tokensOut"]}, [entry]

@@ -24,6 +24,10 @@ class Panel:
         except requests.HTTPError:
             return True
 
+    def ai_config(self) -> dict:
+        """IA escolhida em Config. da conta (provedor, modelos, chave já decifrada)."""
+        return self._call("GET", "radar/brain/ai")
+
     def status(self, problem: str | None) -> dict:
         return self._call("POST", "radar/brain/status", json={"problem": problem})
 

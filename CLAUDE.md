@@ -10,7 +10,7 @@ Plano completo: doc "Planejamento: App de Prospecção Inteligente com IA". Este
 
 1. **Construir em cima do ujob, nunca do lado.** Antes de criar algo, procure se o ujob já faz. Reaproveite padrões, visual e helpers.
 2. **IA só onde precisa.** Tudo que dá para fazer com regra, SQL, regex ou biblioteca local é feito sem IA. IA entra para julgar, escrever e interpretar.
-3. **Só o Claude do usuário.** Toda IA usa o Claude Code logado no PC de quem instalou (`claude -p`), na assinatura dele. Sem API key, sem outro provedor.
+3. **IA da escolha do usuário, Claude por padrão.** Padrão: Claude Code logado (`claude -p`), na assinatura dele. Em Config. da conta a pessoa pode trocar por ChatGPT logado (Codex CLI) ou API com chave (OpenRouter, DeepSeek, compatível com OpenAI) (decisão do Murillo em 2026-10-19). Tudo passa por `brain/claude.py`, que delega a `brain/providers.py` quando não é Claude. Chave cifrada no banco, nunca na tela.
 9. **Tudo local, sem servidor.** Banco, coleta e IA rodam no PC do usuário. Sem login, sem conta na nuvem, painel só em 127.0.0.1.
 4. **Nada sai sem o usuário saber.** Envio externo (e-mail, formulário) respeita o modo do perfil (Revisão, Híbrido, Auto), teto diário e fica registrado em `audit`.
 5. **Sem DM automática** em Instagram, WhatsApp, LinkedIn ou X. O app gera o texto e abre o link; o usuário envia.
