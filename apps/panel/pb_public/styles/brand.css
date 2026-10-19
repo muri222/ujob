@@ -1,0 +1,259 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--brand);
+  --mascot-bg: var(--bg);
+}
+
+.mascot {
+  display: block;
+  flex: none;
+  overflow: visible;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mascot--mark {
+  width: 34px;
+  height: 34px;
+}
+
+.mascot--word {
+  width: auto;
+  height: 20px;
+  cursor: default;
+}
+
+.mascot--full {
+  width: min(100%, 230px);
+  height: auto;
+}
+
+.mascot__ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 80;
+}
+
+.mascot__tuft,
+.mascot__cap,
+.mascot__eye,
+.mascot__word,
+.mascot__plug {
+  fill: currentColor;
+}
+
+.mascot__cap,
+.mascot__tuft {
+  stroke: currentColor;
+  stroke-width: 10;
+  stroke-linejoin: round;
+}
+
+.mascot__cup {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.mascot__wire,
+.mascot__signal {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: var(--wire, 30);
+}
+
+.mascot__wire {
+  stroke: currentColor;
+}
+
+.mascot__signal {
+  stroke: var(--mascot-bg);
+  stroke-dasharray: 7 93;
+  stroke-width: calc(var(--wire, 30) * 0.55);
+  animation: signal 2.6s linear infinite;
+}
+
+.mascot--full {
+  --wire: 18;
+}
+
+.mascot__look {
+  transition: transform 160ms var(--ease);
+}
+
+.mascot__eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 6s infinite;
+  transition: transform 220ms var(--ease);
+}
+
+.mascot__eye + .mascot__eye {
+  animation-delay: 40ms;
+}
+
+.mascot__plug {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.mascot:hover .mascot__cup {
+  animation: beat 520ms var(--ease) 2;
+}
+
+.mascot.is-happy {
+  animation: hop 900ms var(--spring);
+}
+
+.mascot.is-happy .mascot__eye {
+  transform: scaleY(0.3);
+  animation: none;
+}
+
+.mascot.is-happy .mascot__plug {
+  animation: wiggle 600ms var(--ease);
+}
+
+.mascot.is-shy .mascot__eye {
+  transform: scaleY(0.1);
+  animation: none;
+}
+
+.mascot.is-shy .mascot__look {
+  transform: translate(0, 30px);
+}
+
+.is-collecting .mascot__signal {
+  animation-duration: 0.9s;
+}
+
+.is-collecting .mascot__cup {
+  animation: beat 900ms var(--ease) infinite;
+}
+
+.mascot--full .mascot__wire {
+  stroke-dasharray: 100;
+  animation: draw 1.4s var(--ease) 300ms both;
+  --length: 100;
+}
+
+.mascot--full .mascot__signal {
+  animation-delay: 1.6s;
+}
+
+.mascot--full .mascot__word {
+  animation: fade 700ms var(--ease) 900ms both;
+}
+
+.mascot--full .mascot__plug {
+  animation: pop 400ms var(--spring) 1.5s both;
+}
+
+.brand--side,
+.brand--bar {
+  gap: 9px;
+}
+
+.brand--side {
+  --mascot-bg: var(--canvas);
+}
+
+.brand--side .mascot--mark {
+  width: 38px;
+  height: 38px;
+}
+
+.brand--side .mascot--word {
+  height: 21px;
+}
+
+.brand--bar .mascot--mark {
+  width: 30px;
+  height: 30px;
+}
+
+.brand--bar .mascot--word {
+  height: 17px;
+}
+
+.brand--gate {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.mascot-slot {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.mascot-slot .mascot--mark {
+  width: 72px;
+  height: 72px;
+  color: var(--brand);
+}
+
+.lost .mascot--mark {
+  width: 120px;
+  height: 120px;
+  color: var(--brand);
+}
+
+@keyframes signal {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    transform: none;
+  }
+  95% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes beat {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  35% {
+    transform: translateY(-14%) rotate(-6deg);
+  }
+  65% {
+    transform: translateY(2%) rotate(3deg);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: rotate(18deg) scale(1.2);
+  }
+  60% {
+    transform: rotate(-12deg);
+  }
+}

@@ -1,0 +1,166 @@
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(154 122 79 / 45%);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(154 122 79 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(154 122 79 / 0%);
+  }
+}
+
+@keyframes pulse-light {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 60%);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(255 255 255 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0%);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--length, 200);
+  }
+}
+
+@keyframes drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-38px) scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.08, 0.9);
+  }
+  75% {
+    transform: translateY(-3px) scale(0.96, 1.04);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(page) {
+  animation: 120ms var(--ease) both view-out;
+}
+
+::view-transition-new(page) {
+  animation: 340ms var(--ease) both view-in;
+}
+
+::view-transition-group(page) {
+  animation-duration: 0s;
+}
+
+@keyframes view-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+}
+
+.side {
+  view-transition-name: side;
+}
+
+.appbar {
+  view-transition-name: appbar;
+}
+
+.tabbar {
+  view-transition-name: tabbar;
+}
+
+.main {
+  view-transition-name: page;
+}
+
+::view-transition-group(side),
+::view-transition-group(appbar),
+::view-transition-group(tabbar) {
+  animation: none;
+}
+
+.stagger > * {
+  animation: fade 420ms var(--ease) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 28ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,461 @@
+[
+ {
+  "slug": "gupy-estado-ac",
+  "name": "Gupy · Acre",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Acre",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-al",
+  "name": "Gupy · Alagoas",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Alagoas",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ap",
+  "name": "Gupy · Amapá",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Amapá",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-am",
+  "name": "Gupy · Amazonas",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Amazonas",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ba",
+  "name": "Gupy · Bahia",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Bahia",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ce",
+  "name": "Gupy · Ceará",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Ceará",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-df",
+  "name": "Gupy · Distrito Federal",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Distrito Federal",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-es",
+  "name": "Gupy · Espírito Santo",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Espírito Santo",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-go",
+  "name": "Gupy · Goiás",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Goiás",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ma",
+  "name": "Gupy · Maranhão",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Maranhão",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-mt",
+  "name": "Gupy · Mato Grosso",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Mato Grosso",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ms",
+  "name": "Gupy · Mato Grosso do Sul",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Mato Grosso do Sul",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-mg",
+  "name": "Gupy · Minas Gerais",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Minas Gerais",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-pa",
+  "name": "Gupy · Pará",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Pará",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-pb",
+  "name": "Gupy · Paraíba",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Paraíba",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-pr",
+  "name": "Gupy · Paraná",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Paraná",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-pe",
+  "name": "Gupy · Pernambuco",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Pernambuco",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-pi",
+  "name": "Gupy · Piauí",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Piauí",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-rj",
+  "name": "Gupy · Rio de Janeiro",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Rio de Janeiro",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-rn",
+  "name": "Gupy · Rio Grande do Norte",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Rio Grande do Norte",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-rs",
+  "name": "Gupy · Rio Grande do Sul",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Rio Grande do Sul",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-ro",
+  "name": "Gupy · Rondônia",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Rondônia",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-rr",
+  "name": "Gupy · Roraima",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Roraima",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-sc",
+  "name": "Gupy · Santa Catarina",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Santa Catarina",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-sp",
+  "name": "Gupy · São Paulo",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "São Paulo",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-se",
+  "name": "Gupy · Sergipe",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Sergipe",
+   "pages": 8
+  }
+ },
+ {
+  "slug": "gupy-estado-to",
+  "name": "Gupy · Tocantins",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": [
+    ""
+   ],
+   "state": "Tocantins",
+   "pages": 8
+  }
+ }
+]

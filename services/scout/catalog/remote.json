@@ -1,0 +1,80 @@
+[
+ {
+  "slug": "remoteok",
+  "name": "Remote OK",
+  "kind": "remoteok",
+  "group": "remoto",
+  "target": "",
+  "site": "https://remoteok.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=remoteok.com&sz=128",
+  "intervalMinutes": 240
+ },
+ {
+  "slug": "himalayas",
+  "name": "Himalayas",
+  "kind": "himalayas",
+  "group": "remoto",
+  "target": "",
+  "site": "https://himalayas.app",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=himalayas.app&sz=128",
+  "intervalMinutes": 240,
+  "config": {
+   "pages": 5
+  }
+ },
+ {
+  "slug": "jobicy",
+  "name": "Jobicy",
+  "kind": "jobicy",
+  "group": "remoto",
+  "target": "",
+  "site": "https://jobicy.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=jobicy.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "jobicy-latam",
+  "name": "Jobicy LatAm",
+  "kind": "jobicy",
+  "group": "remoto",
+  "target": "",
+  "site": "https://jobicy.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=jobicy.com&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "geo": "latam"
+  }
+ },
+ {
+  "slug": "arbeitnow",
+  "name": "Arbeitnow",
+  "kind": "arbeitnow",
+  "group": "remoto",
+  "target": "",
+  "site": "https://www.arbeitnow.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.arbeitnow.com&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "pages": 3
+  }
+ },
+ {
+  "slug": "weworkremotely",
+  "name": "We Work Remotely",
+  "kind": "wwr",
+  "group": "remoto",
+  "target": "",
+  "site": "https://weworkremotely.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=weworkremotely.com&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "feeds": [
+    "https://weworkremotely.com/remote-jobs.rss",
+    "https://weworkremotely.com/categories/remote-customer-support-jobs.rss",
+    "https://weworkremotely.com/categories/remote-sales-and-marketing-jobs.rss",
+    "https://weworkremotely.com/categories/remote-design-jobs.rss",
+    "https://weworkremotely.com/categories/remote-management-and-finance-jobs.rss"
+   ]
+  }
+ }
+]

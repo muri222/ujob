@@ -1,0 +1,261 @@
+.kanban {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(250px, 1fr);
+  gap: 12px;
+  margin: 0 calc(-1 * clamp(24px, 4vw, 56px));
+  padding: 0 clamp(24px, 4vw, 56px) 16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.kcol {
+  display: flex;
+  flex-direction: column;
+  min-height: 60vh;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--canvas);
+  scroll-snap-align: start;
+  transition: background-color var(--quick), box-shadow var(--quick);
+  animation: fade 480ms var(--ease) both;
+  animation-delay: calc(var(--i) * 50ms);
+}
+
+.kcol.is-target {
+  background: var(--brand-soft);
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+.kcol header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 8px;
+  padding: 4px 6px 12px;
+}
+
+.kcol header strong {
+  font-weight: 700;
+}
+
+.kcol header small {
+  grid-column: 1 / -1;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.kcol__count {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.kcol--contratado header strong {
+  color: var(--ok);
+}
+
+.kcol__list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  flex: 1;
+}
+
+.kcard {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: box-shadow var(--quick), border-color var(--quick), opacity var(--quick);
+}
+
+.kcard:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow);
+}
+
+.kcard:focus-visible {
+  outline-offset: 0;
+}
+
+.kcard.is-lifted {
+  opacity: 0.35;
+}
+
+.kcard--ghost {
+  position: fixed;
+  z-index: 100;
+  margin: 0;
+  box-shadow: var(--shadow-lg);
+  cursor: grabbing;
+  pointer-events: none;
+}
+
+.kcard__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.kcard > strong {
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.kcard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.kcard__meta .tag {
+  height: 22px;
+  font-size: 11px;
+}
+
+.kcard__meta time {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.kdetail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kdetail div {
+  display: grid;
+}
+
+.drawer__form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 820px) {
+  .kanban {
+    grid-auto-columns: 82vw;
+    margin: 0 -16px;
+    padding: 0 16px 16px;
+    scroll-snap-type: x mandatory;
+  }
+}
+
+.prep {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--sunken);
+}
+
+.prep > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.prep > summary::-webkit-details-marker {
+  display: none;
+}
+
+.prep > summary .icon {
+  color: var(--brand);
+}
+
+.prep__count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.prep__meter {
+  width: 64px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.prep__meter i {
+  display: block;
+  width: var(--p, 0%);
+  height: 100%;
+  background: var(--brand);
+  transition: width 500ms var(--ease);
+}
+
+.prep__list {
+  display: grid;
+  gap: 2px;
+  padding: 0 8px 8px;
+}
+
+.prep__list label {
+  display: flex;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.prep__list label:hover {
+  background: var(--bg);
+}
+
+.prep__list input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--brand);
+}
+
+.prep__list input:checked + span {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+
+.prep__questions {
+  display: grid;
+  gap: 6px;
+  padding: 0 14px 14px;
+}
+
+.prep__q {
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.prep__q summary {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prep__q p {
+  padding: 0 12px 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+}

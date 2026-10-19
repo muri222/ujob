@@ -1,0 +1,23 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$PANEL_DOMAIN} {
+	encode zstd gzip
+	header -Server
+	header -Via
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+	@outsider not remote_ip {$PANEL_ALLOWED_IPS}
+	respond @outsider "Vaga preenchida. Tenta outra porta." 404
+
+	@scout path /api/scout/*
+	handle @scout {
+		respond "Essa entrada é só do coletor." 404
+	}
+
+	@assets path /scripts/* /styles/* /assets/*
+	header @assets Cache-Control "public, max-age=3600"
+
+	reverse_proxy panel:8090
+}

@@ -1,0 +1,22 @@
+{
+  "name": "ujob",
+  "short_name": "ujob",
+  "description": "Vagas de emprego de todos os portais num lugar só.",
+  "lang": "pt-BR",
+  "start_url": "./#inicio",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f2ed",
+  "theme_color": "#f5f2ed",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/mark.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Buscar vagas", "url": "./#buscar" },
+    { "name": "Maratona", "url": "./#maratona" },
+    { "name": "Candidaturas", "url": "./#funil" }
+  ]
+}

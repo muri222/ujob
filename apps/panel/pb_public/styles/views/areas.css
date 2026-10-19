@@ -1,0 +1,142 @@
+.area-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.area-card {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 18px 18px 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--quick), box-shadow 260ms, transform 300ms var(--spring);
+}
+
+.area-card .cat {
+  margin-bottom: 8px;
+  transition: transform 400ms var(--spring), background-color var(--quick), color var(--quick);
+}
+
+.area-card strong {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.area-card > span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.area-card__bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: var(--share);
+  height: 4px;
+  background: var(--brand);
+  transform-origin: left;
+  animation: grow-x 1s var(--ease) both;
+  animation-delay: 200ms;
+}
+
+.area-card:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow);
+  transform: translateY(-3px);
+}
+
+.area-card:hover .cat {
+  background: var(--brand);
+  color: var(--on-brand);
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.map {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr);
+  gap: 32px;
+  align-items: center;
+  padding: clamp(20px, 3vw, 36px);
+}
+
+.map .brmap {
+  max-width: 540px;
+}
+
+.map__detail {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.map__number {
+  color: var(--brand-ink);
+  font-size: clamp(48px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.map__detail > span {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.map__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.map__rank {
+  display: grid;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.map__rank li > :is(a, button) {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  margin: 0 -10px;
+  box-sizing: content-box;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+  transition: background-color var(--quick), color var(--quick);
+}
+
+.map__rank li > :is(a, button):hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.map__cities {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.map__cities .map__rank {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.map__skeleton {
+  height: 160px;
+}
+
+.map__rank b {
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .map {
+    grid-template-columns: 1fr;
+  }
+}

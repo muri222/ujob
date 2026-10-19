@@ -1,0 +1,52 @@
+.explorer {
+  display: grid;
+  gap: 10px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.explorer__top .sentence {
+  line-height: 1.6;
+}
+
+.explorer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.explorer__bar .segmented button {
+  height: 28px;
+  font-size: 12.5px;
+}
+
+.explorer__bar .btn {
+  height: 34px;
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.toolbar-row .search {
+  min-width: 220px;
+}
+
+.more {
+  display: flex;
+  margin: 24px auto 0;
+}

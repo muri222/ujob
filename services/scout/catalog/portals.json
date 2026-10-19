@@ -1,0 +1,167 @@
+[
+ {
+  "slug": "vagas-com-br",
+  "name": "Vagas.com",
+  "kind": "card_listing",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.vagas.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.vagas.com.br&sz=128",
+  "intervalMinutes": 180,
+  "config": {
+   "list": "https://www.vagas.com.br/vagas-de-{term}",
+   "terms": "@base",
+   "card": "li.vaga",
+   "fields": {
+    "link": "h2.cargo a::attr(href)",
+    "title": "h2.cargo a::attr(title)",
+    "company": ".emprVaga::text",
+    "logo": ".logoEmpresa img::attr(src)",
+    "place": ".vaga-local::text",
+    "summary": ".detalhes ::text",
+    "date": ".data-publicacao::text",
+    "hints": ".nivelVaga::text"
+   }
+  }
+ },
+ {
+  "slug": "trabalha-brasil",
+  "name": "Trabalha Brasil",
+  "kind": "card_listing",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.trabalhabrasil.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.trabalhabrasil.com.br&sz=128",
+  "intervalMinutes": 180,
+  "config": {
+   "list": "https://www.trabalhabrasil.com.br/vagas-de-emprego/{term}",
+   "list_city": "https://www.trabalhabrasil.com.br/vagas-de-emprego-em-{city}-{uf}/{term}",
+   "terms": "@base",
+   "card": "article.job-card",
+   "strip_title": "^vaga de\\s+",
+   "fields": {
+    "link": "a.job-link::attr(href)",
+    "title": ".job-title::text",
+    "company": ".job-company ::text",
+    "place": ".job-location ::text",
+    "hints": ".workplace::text, .employment-type::text"
+   }
+  }
+ },
+ {
+  "slug": "infojobs",
+  "name": "InfoJobs",
+  "kind": "jsonld",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.infojobs.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.infojobs.com.br&sz=128",
+  "intervalMinutes": 180,
+  "config": {
+   "list": "https://www.infojobs.com.br/vagas-de-emprego-{term}.aspx?campo=griddate&orden=desc",
+   "link": "/vaga-de-[^\"'?#]+__\\d+\\.aspx",
+   "terms": "@base",
+   "budget": 80
+  }
+ },
+ {
+  "slug": "bne",
+  "name": "BNE",
+  "kind": "jsonld",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.bne.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.bne.com.br&sz=128",
+  "intervalMinutes": 240,
+  "config": {
+   "list": "https://www.bne.com.br/vagas-de-emprego/{term}",
+   "link": "^/vaga-de-emprego-na-area-[^?#]+/\\d+$",
+   "terms": "@base",
+   "budget": 80
+  }
+ },
+ {
+  "slug": "empregos-com-br",
+  "name": "Empregos.com.br",
+  "kind": "jsonld",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.empregos.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.empregos.com.br&sz=128",
+  "intervalMinutes": 240,
+  "config": {
+   "list": "https://www.empregos.com.br/vagas/{term}",
+   "link": "^/vaga/\\d+/",
+   "terms": "@base",
+   "budget": 80
+  }
+ },
+ {
+  "slug": "gupy-portal",
+  "name": "Gupy Portal",
+  "kind": "gupy_search",
+  "group": "portal",
+  "target": "",
+  "site": "https://portal.gupy.io",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=gupy.io&sz=128",
+  "intervalMinutes": 120,
+  "config": {
+   "terms": "@base",
+   "pages": 2
+  }
+ },
+ {
+  "slug": "trampos",
+  "name": "Trampos",
+  "kind": "trampos",
+  "group": "portal",
+  "target": "",
+  "site": "https://trampos.co",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=trampos.co&sz=128",
+  "intervalMinutes": 180,
+  "config": {
+   "pages": 6
+  }
+ },
+ {
+  "slug": "programathor",
+  "name": "Programathor",
+  "kind": "programathor",
+  "group": "portal",
+  "target": "",
+  "site": "https://programathor.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=programathor.com.br&sz=128",
+  "intervalMinutes": 240,
+  "config": {
+   "pages": 4
+  }
+ },
+ {
+  "slug": "adzuna-br",
+  "name": "Adzuna Brasil",
+  "kind": "adzuna",
+  "group": "portal",
+  "target": "",
+  "site": "https://www.adzuna.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.adzuna.com.br&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "terms": "@geral"
+  },
+  "active": false
+ },
+ {
+  "slug": "jooble-br",
+  "name": "Jooble Brasil",
+  "kind": "jooble",
+  "group": "portal",
+  "target": "",
+  "site": "https://br.jooble.org",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=br.jooble.org&sz=128",
+  "intervalMinutes": 360,
+  "config": {
+   "terms": "@geral"
+  },
+  "active": false
+ }
+]

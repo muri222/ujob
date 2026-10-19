@@ -1,0 +1,268 @@
+.marathon {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding-top: 8px;
+}
+
+.deck {
+  position: relative;
+  width: min(100%, 440px);
+  height: min(560px, calc(var(--view-h) - 290px));
+  min-height: 430px;
+}
+
+.deck__left {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.swipe {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  transform: translateY(calc(var(--depth) * 14px)) scale(calc(1 - var(--depth) * 0.045));
+  opacity: calc(1 - var(--depth) * 0.22);
+  transition: transform 420ms var(--spring), opacity 300ms;
+}
+
+.swipe.is-dragging {
+  cursor: grabbing;
+  transition: none;
+  box-shadow: var(--shadow-lg);
+}
+
+.swipe__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.swipe__head > div {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.swipe__head strong {
+  overflow: hidden;
+  font-size: 14.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swipe__head span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.swipe__title {
+  font-size: clamp(21px, 3vw, 25px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.swipe__tags,
+.swipe__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swipe__why {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.swipe__why .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.swipe__summary {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13.5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+}
+
+.swipe__more {
+  margin-top: auto;
+}
+
+.swipe__stamp {
+  position: absolute;
+  top: 26px;
+  z-index: 2;
+  padding: 6px 14px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  background: var(--bg);
+}
+
+.swipe__stamp--save {
+  left: 22px;
+  color: var(--ok);
+  opacity: var(--save, 0);
+  rotate: -10deg;
+}
+
+.swipe__stamp--skip {
+  right: 22px;
+  color: var(--down);
+  opacity: var(--skip, 0);
+  rotate: 10deg;
+}
+
+.swipe__stamp--apply {
+  left: 50%;
+  top: auto;
+  bottom: 30px;
+  color: var(--brand-ink);
+  opacity: var(--apply, 0);
+  translate: -50% 0;
+}
+
+.deck__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deck__btn {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  box-shadow: var(--shadow-sm);
+  transition: transform 300ms var(--spring), border-color var(--quick), color var(--quick), box-shadow 200ms;
+}
+
+.deck__btn .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.deck__btn:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: var(--shadow);
+}
+
+.deck__btn:active {
+  transform: scale(0.9);
+}
+
+.deck__btn--undo,
+.deck__btn--letter {
+  width: 44px;
+  height: 44px;
+}
+
+.deck__btn--undo .icon,
+.deck__btn--letter .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.deck__btn--skip:hover {
+  border-color: var(--down);
+  color: var(--down);
+}
+
+.deck__btn--save:hover {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.deck__btn--apply {
+  width: 66px;
+  height: 66px;
+  border-color: var(--brand-press);
+  background: var(--brand);
+  color: var(--on-brand);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 14%), 0 12px 24px -12px rgb(154 122 79 / 60%);
+}
+
+.deck__btn--apply .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.deck__tally {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.deck__tally b {
+  color: var(--ink);
+}
+
+.deck__hint {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.deck__done {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 26px;
+  color: var(--muted);
+  text-align: center;
+  animation: pop 420ms var(--ease);
+}
+
+.deck__done strong {
+  color: var(--ink);
+  font-size: 19px;
+}
+
+@media (hover: none) {
+  .deck__hint {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .deck {
+    height: calc(var(--view-h) - 260px);
+    min-height: 400px;
+  }
+}

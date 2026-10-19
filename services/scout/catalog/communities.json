@@ -1,0 +1,152 @@
+[
+ {
+  "slug": "github-backend-br",
+  "name": "Backend Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "backend-br/vagas",
+  "site": "https://github.com/backend-br/vagas",
+  "logoUrl": "https://github.com/backend-br.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-frontendbr",
+  "name": "Frontend Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "frontendbr/vagas",
+  "site": "https://github.com/frontendbr/vagas",
+  "logoUrl": "https://github.com/frontendbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-react-brasil",
+  "name": "React Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "react-brasil/vagas",
+  "site": "https://github.com/react-brasil/vagas",
+  "logoUrl": "https://github.com/react-brasil.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-androiddevbr",
+  "name": "Android Dev BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "androiddevbr/vagas",
+  "site": "https://github.com/androiddevbr/vagas",
+  "logoUrl": "https://github.com/androiddevbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-qa-brasil",
+  "name": "QA Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "qa-brasil/vagas",
+  "site": "https://github.com/qa-brasil/vagas",
+  "logoUrl": "https://github.com/qa-brasil.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-phpdevbr",
+  "name": "PHP Dev BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "phpdevbr/vagas",
+  "site": "https://github.com/phpdevbr/vagas",
+  "logoUrl": "https://github.com/phpdevbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-cocoaheadsbrasil",
+  "name": "CocoaHeads Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "CocoaHeadsBrasil/vagas",
+  "site": "https://github.com/CocoaHeadsBrasil/vagas",
+  "logoUrl": "https://github.com/CocoaHeadsBrasil.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-vuejs-br",
+  "name": "Vue.js Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "vuejs-br/vagas",
+  "site": "https://github.com/vuejs-br/vagas",
+  "logoUrl": "https://github.com/vuejs-br.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-datascience-br",
+  "name": "Data Science BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "datascience-br/vagas",
+  "site": "https://github.com/datascience-br/vagas",
+  "logoUrl": "https://github.com/datascience-br.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-nodejsdevbr",
+  "name": "Node.js Dev BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "nodejsdevbr/vagas",
+  "site": "https://github.com/nodejsdevbr/vagas",
+  "logoUrl": "https://github.com/nodejsdevbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-flutterbr",
+  "name": "Flutter BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "flutterbr/vagas",
+  "site": "https://github.com/flutterbr/vagas",
+  "logoUrl": "https://github.com/flutterbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-dotnetdevbr",
+  "name": ".NET Dev BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "dotnetdevbr/vagas",
+  "site": "https://github.com/dotnetdevbr/vagas",
+  "logoUrl": "https://github.com/dotnetdevbr.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-uxbrasil",
+  "name": "UX Brasil",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "uxbrasil/vagas",
+  "site": "https://github.com/uxbrasil/vagas",
+  "logoUrl": "https://github.com/uxbrasil.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-gommunity",
+  "name": "Go Community BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "Gommunity/vagas",
+  "site": "https://github.com/Gommunity/vagas",
+  "logoUrl": "https://github.com/Gommunity.png?size=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "github-salesforce-br",
+  "name": "Salesforce BR",
+  "kind": "github",
+  "group": "comunidade",
+  "target": "salesforce-br/vagas",
+  "site": "https://github.com/salesforce-br/vagas",
+  "logoUrl": "https://github.com/salesforce-br.png?size=128",
+  "intervalMinutes": 360
+ }
+]

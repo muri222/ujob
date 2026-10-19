@@ -1,0 +1,61 @@
+:root {
+  --brand: #9a7a4f;
+  --brand-hover: #8a6b42;
+  --brand-press: #775b36;
+  --brand-ink: #7a5c33;
+  --brand-soft: #f6f0e6;
+  --brand-line: #e8dcc8;
+  --on-brand: #ffffff;
+
+  --accent: #c2a272;
+  --accent-soft: #f6f0e4;
+
+  --heat-0: #f4f1ec;
+  --heat-1: #ece4d6;
+  --heat-2: #dccbae;
+  --heat-3: #c6ab80;
+  --heat-4: #a4855a;
+  --heat-5: #6f5634;
+
+  --bg: #ffffff;
+  --canvas: #f5f2ed;
+  --sunken: #f7f4ef;
+  --hover: #f8f5f0;
+  --ink: #1f1b17;
+  --muted: #6e665e;
+  --faint: #a59d93;
+  --line: #ece7df;
+  --line-strong: #ddd5c9;
+
+  --ok: #1e9e67;
+  --ok-soft: #e4f5ec;
+  --warn: #d98a0b;
+  --warn-soft: #fdf3df;
+  --down: #c9364f;
+  --down-soft: #fbe9ec;
+
+  --scroll: #ddd5ca;
+  --scroll-hover: #bdb3a6;
+
+  --shadow-sm: 0 1px 2px rgb(31 27 23 / 6%);
+  --shadow: 0 1px 2px rgb(31 27 23 / 5%), 0 8px 24px -10px rgb(31 27 23 / 14%);
+  --shadow-lg: 0 30px 70px -24px rgb(31 27 23 / 32%), 0 2px 8px rgb(31 27 23 / 6%);
+  --ring: 0 0 0 3px var(--brand-soft);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.5, 0.64, 1);
+  --quick: 160ms;
+  --smooth: 420ms;
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --side: 248px;
+  --list: 400px;
+  --appbar: 0px;
+  --tabbar: 0px;
+  --frame: 10px;
+  --view-h: calc(100dvh - var(--frame) * 2);
+
+  color-scheme: light;
+}

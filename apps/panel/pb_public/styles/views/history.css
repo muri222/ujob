@@ -1,0 +1,75 @@
+.history {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.history__row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.history__who {
+  display: grid;
+  min-width: 0;
+}
+
+.history__who strong {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history__who span {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.history__numbers {
+  display: flex;
+  gap: 16px;
+}
+
+.history__numbers span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 52px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.history__numbers .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--faint);
+}
+
+.history__numbers .is-up {
+  color: var(--brand-ink);
+}
+
+.history__numbers .is-up .icon {
+  color: var(--brand-ink);
+}
+
+.history__error {
+  grid-column: 2 / -1;
+  color: var(--down);
+  font-size: 12px;
+}
+
+@media (max-width: 820px) {
+  .history__row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .history__numbers {
+    grid-column: 2;
+    gap: 10px;
+  }
+}

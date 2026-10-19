@@ -1,0 +1,232 @@
+[
+ {
+  "slug": "greenhouse-btgpactual",
+  "name": "BTG Pactual",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "btgpactual",
+  "site": "https://www.btgpactual.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.btgpactual.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-c6bank",
+  "name": "C6 Bank",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "c6bank",
+  "site": "https://www.c6bank.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.c6bank.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-cabify",
+  "name": "Cabify",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "cabify",
+  "site": "https://cabify.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=cabify.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-ebanx",
+  "name": "EBANX",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "ebanx",
+  "site": "https://www.ebanx.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.ebanx.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-getnet",
+  "name": "Getnet",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "getnet",
+  "site": "https://site.getnet.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=site.getnet.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-wellhub",
+  "name": "Wellhub",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "gympass",
+  "site": "https://wellhub.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=wellhub.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-inter",
+  "name": "Inter",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "inter",
+  "site": "https://inter.co",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=inter.co&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-jusbrasil",
+  "name": "Jusbrasil",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "jusbrasil",
+  "site": "https://www.jusbrasil.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.jusbrasil.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-quintoandar",
+  "name": "QuintoAndar",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "quintoandar",
+  "site": "https://www.quintoandar.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.quintoandar.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-rdstation",
+  "name": "RD Station",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "rdstation",
+  "site": "https://www.rdstation.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.rdstation.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-stone",
+  "name": "Stone",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "stone",
+  "site": "https://www.stone.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.stone.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-thoughtworks",
+  "name": "Thoughtworks",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "thoughtworks",
+  "site": "https://www.thoughtworks.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.thoughtworks.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-vtex",
+  "name": "VTEX",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "vtex",
+  "site": "https://vtex.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=vtex.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-wildlife",
+  "name": "Wildlife Studios",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "wildlifestudios",
+  "site": "https://wildlifestudios.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=wildlifestudios.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-xp",
+  "name": "XP Inc.",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "xpinc",
+  "site": "https://www.xpinc.com",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.xpinc.com&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-arco",
+  "name": "Arco Educação",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "arcoeducacao",
+  "site": "https://www.arcoeducacao.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.arcoeducacao.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-blip",
+  "name": "Blip",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "blip",
+  "site": "https://www.blip.ai",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.blip.ai&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "greenhouse-zup",
+  "name": "Zup Innovation",
+  "kind": "greenhouse",
+  "group": "empresa",
+  "target": "zupinnovation",
+  "site": "https://www.zup.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=www.zup.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "lever-ciandt",
+  "name": "CI&T",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "ciandt",
+  "site": "https://ciandt.com",
+  "logoUrl": "",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "lever-neon",
+  "name": "Neon",
+  "kind": "lever",
+  "group": "empresa",
+  "target": "neon",
+  "site": "https://neon.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=neon.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "ashby-nubank",
+  "name": "Nubank",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "nubank",
+  "site": "https://nubank.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=nubank.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "ashby-neon",
+  "name": "Neon Tech",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "neon",
+  "site": "https://neon.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=neon.com.br&sz=128",
+  "intervalMinutes": 360
+ },
+ {
+  "slug": "ashby-warren",
+  "name": "Warren",
+  "kind": "ashby",
+  "group": "empresa",
+  "target": "warren",
+  "site": "https://warren.com.br",
+  "logoUrl": "https://www.google.com/s2/favicons?domain=warren.com.br&sz=128",
+  "intervalMinutes": 360
+ }
+]
