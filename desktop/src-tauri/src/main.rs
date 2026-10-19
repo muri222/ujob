@@ -14,6 +14,7 @@ use std::time::{Duration, Instant};
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
+use tauri::webview::NewWindowResponse;
 use tauri::{AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 const PANEL: &str = "127.0.0.1:8096";
@@ -120,6 +121,14 @@ fn stop_services(children: &mut Vec<Child>) {
     }
 }
 
+// só http(s), mailto e tel: nada de file:// ou esquema estranho vindo de página de vaga
+fn open_outside(url: &str) {
+    let ok = ["http://", "https://", "mailto:", "tel:"].iter().any(|scheme| url.starts_with(scheme));
+    if ok {
+        let _ = Command::new("rundll32").args(["url.dll,FileProtocolHandler", url]).creation_flags(CREATE_NO_WINDOW).spawn();
+    }
+}
+
 fn show(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
@@ -129,6 +138,19 @@ fn show(app: &AppHandle) {
     }
     let url = format!("http://{PANEL}/").parse().unwrap();
     let _ = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url))
+        // link de vaga, site, mailto, WhatsApp: abre no navegador/app padrão do Windows, não dentro do Radar
+        .on_new_window(|url, _| {
+            open_outside(url.as_str());
+            NewWindowResponse::Deny
+        })
+        .on_navigation(|url| {
+            let inside = url.scheme() == "http" && url.host_str() == Some("127.0.0.1");
+            if !inside && url.scheme() != "about" && url.scheme() != "data" && url.scheme() != "blob" {
+                open_outside(url.as_str());
+                return false;
+            }
+            true
+        })
         .title("Radar")
         .inner_size(1360.0, 860.0)
         .min_inner_size(720.0, 520.0)
