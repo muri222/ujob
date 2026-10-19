@@ -47,7 +47,7 @@ routerUse((e) => {
 
   // cada conta de serviço só enxerga a própria API
   const role = e.auth?.collection().name === "bots" ? e.auth.getString("role") : "";
-  if ((role !== "scout" && role && path.startsWith("/api/scout/")) || (role !== "brain" && role && path.startsWith("/api/radar/tasks"))) {
+  if ((role !== "scout" && role && path.startsWith("/api/scout/")) || (role !== "brain" && role && /^\/api\/radar\/(tasks|brain)/.test(path))) {
     return e.json(403, { message: "Crachá errado pra essa porta." });
   }
 

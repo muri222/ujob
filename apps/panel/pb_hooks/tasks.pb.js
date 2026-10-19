@@ -74,3 +74,25 @@ routerAdd(
   },
   $apis.requireAuth("bots"),
 );
+
+// brain avisa quais provedores estão prontos; a tela lê pra mostrar aviso
+routerAdd(
+  "POST",
+  "/api/radar/brain/status",
+  (e) => {
+    const providers = {};
+    for (const [name, problem] of Object.entries(e.requestInfo().body.providers || {}).slice(0, 10)) {
+      if (/^[a-z]{1,20}$/.test(name)) providers[name] = problem ? String(problem).slice(0, 200) : null;
+    }
+    $app.store().set("radar:brain", { providers, at: new Date().toISOString() });
+    return e.json(200, { ok: true });
+  },
+  $apis.requireAuth("bots"),
+);
+
+routerAdd(
+  "GET",
+  "/api/radar/brain",
+  (e) => e.json(200, $app.store().get("radar:brain") || { providers: {}, at: null }),
+  $apis.requireSuperuserAuth(),
+);
