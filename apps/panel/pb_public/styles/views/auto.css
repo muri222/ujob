@@ -322,3 +322,132 @@
 .kit__new {
   width: min(640px, 92vw);
 }
+
+.mail {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 14px;
+  min-height: 70vh;
+}
+
+.mail__side {
+  max-height: 75vh;
+  overflow: auto;
+  padding: 6px;
+}
+
+.mail__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mail__item {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mail__item:hover,
+.mail__item.is-on {
+  background: var(--hover);
+}
+
+.mail__item.is-on {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.mail__item strong,
+.mail__item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mail__item strong {
+  font-weight: 500;
+}
+
+.mail__item.is-unread strong,
+.mail__item.is-unread .mail__from {
+  font-weight: 700;
+}
+
+.mail__item small,
+.mail__from time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mail__from {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mail__main {
+  min-width: 0;
+  max-height: 75vh;
+  overflow: auto;
+}
+
+.mail__head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.mail__head select {
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.mail__ai {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--brand-soft);
+}
+
+.mail__body {
+  font: inherit;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.auto__toolbar select {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+@media (max-width: 860px) {
+  .mail {
+    grid-template-columns: 1fr;
+  }
+}

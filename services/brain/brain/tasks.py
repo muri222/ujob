@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 
-from . import claude, cvpdf, leads, mail, mind, read, site, transcribe as whisper
+from . import claude, cvpdf, inbox, leads, mail, mind, read, site, transcribe as whisper
 from .prompts import render
 
 
@@ -153,6 +153,29 @@ def apply_kit(task: dict) -> tuple[dict, list[dict]]:
     value, log = claude.complete("apply_kit", prompt, ApplyKit, "top")
     lang = value.idioma.lower()[:2] if value.idioma.lower()[:2] in ("pt", "en", "es") else "pt"
     return {"idioma": lang, "assunto": value.assunto.strip(), "carta": value.carta.strip(), "followup": value.followup.strip(), "cv": tailor(payload["cv"], value.cv)}, log
+
+
+def mail_sync(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    try:
+        return inbox.sync(task["mail"], int(payload.get("lastUid") or 0), int(payload.get("days") or 30), payload.get("hints") or []), []
+    except Exception as error:  # login/rede viram mensagem clara
+        raise claude.TaskFailed(mail.friendly(error), []) from error
+
+
+class InboxReply(BaseModel):
+    resumo: str
+    etapa: str
+    proxima_acao: str
+    resposta: str
+
+
+def inbox_reply(task: dict) -> tuple[dict, list[dict]]:
+    payload = task["payload"]
+    prompt = render("inbox_reply", email=json.dumps(payload.get("email") or {}, ensure_ascii=False)[:12000], candidatura=json.dumps(payload.get("candidatura") or {}, ensure_ascii=False), cv=json.dumps(payload.get("cv") or {}, ensure_ascii=False)[:6000])
+    value, log = claude.complete("inbox_reply", prompt, InboxReply, "best")
+    etapa = value.etapa if value.etapa in ("aplicada", "entrevista", "teste", "proposta", "contratado", "recusada", "") else ""
+    return {**value.model_dump(), "etapa": etapa}, log
 
 
 def cv_pdf(task: dict) -> tuple[dict, list[dict]]:
@@ -361,7 +384,7 @@ def cv_translate(task: dict) -> tuple[dict, list[dict]]:
 
 
 # tarefas sem IA rodam mesmo com o Claude fora
-LOCAL = {"mail_test", "mail_send", "leads_discover", "lead_enrich", "transcribe", "cv_pdf"}
+LOCAL = {"mail_test", "mail_send", "mail_sync", "leads_discover", "lead_enrich", "transcribe", "cv_pdf"}
 # pista própria pro chat: não espera atrás de campanha grande
 CHAT = {"chat_reply", "chat_title", "transcribe"}
 
@@ -369,6 +392,8 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "echo": echo,
     "job_fit": job_fit,
     "cv_pdf": cv_pdf,
+    "mail_sync": mail_sync,
+    "inbox_reply": inbox_reply,
     "cv_import": cv_import,
     "mind_extract": mind_extract,
     "apply_kit": apply_kit,

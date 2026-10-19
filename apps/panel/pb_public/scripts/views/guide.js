@@ -30,6 +30,16 @@ const FLOWS = [
     ],
   },
   {
+    title: "Candidatura automática, kits e Entrada",
+    lead: "O fluxo do AiApply, com o seu Claude.",
+    steps: [
+      ["Revisão rápida", "Em Candidatura automática, um cartão por vaga com o porquê, correspondências e lacunas: Recusar, Pular ou Candidatar.", "#auto"],
+      ["Suas vagas", "Tabela com tudo que o Claude avaliou: revisar, preparando, enviadas e recusadas.", "#auto?aba=vagas"],
+      ["Kits", "Cole a descrição de qualquer vaga (até do LinkedIn) e saem carta, CV adaptado em PDF e follow-up.", "#kits"],
+      ["Entrada", "As respostas dos recrutadores chegam com etiqueta (entrevista, rejeição...). O Claude resume, sugere a resposta e move o funil.", "#entrada"],
+    ],
+  },
+  {
     title: "Achar vaga e se candidatar",
     lead: "Do radar até o e-mail enviado, com o Claude escrevendo por você.",
     steps: [
@@ -65,7 +75,8 @@ const FLOWS = [
     lead: "Tudo fica só neste PC.",
     steps: [
       ["E-mail de envio", "Em Config. da conta: seu e-mail + senha de app. Vale pra todas as funções.", "#config"],
-      ["Apify (opcional)", "Cole o token pra buscar leads no Google Maps.", "#config"],
+      ["Apify (opcional)", "Cole o token pra buscar leads no Google Maps e, se quiser, vagas do LinkedIn, Indeed e Google Vagas.", "#config"],
+      ["Fontes de vagas", "Chaves grátis da Adzuna e da Jooble deixam o radar ainda maior.", "#config"],
       ["Tema", "Claro, escuro e 6 paletas de cor.", "#config"],
     ],
   },

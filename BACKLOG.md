@@ -77,9 +77,17 @@ Ordem de execução de cima para baixo. Cada item vira uma issue e uma branch. C
 - **Aba Claude:** chat estilo app do Claude com contexto do Radar a cada resposta, streaming, anexos (Read só na pasta da conversa), busca na web, áudio com Whisper local, modelos Haiku/Sonnet/Opus, fixar/renomear/arquivar/apagar.
 - **Paridade AiApply:** Auto Apply (Revisão/Híbrido/Automático, cron de 30 min), simulador de entrevista (modo do chat, avaliação por critério), Scanner ATS, Tradutor de CV com PDF.
 
+## Feito em 2026-10-19 (tarde)
+
+- **Funções:** painéis por área (Artista 3D, Editor de Vídeo...), cada um com CV, preferências, buscas, funil e painel próprios.
+- **Preferências em abas** igual AiApply e **Config. da conta** separada.
+- **Fontes:** Workable (global + por empresa), Recruitee, Personio, LinkedIn/Indeed/Google Vagas via Apify (opcional, com teto), descoberta automática de empresas, Adzuna/Jooble no app, +28 empresas.
+- **Candidatura automática** (Revisão rápida + Suas vagas), **Kits de candidatura**, **Visão geral** com Sua semana.
+- **F2.1 Entrada** feita: IMAP sem IA, etiqueta por regra, ligação ao funil, resumo e resposta com Claude. Falta testar com e-mail real (precisa da senha de app).
+
 ## Próximos (F2)
 
-### F2.1 Inbox de respostas
+### F2.1 Inbox de respostas (feito, ver acima)
 - IMAP do e-mail já configurado: lê respostas das candidaturas e e-mails frios, liga à mensagem enviada, move o funil (Entrevista, Recusada) com confirmação.
 - Claude resume cada resposta e sugere a réplica (no chat ou em Prontas para enviar).
 
