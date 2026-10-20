@@ -20,12 +20,37 @@ use tauri::{AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, Wind
 const PANEL: &str = "127.0.0.1:8096";
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-// ponytail: app pessoal, a raiz do Radar fica fixa na compilação; RADAR_HOME troca se mudar de pasta
-fn home() -> PathBuf {
-    std::env::var("RADAR_HOME")
-        .map(PathBuf::from)
-        // sem canonicalize: o caminho \\?\ dele quebra o SQLite do PocketBase
-        .unwrap_or_else(|_| Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf())
+// Onde fica cada coisa:
+// - instalado (NSIS): código em <instalação>/app, dados (.env, pb_data, venvs, logs) em %APPDATA%\com.murillo.radar,
+//   assim atualizar o app não apaga nada; o uv vem junto em app/bin/uv.exe e baixa o Python na primeira vez
+// - desenvolvimento: tudo na raiz do repositório (RADAR_HOME troca)
+struct Layout {
+    code: PathBuf,
+    data: PathBuf,
+    uv: String,
+    installed: bool,
+}
+
+// sem \\?\ (caminho estendido do Windows): ele quebra o SQLite do PocketBase
+fn plain(path: PathBuf) -> PathBuf {
+    let text = path.to_string_lossy().to_string();
+    PathBuf::from(text.strip_prefix(r"\\?\").unwrap_or(&text))
+}
+
+fn layout(app: &AppHandle) -> Layout {
+    if let Ok(home) = std::env::var("RADAR_HOME") {
+        return Layout { code: PathBuf::from(&home), data: PathBuf::from(home), uv: "uv".into(), installed: false };
+    }
+    if let Ok(resources) = app.path().resource_dir() {
+        let code = plain(resources).join("app");
+        if code.join("apps/panel/pocketbase.exe").exists() {
+            let data = app.path().app_data_dir().map(plain).unwrap_or_else(|_| code.clone());
+            let uv = code.join("bin/uv.exe").to_string_lossy().to_string();
+            return Layout { code, data, uv, installed: true };
+        }
+    }
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap().to_path_buf();
+    Layout { code: root.clone(), data: root, uv: "uv".into(), installed: false }
 }
 
 // 32 hex com semente aleatória do sistema (RandomState); serve pras contas locais do scout e do brain
@@ -36,9 +61,9 @@ fn secret() -> String {
 const SECRETS: [&str; 3] = ["SCOUT_PASSWORD", "BRAIN_PASSWORD", "RADAR_SECRET"];
 
 // cria o .env a partir do exemplo na primeira vez e completa segredo vazio ou faltando (versões novas trazem chaves novas)
-fn ensure_env(root: &Path) {
-    let path = root.join(".env");
-    let base = fs::read_to_string(&path).or_else(|_| fs::read_to_string(root.join(".env.example"))).unwrap_or_default();
+fn ensure_env(code: &Path, data: &Path) {
+    let path = data.join(".env");
+    let base = fs::read_to_string(&path).or_else(|_| fs::read_to_string(code.join(".env.example"))).unwrap_or_default();
     let mut lines: Vec<String> = base
         .lines()
         .map(|line| match line.strip_suffix('=') {
@@ -77,11 +102,11 @@ fn panel_up() -> bool {
     stream.write_all(request.as_bytes()).is_ok() && stream.read_to_string(&mut reply).is_ok() && reply.lines().next().is_some_and(|status| status.contains(" 200 "))
 }
 
-fn spawn(root: &Path, env: &[(String, String)], dir: &str, program: &str, args: &[&str], log: &str) -> Option<Child> {
-    let out = File::create(root.join(log)).ok()?;
+fn spawn(dir: &Path, log: &Path, env: &[(String, String)], program: &str, args: &[&str]) -> Option<Child> {
+    let out = File::create(log).ok()?;
     Command::new(program)
         .args(args)
-        .current_dir(root.join(dir))
+        .current_dir(dir)
         .envs(env.iter().cloned())
         .env("PYTHONUTF8", "1")
         .stdout(out.try_clone().ok()?)
@@ -92,19 +117,40 @@ fn spawn(root: &Path, env: &[(String, String)], dir: &str, program: &str, args: 
 }
 
 // sobe painel, scout e brain; se o painel já está no ar (INICIAR.bat), não sobe nada e não derruba nada
-fn start_services() -> Vec<Child> {
+fn start_services(app: &AppHandle) -> Vec<Child> {
     if panel_up() {
         return vec![];
     }
-    let root = home();
-    ensure_env(&root);
-    let env = env_file(&root);
-    let panel_exe = root.join("apps/panel/pocketbase.exe");
-    let panel_exe = panel_exe.to_string_lossy();
+    let Layout { code, data, uv, installed } = layout(app);
+    let _ = fs::create_dir_all(&data);
+    ensure_env(&code, &data);
+    let mut env = env_file(&data);
+    env.push(("RADAR_DATA".into(), data.to_string_lossy().to_string()));
+    let panel = code.join("apps/panel");
+    let pb = |name: &str| panel.join(name).to_string_lossy().to_string();
+    let data_flag = format!("--dir={}", data.join(if installed { "pb_data" } else { "apps/panel/pb_data" }).to_string_lossy());
+    let panel_args = [
+        "serve".to_string(),
+        format!("--http={PANEL}"),
+        data_flag,
+        format!("--hooksDir={}", pb("pb_hooks")),
+        format!("--migrationsDir={}", pb("pb_migrations")),
+        format!("--publicDir={}", pb("pb_public")),
+    ];
+    let panel_args: Vec<&str> = panel_args.iter().map(String::as_str).collect();
+    // instalado: os ambientes Python ficam nos dados (a pasta do app é trocada na atualização) e o uv.lock vale como está
+    let python = |service: &str, module: &str, log: &str| {
+        let mut service_env = env.clone();
+        if installed {
+            service_env.push(("UV_PROJECT_ENVIRONMENT".into(), data.join("venvs").join(service).to_string_lossy().to_string()));
+        }
+        let args: Vec<&str> = if installed { vec!["run", "--frozen", "python", "-m", module] } else { vec!["run", "python", "-m", module] };
+        spawn(&code.join("services").join(service), &data.join(log), &service_env, &uv, &args)
+    };
     [
-        spawn(&root, &env, "apps/panel", &panel_exe, &["serve", &format!("--http={PANEL}")], ".panel.log"),
-        spawn(&root, &env, "services/scout", "uv", &["run", "python", "-m", "ujob_scout.scheduler"], ".scout.log"),
-        spawn(&root, &env, "services/brain", "uv", &["run", "python", "-m", "brain.worker"], ".brain.log"),
+        spawn(&panel, &data.join(".panel.log"), &env, &pb("pocketbase.exe"), &panel_args),
+        python("scout", "ujob_scout.scheduler", ".scout.log"),
+        python("brain", "brain.worker", ".brain.log"),
     ]
     .into_iter()
     .flatten()
@@ -167,7 +213,7 @@ fn main() {
             }
         })
         .setup(|app| {
-            *app.state::<Mutex<Vec<Child>>>().lock().unwrap() = start_services();
+            *app.state::<Mutex<Vec<Child>>>().lock().unwrap() = start_services(app.handle());
 
             let open = MenuItem::with_id(app, "open", "Abrir o Radar", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
@@ -191,7 +237,8 @@ fn main() {
             let handle = app.handle().clone();
             thread::spawn(move || {
                 let started = Instant::now();
-                while !panel_up() && started.elapsed() < Duration::from_secs(30) {
+                // primeira vez instalado: o PocketBase cria o banco; dá mais tempo antes de abrir a janela
+                while !panel_up() && started.elapsed() < Duration::from_secs(90) {
                     thread::sleep(Duration::from_millis(300));
                 }
                 let app = handle.clone();

@@ -20,3 +20,6 @@ pb_data/
 # desktop
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
+
+# instalador
+desktop/src-tauri/payload/
