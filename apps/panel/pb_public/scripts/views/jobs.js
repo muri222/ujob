@@ -2,7 +2,7 @@ import { list } from "../core/api.js";
 import { askClaude, asMap, brainProblem, ctx, fitFor, requestFit, stats } from "../core/context.js";
 import { h, icon, toast } from "../core/dom.js";
 import { match } from "../core/match.js";
-import { fromParams, toFilter, toParams } from "../core/query.js";
+import { fromParams, listOf, toFilter, toParams } from "../core/query.js";
 import { createSentence } from "../core/sentence.js";
 import { createSplit } from "../core/split.js";
 import { segmented } from "../core/ui.js";
@@ -99,8 +99,10 @@ export default async function jobs(root, { query, signal }) {
       }),
       // países da função: um clique filtra (Brasil, Portugal, Mundo todo...)
       ...profileCountries(ctx.profile).map((code) => {
-        const on = state.country === code;
-        return h("button", { className: "chip", "aria-pressed": String(on), onclick: () => (apply({ country: on ? "" : code, state: "", city: "" }), sentence.set({ country: on ? "" : code, state: "", city: "" })) }, countryLabel(code));
+        const chosen = listOf(state.country);
+        const on = chosen.includes(code);
+        const country = (on ? chosen.filter((item) => item !== code) : [...chosen, code]).join(",");
+        return h("button", { className: "chip", "aria-pressed": String(on), onclick: () => (apply({ country, state: "", city: "" }), sentence.set({ country, state: "", city: "" })) }, countryLabel(code));
       }),
       state.q ? h("button", { className: "chip", "aria-pressed": "true", title: (state.terms ?? "").split("|").join(", "), onclick: () => ((described.value = ""), apply({ q: "", terms: "" })) }, icon("sparkle"), `“${state.q.slice(0, 40)}”`, icon("close")) : "",
       state.company ? h("button", { className: "chip", "aria-pressed": "true", onclick: () => apply({ company: "" }) }, icon("building"), state.company, icon("close")) : "",

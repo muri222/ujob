@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3 (2026-10-20)
+
+- Vários lugares de uma vez: no seletor de lugar, cada clique marca ou desmarca um país ou estado (ex.: Portugal, Espanha, São Paulo e Rio de Janeiro). "Qualquer lugar" limpa. Vale na lista de vagas, nos chips de país e nas buscas nos portais.
+
 ## 1.1.2 (2026-10-20)
 
 - Tirar estado da busca: botão direito num estado do Brasil também deixa ele vermelho ("Brasil, menos São Paulo, Minas Gerais"), na lista de vagas e nas buscas nos portais.

@@ -65,7 +65,7 @@ function searchTerms(search) {
 // países da busca com o nome em inglês pro scout; sem país = Brasil (comportamento antigo)
 function searchCountries(search) {
   const { COUNTRIES } = require(`${__hooks}/countries.js`);
-  const codes = (JSON.parse(search.getString("countries") || "[]") || []).filter((code) => COUNTRIES[code]);
+  const codes = (JSON.parse(search.getString("countries") || "[]") || []).map((code) => (/^BR-/.test(code) ? "BR" : code)).filter((code, i, all) => COUNTRIES[code] && all.indexOf(code) === i);
   return (codes.length ? codes : ["BR"]).map((code) => ({ code, name: COUNTRIES[code].en }));
 }
 

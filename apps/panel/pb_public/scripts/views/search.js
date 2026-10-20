@@ -6,6 +6,7 @@ import { ago, number } from "../core/format.js";
 import { dotGrid, magnet, rotatingText } from "../core/fx.js";
 import { describe, fromParams } from "../core/query.js";
 import { excluded, profileCountries } from "../core/countries.js";
+import { placeCodes } from "../core/query.js";
 import { createSentence } from "../core/sentence.js";
 
 const ROLES = ["vendedor", "enfermeira", "motorista", "dev", "professora", "designer", "analista", "cozinheiro", "estágio"];
@@ -14,7 +15,11 @@ const STATUS = { queued: ["Na fila", "tag"], running: ["Buscando", "tag tag--bra
 export async function runSearch(query, { saved = false } = {}) {
   // país escolhido na frase manda; senão, os países da função (Brasil se não tiver nenhum)
   const out = excluded(query.not);
-  const base = (query.countries ?? (query.country ? [query.country] : query.state || query.city ? ["BR"] : profileCountries(ctx.profile))).filter((code) => !out.includes(code));
+  const codes = placeCodes(query);
+  const single = codes.length === 1 && codes[0].startsWith("BR-");
+  const many = !query.countries && codes.length && !single;
+  if (many) query = { ...query, state: "", city: "" };
+  const base = (query.countries ?? (single ? ["BR"] : many ? codes : profileCountries(ctx.profile))).filter((code) => !out.includes(code));
   const outUf = String(query.notUf ?? "").split(",").filter((code) => /^[A-Z]{2}$/.test(code));
   const countries = [...(base.length ? base : ["WW"]), ...out.map((code) => `-${code}`), ...outUf.map((code) => `-BR-${code}`)];
   const { search, reused } = await api("ujob/search", { method: "POST", body: { ...query, countries, saved, profile: ctx.profile?.id } });

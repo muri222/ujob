@@ -55,7 +55,10 @@ export default async function searchRun(root, { params, signal }) {
   const wanted = (search.countries ?? []).filter((code) => code[0] !== "-");
   const { countries: _, ...shown } = query;
   shown.not = (search.countries ?? []).filter((code) => /^-[A-Z]{2}$/.test(code)).map((code) => code.slice(1)).join(",");
-  if (wanted.length === 1 && !search.state) shown.country = wanted[0];
+  if (!search.state) {
+    shown.country = wanted.filter((code) => !code.startsWith("BR-")).join(",");
+    shown.state = wanted.filter((code) => code.startsWith("BR-")).map((code) => code.slice(3)).join(",");
+  }
   shown.notUf = (search.countries ?? []).filter((code) => code.startsWith("-BR-")).map((code) => code.slice(4)).join(",");
   const sentence = createSentence({ query: shown, size: "md", onChange: (next) => runSearch({ ...next, countries: next.country || next.state || !wanted.length ? undefined : wanted }).catch(() => toast("Não deu pra buscar.")) });
 
