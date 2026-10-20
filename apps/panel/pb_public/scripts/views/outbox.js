@@ -3,6 +3,7 @@ import { ctx, mine } from "../core/context.js";
 import { h, header, icon, logo, toast } from "../core/dom.js";
 import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
+import { downloadCv } from "./kits.js";
 import { paper } from "./resume.js";
 
 const STATUS = {
@@ -12,6 +13,12 @@ const STATUS = {
   enviada: ["Enviada", "tag"],
   erro: ["Falhou", "tag tag--down"],
 };
+
+function pdfButton(message, job) {
+  const button = h("button", { type: "button", className: "btn btn--soft btn--sm" }, icon("upload"), "Baixar PDF");
+  button.addEventListener("click", () => downloadCv({ cv: message.cv, lang: message.lang, company: job.company }, button));
+  return button;
+}
 
 export default async function outbox(root, { signal }) {
   if (!ctx.profile) {
@@ -73,7 +80,7 @@ export default async function outbox(root, { signal }) {
             "div",
             { className: "outbox__grid" },
             h("div", { className: "outbox__letter" }, h("label", { className: "field" }, h("span", {}, "Assunto"), subject), h("label", { className: "field" }, h("span", {}, "Carta"), body)),
-            message.cv ? h("div", { className: "outbox__cv" }, h("span", { className: "eyebrow" }, "CV adaptado (vai em PDF)"), paper(message.cv)) : null,
+            message.cv ? h("div", { className: "outbox__cv" }, h("div", { className: "import__row" }, h("span", { className: "eyebrow" }, "CV adaptado (vai em PDF)"), pdfButton(message, job)), paper(message.cv, message.lang)) : null,
           )
         : null,
       h("div", { className: "import__row" }, ...actions, message.status !== "enviando" && message.status !== "enviada" ? h("button", { className: "btn btn--ghost", onclick: discard }, "Descartar") : null),

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.6 (2026-10-20)
+
+- Revisão de responsividade: avaliação do Claude com itens longos quebra linha em vez de alargar a gaveta (Candidatura automática, Candidaturas, vaga). Filtros e tabela da Candidatura automática não alargam mais a página no celular. CV adaptado cabe no cartão em Prontas para enviar.
+- CV adaptado no idioma da vaga: títulos (Summary, Experience, Education...), "present", idiomas e nome dos cursos traduzidos, item por item, sem acrescentar nada.
+- Baixar PDF avisa que salvou em Downloads.
+
+## 1.1.5 (2026-10-20)
+
+- Prontas para enviar: botão "Baixar PDF" no CV adaptado.
+- Círculo da nota não amassa mais na gaveta da candidatura (aba Compatibilidade).
+
 ## 1.1.4 (2026-10-20)
 
 - Biblioteca de respostas: botão "Preencher com IA". Preenche só as perguntas vazias com o currículo, as preferências, o PDF enviado e o que a Mente aprendeu. O que não está lá fica vazio pra você completar (nada inventado).

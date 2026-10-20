@@ -46,3 +46,12 @@ def test_answers_fill_keeps_only_asked_questions_with_answers(monkeypatch):
     result, _ = tasks.answers_fill({"payload": {"perguntas": ["Link do portfólio", "Como ficou sabendo da vaga?"], "cv": {"links": ["https://artstation.com/x"]}, "funcao": "Artista 3D"}})
     assert result == {"respostas": [{"q": "Link do portfólio", "a": "https://artstation.com/x"}]}
     assert seen["tier"] == "best" and "Artista 3D" in seen["prompt"] and "artstation" in seen["prompt"]
+
+
+def test_tailor_translates_languages_only_item_by_item():
+    original = {"languages": ["Português (nativo)", "Inglês (avançado)"], "education": [{"course": "Bacharelado em Audiovisual", "school": "Méliès"}], "skills": ["Blender"], "experiences": []}
+    kit = tasks.TailoredCv(headline="3D Artist", about="", skills=["Blender"], experiencias=[], idiomas=["Portuguese (native)", "English (advanced)"], formacao=["Bachelor's in Audiovisual"])
+    cv = tasks.tailor(original, kit)
+    assert cv["languages"] == ["Portuguese (native)", "English (advanced)"] and cv["education"][0] == {"course": "Bachelor's in Audiovisual", "school": "Méliès"}
+    extra = tasks.TailoredCv(headline="", about="", skills=[], experiencias=[], idiomas=["Portuguese", "English", "French"])
+    assert tasks.tailor(original, extra)["languages"] == original["languages"]

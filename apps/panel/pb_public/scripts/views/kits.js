@@ -11,12 +11,14 @@ const fileSafe = (text) => String(text || "").normalize("NFD").replace(/[^\w]+/g
 
 const copy = (text) => navigator.clipboard.writeText(text).then(() => toast("Copiado."));
 
-async function downloadCv(kit, button) {
+// serve pro kit e pra mensagem pronta: os dois têm cv, lang e a empresa
+export async function downloadCv(kit, button) {
   button.disabled = true;
   try {
     const { pdf } = await askClaude("cv_pdf", { cv: { ...ctx.profile, ...kit.cv }, lang: kit.lang || "pt" }, { timeout: 60_000 });
     const url = URL.createObjectURL(new Blob([Uint8Array.from(atob(pdf), (char) => char.charCodeAt(0))], { type: "application/pdf" }));
     h("a", { href: url, download: `${fileSafe(ctx.profile.name || "curriculo")}-${fileSafe(kit.company || "vaga")}.pdf` }).click();
+    toast("PDF salvo na pasta Downloads.");
   } catch (error) {
     toast(error.message);
   } finally {
@@ -37,7 +39,7 @@ function openKit(kit) {
       { className: "auto__pane kit" },
       block(`Carta${kit.subject ? `: ${kit.subject}` : ""}`, kit.body),
       kit.followup ? block("E-mail de follow-up (mande em 7 dias)", kit.followup) : null,
-      kit.cv ? h("section", { className: "kit__block" }, h("header", {}, h("h3", {}, "CV adaptado"), pdf), h("div", { className: "resume__paper translate__paper" }, paper({ ...ctx.profile, ...kit.cv }))) : null,
+      kit.cv ? h("section", { className: "kit__block" }, h("header", {}, h("h3", {}, "CV adaptado"), pdf), h("div", { className: "resume__paper translate__paper" }, paper({ ...ctx.profile, ...kit.cv }, kit.lang))) : null,
       kit.channel === "email" && kit.status === "pronta" ? h("a", { className: "btn btn--primary", href: "#envios" }, icon("send"), "Revisar e enviar por e-mail") : null,
     ),
   );

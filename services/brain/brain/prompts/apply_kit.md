@@ -21,6 +21,8 @@ CV adaptado (campo "cv"):
 - headline: título do candidato alinhado à vaga, sem prometer o que o CV não mostra.
 - about: 2 a 4 frases focadas no que importa pra esta vaga.
 - skills: só skills que estão no CV, as mais relevantes primeiro (máximo 15).
+- idiomas: os idiomas do CV, na mesma ordem e quantidade, traduzidos pro idioma da vaga (ex.: "Português (nativo)" vira "Portuguese (native)"). Sem acrescentar nem mudar nível.
+- formacao: o nome de cada curso da formação do CV, na mesma ordem e quantidade, traduzido pro idioma da vaga. Não mude o grau nem a instituição.
 - experiencias: lista de {{indice, destaque}} com o índice (começando em 0) da experiência no CV original, na ordem mais relevante; "destaque" reescreve o texto daquela experiência destacando o que a vaga pede, sem inventar nada. Pode omitir experiências irrelevantes.
 
 VAGA (JSON):

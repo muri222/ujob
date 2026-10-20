@@ -756,3 +756,8 @@
   min-width: 0;
   text-overflow: ellipsis;
 }
+
+/* filtros e tabela rolam dentro do cartão; antes alargavam a página no celular */
+.auto__body > * {
+  min-width: 0;
+}

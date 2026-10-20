@@ -33,26 +33,34 @@ function completeness(p) {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
-export function paper(p) {
+// títulos do CV no idioma da vaga (o PDF usa os mesmos, em brain/cvpdf.py)
+const TITLES = {
+  pt: ["Resumo", "Experiência", "Formação", "Habilidades", "Idiomas", "atual"],
+  en: ["Summary", "Experience", "Education", "Skills", "Languages", "present"],
+  es: ["Resumen", "Experiencia", "Formación", "Habilidades", "Idiomas", "actual"],
+};
+
+export function paper(p, lang = p.lang) {
+  const [resumo, experiencia, formacao, habilidades, idiomas, atual] = TITLES[String(lang || "pt").slice(0, 2)] ?? TITLES.pt;
   const contact = [p.email, p.phone, [p.city, p.state].filter(Boolean).join("/"), ...(p.links ?? [])].filter(Boolean);
   const section = (title, ...content) => (content.flat().filter(Boolean).length ? h("section", {}, h("h3", {}, title), content) : null);
   return h(
     "article",
     { className: `paper paper--${p.template || "classico"}` },
     h("header", { className: "paper__head" }, h("h2", {}, p.name || "Seu nome"), p.headline ? h("p", { className: "paper__headline" }, p.headline) : null, h("p", { className: "paper__contact" }, contact.join("  ·  "))),
-    section("Resumo", p.about ? h("p", {}, p.about) : null),
+    section(resumo, p.about ? h("p", {}, p.about) : null),
     section(
-      "Experiência",
+      experiencia,
       (p.experiences ?? [])
         .filter((item) => item.role || item.company)
-        .map((item) => h("div", { className: "paper__item" }, h("div", { className: "paper__line" }, h("strong", {}, [item.role, item.company].filter(Boolean).join(" · ")), h("span", {}, [item.start, item.end || (item.start ? "atual" : "")].filter(Boolean).join(" – "))), item.text ? h("p", {}, item.text) : null)),
+        .map((item) => h("div", { className: "paper__item" }, h("div", { className: "paper__line" }, h("strong", {}, [item.role, item.company].filter(Boolean).join(" · ")), h("span", {}, [item.start, item.end || (item.start ? atual : "")].filter(Boolean).join(" – "))), item.text ? h("p", {}, item.text) : null)),
     ),
     section(
-      "Formação",
+      formacao,
       (p.education ?? []).filter((item) => item.course).map((item) => h("div", { className: "paper__line" }, h("strong", {}, [item.course, item.school].filter(Boolean).join(" · ")), h("span", {}, item.end))),
     ),
-    section("Habilidades", (p.skills ?? []).length ? h("p", { className: "paper__skills" }, p.skills.join("  ·  ")) : null),
-    section("Idiomas", (p.languages ?? []).length ? h("p", {}, p.languages.join("  ·  ")) : null),
+    section(habilidades, (p.skills ?? []).length ? h("p", { className: "paper__skills" }, p.skills.join("  ·  ")) : null),
+    section(idiomas, (p.languages ?? []).length ? h("p", {}, p.languages.join("  ·  ")) : null),
   );
 }
 
@@ -322,7 +330,7 @@ export default async function resume(root, { signal }) {
       const fileName = `${(p.name || "curriculo").normalize("NFD").replace(/[^\w]+/g, "-")}-${r.lang}.pdf`;
       translateBox.replaceChildren(
         h("div", { className: "import__row" }, h("a", { className: "btn btn--primary", href: url, download: fileName }, icon("upload"), "Baixar PDF"), h("button", { type: "button", className: "btn", onclick: () => navigator.clipboard.writeText(JSON.stringify(r.cv, null, 2)).then(() => toast("Copiado.")) }, icon("copy"), "Copiar texto")),
-        h("div", { className: "resume__paper translate__paper" }, paper(r.cv)),
+        h("div", { className: "resume__paper translate__paper" }, paper(r.cv, r.lang)),
       );
     } catch (error) {
       translateBox.replaceChildren(h("p", { className: "fit__err" }, error.message));

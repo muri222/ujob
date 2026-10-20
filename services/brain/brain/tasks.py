@@ -145,6 +145,9 @@ class TailoredCv(BaseModel):
     about: str
     skills: list[str]
     experiencias: list[Highlight]
+    # mesmos itens do CV, na mesma ordem, só traduzidos pro idioma da vaga
+    idiomas: list[str] = []
+    formacao: list[str] = []
 
 
 class ApplyKit(BaseModel):
@@ -169,6 +172,13 @@ def tailor(original: dict, kit: TailoredCv) -> dict:
             seen.add(item.indice)
             picked.append({**experiences[item.indice], "text": item.destaque.strip() or experiences[item.indice].get("text", "")})
     cv = {key: original.get(key) for key in ("name", "email", "phone", "city", "state", "links", "education", "languages")}
+    # tradução só vale se veio item por item (senão fica o original, nunca um item a mais)
+    languages = original.get("languages") or []
+    if languages and len(kit.idiomas) == len(languages):
+        cv["languages"] = [item.strip() or languages[index] for index, item in enumerate(kit.idiomas)]
+    education = original.get("education") or []
+    if education and len(kit.formacao) == len(education):
+        cv["education"] = [{**item, "course": kit.formacao[index].strip() or item.get("course", "")} for index, item in enumerate(education)]
     cv.update(
         headline=kit.headline.strip() or original.get("headline") or "",
         about=kit.about.strip() or original.get("about") or "",
@@ -188,7 +198,7 @@ def apply_kit(task: dict) -> tuple[dict, list[dict]]:
     )
     value, log = claude.complete("apply_kit", prompt, ApplyKit, "top")
     lang = value.idioma.lower()[:2] if value.idioma.lower()[:2] in ("pt", "en", "es") else "pt"
-    return {"idioma": lang, "assunto": value.assunto.strip(), "carta": value.carta.strip(), "followup": value.followup.strip(), "cv": tailor(payload["cv"], value.cv)}, log
+    return {"idioma": lang, "assunto": value.assunto.strip(), "carta": value.carta.strip(), "followup": value.followup.strip(), "cv": {**tailor(payload["cv"], value.cv), "lang": lang}}, log
 
 
 def mail_sync(task: dict) -> tuple[dict, list[dict]]:
