@@ -56,6 +56,10 @@ export function tags(list, onChange, { placeholder = "Digite e aperte Enter", su
   };
   function draw() {
     box.replaceChildren(...list.map((item, index) => h("button", { type: "button", className: "chip is-on", onclick: () => (list.splice(index, 1), onChange(list), draw()) }, item, " ×")), entry);
+    drawHints();
+  }
+  // enquanto digita só as sugestões mudam: recolocar o campo tirava o foco e o blur virava cada letra em etiqueta
+  function drawHints() {
     const term = fold(entry.value);
     hints.replaceChildren(
       ...suggestions
@@ -70,13 +74,15 @@ export function tags(list, onChange, { placeholder = "Digite e aperte Enter", su
       add(entry.value);
       entry.value = "";
       draw();
+      entry.focus();
     } else if (event.key === "Backspace" && !entry.value && list.length) {
       list.pop();
       onChange(list);
       draw();
+      entry.focus();
     }
   });
-  entry.addEventListener("input", draw);
+  entry.addEventListener("input", drawHints);
   // ponytail: texto digitado e não confirmado entra ao sair do campo, senão a pessoa perde
   entry.addEventListener("blur", () => entry.value.trim() && (add(entry.value), (entry.value = ""), draw()));
   box.addEventListener("click", (event) => event.target === box && entry.focus());

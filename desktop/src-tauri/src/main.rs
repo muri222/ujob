@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
-use tauri::webview::NewWindowResponse;
+use tauri::webview::{NewWindowResponse, PermissionKind, PermissionResponse};
 use tauri::{AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 const PANEL: &str = "127.0.0.1:8096";
@@ -196,6 +196,11 @@ fn show(app: &AppHandle) {
                 return false;
             }
             true
+        })
+        // microfone do chat (áudio transcrito no PC): o WebView2 negava sem perguntar; a janela só abre o painel local
+        .on_permission_request(|_, kind| match kind {
+            PermissionKind::Microphone => PermissionResponse::Allow,
+            _ => PermissionResponse::Default,
         })
         .title("uJob")
         .inner_size(1360.0, 860.0)

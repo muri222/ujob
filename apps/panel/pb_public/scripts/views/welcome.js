@@ -1,3 +1,4 @@
+import { aiPicker } from "../core/ai.js";
 import { queueTour } from "../core/tour.js";
 import { api, create, remove, update } from "../core/api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES } from "../core/catalog.js";
@@ -82,12 +83,28 @@ export function welcome({ force = false, fresh = false } = {}) {
     return record;
   }
 
+  const passo = (fn) => `Passo ${STEPS.indexOf(fn) + 1} de ${STEPS.length}`;
+
+  // ── passo 0 (só na primeira vez): conectar a IA, que faz o resto funcionar; dá pra pular e fazer depois
+  let ai;
+  function stepAi() {
+    ai ??= aiPicker();
+    return h(
+      "section",
+      { className: "welcome__step" },
+      h("p", { className: "eyebrow" }, icon("sparkle"), passo(stepAi)),
+      h("h2", {}, "Conecte sua IA"),
+      h("p", { className: "lead" }, "A IA lê seu currículo, dá nota pras vagas, escreve cartas e acha clientes. Use o Claude Code logado (recomendado), o ChatGPT logado ou uma chave de API. Dá pra pular e escolher depois em Config. da conta."),
+      ...ai.nodes,
+    );
+  }
+
   // ── passo 1: função e contato
   function stepFunction() {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("sparkle"), "Passo 1 de 6"),
+      h("p", { className: "eyebrow" }, icon("sparkle"), passo(stepFunction)),
       h("h2", {}, editing ? "Ajuste sua função" : base.id ? "Nova função" : "Vamos montar seu uJob"),
       h("p", { className: "lead" }, "Uma função é um tipo de vaga que você procura (ex.: Artista 3D, Editor de Vídeo). Cada uma tem currículo, países, buscas e painel próprios."),
       field("Nome da função", input(draft.label, (value) => (draft.label = value), { maxLength: 60, placeholder: "Ex.: 3D Generalist, Editor de Vídeo, Designer Gráfico", required: true })),
@@ -156,7 +173,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("file"), "Passo 2 de 6"),
+      h("p", { className: "eyebrow" }, icon("file"), passo(stepResume)),
       h("h2", {}, "Seu currículo"),
       h("p", { className: "lead" }, "Mande o PDF (ou o link do portfólio). O arquivo é lido no seu PC e o Claude só organiza os campos. É a base das notas, das cartas e do CV adaptado."),
       h("div", { className: "welcome__choices" }, h("button", { type: "button", className: "btn btn--primary", onclick: () => upload.click() }, icon("upload"), "Enviar PDF do currículo"), upload),
@@ -193,7 +210,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("briefcase"), "Passo 3 de 6"),
+      h("p", { className: "eyebrow" }, icon("briefcase"), passo(stepRoles)),
       h("h2", {}, "Que vagas você quer?"),
       h("p", { className: "lead" }, "Os cargos viram as buscas nos portais e o filtro do painel. Coloque em português e inglês pra pegar vaga de fora."),
       h("div", { className: "field" }, h("span", {}, "Cargos"), box),
@@ -254,7 +271,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("globe"), "Passo 4 de 6"),
+      h("p", { className: "eyebrow" }, icon("globe"), passo(stepCountries)),
       h("h2", {}, "Onde você quer trabalhar?"),
       h("p", { className: "lead" }, "O uJob busca no mundo todo. Escolha os países principais e diga se tem permissão de trabalho ou precisa de visto: isso filtra vaga que exige autorização que você não tem."),
       h("label", { className: "check welcome__world" }, h("input", { type: "checkbox", checked: draft.prefs.worldwide, onchange: (event) => (draft.prefs.worldwide = event.target.checked) }), h("span", {}, h("strong", {}, "🌍 Aceito vaga remota de qualquer lugar do mundo"), h("small", {}, " Empresas de fora que contratam remoto (PJ/contractor)."))),
@@ -278,7 +295,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("money"), "Passo 5 de 6"),
+      h("p", { className: "eyebrow" }, icon("money"), passo(stepPrefs)),
       h("h2", {}, "Salário e preferências"),
       h("p", { className: "lead" }, "Entra na nota do Claude e nas respostas dos formulários. Pode deixar em branco."),
       h("div", { className: "welcome__row" }, field("Moeda", select([["BRL", "R$ (real)"], ["USD", "US$ (dólar)"], ["EUR", "€ (euro)"], ["GBP", "£ (libra)"]], draft.prefs.currency, (value) => (draft.prefs.currency = value))), field("Expectativa mensal", input(draft.salary, (value) => (draft.salary = Number(value) || 0), { type: "number", min: 0 }))),
@@ -295,7 +312,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     return h(
       "section",
       { className: "welcome__step" },
-      h("p", { className: "eyebrow" }, icon("send"), "Passo 6 de 6"),
+      h("p", { className: "eyebrow" }, icon("send"), passo(stepMode)),
       h("h2", {}, "Como você quer se candidatar?"),
       h("p", { className: "lead" }, "Dá pra mudar a qualquer hora. Envio por e-mail precisa do seu e-mail configurado em Config. da conta."),
       wrap,
@@ -303,7 +320,8 @@ export function welcome({ force = false, fresh = false } = {}) {
     );
   }
 
-  const STEPS = [stepFunction, stepResume, stepRoles, stepCountries, stepPrefs, stepMode];
+  const firstRun = !base.id && !force;
+  const STEPS = [...(firstRun ? [stepAi] : []), stepFunction, stepResume, stepRoles, stepCountries, stepPrefs, stepMode];
   const back = h("button", { type: "button", className: "btn btn--ghost" }, "Voltar");
   const skip = h("button", { type: "button", className: "btn btn--ghost" }, "Pular");
   const next = h("button", { type: "button", className: "btn btn--primary btn--lg" }, "Continuar", icon("arrow"));
@@ -315,7 +333,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     body.replaceChildren(node);
     back.hidden = step === 0 && !force && !base.id;
     back.textContent = step === 0 ? "Cancelar" : "Voltar";
-    skip.hidden = ![1, 4].includes(step);
+    skip.hidden = ![stepAi, stepResume, stepPrefs].includes(STEPS[step]);
     next.replaceChildren(step === STEPS.length - 1 ? "Montar meu painel" : "Continuar", icon(step === STEPS.length - 1 ? "radar" : "arrow"));
     dialog.style.setProperty("--progress", `${((step + 1) / STEPS.length) * 100}%`);
     node.animate([{ opacity: 0, transform: "translateX(16px)" }, { opacity: 1, transform: "none" }], { duration: 360, easing: "cubic-bezier(0.22, 1, 0.36, 1)" });
@@ -323,12 +341,14 @@ export function welcome({ force = false, fresh = false } = {}) {
   }
 
   async function forward() {
-    if (step === 0 && !draft.label.trim()) return toast("Dê um nome pra função (ex.: Artista 3D).");
-    if (step === 2 && !draft.prefs.roles.length) return toast("Coloque pelo menos um cargo (ou use Sugerir cargos).");
-    if (step === 3 && !draft.countries.length && !draft.prefs.worldwide) return toast("Escolha pelo menos um país ou o mundo todo.");
+    const current = STEPS[step];
+    if (current === stepFunction && !draft.label.trim()) return toast("Dê um nome pra função (ex.: Artista 3D).");
+    if (current === stepRoles && !draft.prefs.roles.length) return toast("Coloque pelo menos um cargo (ou use Sugerir cargos).");
+    if (current === stepCountries && !draft.countries.length && !draft.prefs.worldwide) return toast("Escolha pelo menos um país ou o mundo todo.");
     next.disabled = true;
     try {
-      if (step === 0 || step === STEPS.length - 1) await persist();
+      if (current === stepAi && ai?.changed()) await ai.save();
+      if (current === stepFunction || step === STEPS.length - 1) await persist();
       if (step < STEPS.length - 1) {
         step++;
         show();

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7 (2026-10-20)
+
+- Microfone do chat funciona no app instalado (um cabeçalho de segurança do painel bloqueava o microfone).
+- Configuração inicial começa conectando a IA (Claude Code, ChatGPT ou chave de API), com opção de pular.
+- Campo de cargos (e outros campos de etiquetas) não vira mais uma etiqueta por letra.
+
 ## 1.1.6 (2026-10-20)
 
 - Revisão de responsividade: avaliação do Claude com itens longos quebra linha em vez de alargar a gaveta (Candidatura automática, Candidaturas, vaga). Filtros e tabela da Candidatura automática não alargam mais a página no celular. CV adaptado cabe no cartão em Prontas para enviar.

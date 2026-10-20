@@ -8,7 +8,8 @@ routerUse((e) => {
   headers.set("Referrer-Policy", "no-referrer");
   headers.set("Cross-Origin-Opener-Policy", "same-origin");
   headers.set("Cross-Origin-Resource-Policy", "same-origin");
-  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+  // microfone só pra própria página (áudio do chat, transcrito no PC)
+  headers.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
 
   if ($os.getenv("PB_DASHBOARD") === "1") return e.next();
 

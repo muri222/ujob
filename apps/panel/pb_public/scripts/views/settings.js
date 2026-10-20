@@ -1,6 +1,7 @@
 import { api, list, remove } from "../core/api.js";
-import { brainProblem, ctx, useProfile } from "../core/context.js";
+import { ctx, useProfile } from "../core/context.js";
 import { confirm, h, header, icon, toast } from "../core/dom.js";
+import { aiPicker } from "../core/ai.js";
 import { segmented, toggle } from "../core/ui.js";
 import { ago } from "../core/format.js";
 import { listen } from "../core/realtime.js";
@@ -237,54 +238,7 @@ export default async function settings(root, { signal }) {
     ),
   );
 
-  // IA: Claude Code logado (padrão), ChatGPT logado (Codex) ou API com chave
-  const AIS = [
-    ["claude", "Claude Code (logado)", "Sua assinatura do Claude. Melhor qualidade, pesquisa na web, lê anexos. Recomendado.", { top: "opus", best: "sonnet", cheap: "haiku" }],
-    ["codex", "ChatGPT (Codex logado)", "Sua assinatura do ChatGPT pelo Codex CLI (rode codex login uma vez). Pesquisa na web; sem streaming no chat.", { top: "", best: "", cheap: "" }],
-    ["openrouter", "OpenRouter (chave)", "Paga por uso, centenas de modelos. Web só com :online (cobra a mais).", { top: "anthropic/claude-sonnet-4.5", best: "openai/gpt-5-mini", cheap: "google/gemini-2.5-flash" }],
-    ["deepseek", "DeepSeek (chave)", "Paga por uso, bem barato. Sem pesquisa na web.", { top: "deepseek-reasoner", best: "deepseek-chat", cheap: "deepseek-chat" }],
-    ["openai", "Outra API compatível com OpenAI", "OpenAI, Groq, Together, LM Studio... Cole o endereço e a chave.", { top: "", best: "", cheap: "" }],
-  ];
-  const aiNow = integrations.ai ?? { provider: "claude", models: {} };
-  let aiPick = aiNow.provider || "claude";
-  const aiCards = h("div", { className: "modes" });
-  const aiKey = h("input", { type: "password", autocomplete: "off", placeholder: aiNow.hasKey ? "Chave salva (deixe vazio pra manter)" : "Chave da API" });
-  const aiBase = h("input", { type: "url", value: aiNow.baseUrl ?? "", placeholder: "https://api.openai.com/v1" });
-  const tierInputs = { top: h("input", { maxLength: 120 }), best: h("input", { maxLength: 120 }), cheap: h("input", { maxLength: 120 }) };
-  const aiExtra = h("div", { className: "pref__control" });
-  const paintAi = () => {
-    aiCards.replaceChildren(...AIS.map(([key, title, text]) => h("button", { type: "button", className: "mode", role: "radio", "aria-checked": String(aiPick === key), onclick: () => ((aiPick = key), paintAi()) }, h("strong", {}, title), h("small", {}, text))));
-    const defaults = AIS.find(([key]) => key === aiPick)[3];
-    for (const [tier, node] of Object.entries(tierInputs)) {
-      node.placeholder = defaults[tier] || "padrão da conta";
-      node.value = aiPick === aiNow.provider ? aiNow.models?.[tier] ?? "" : "";
-    }
-    const usesKey = ["openrouter", "deepseek", "openai"].includes(aiPick);
-    aiExtra.replaceChildren(
-      usesKey ? field("Chave da API", aiKey) : "",
-      aiPick === "openai" ? field("Endereço da API", aiBase) : "",
-      aiPick !== "claude" ? h("details", { className: "settings__advanced" }, h("summary", {}, "Modelos (avançado)"), h("div", { className: "resume__grid" }, field("Caprichado (cartas, dossiê)", tierInputs.top), field("Equilibrado (nota de vaga)", tierInputs.best), field("Rápido (extração, títulos)", tierInputs.cheap))) : "",
-    );
-  };
-  paintAi();
-  const aiSave = h("button", { type: "button", className: "btn btn--primary" }, icon("check"), "Usar esta IA");
-  aiSave.addEventListener("click", async () => {
-    aiSave.disabled = true;
-    try {
-      await api("radar/integrations/ai", { method: "POST", body: { provider: aiPick, key: aiKey.value, baseUrl: aiBase.value, models: Object.fromEntries(Object.entries(tierInputs).map(([tier, node]) => [tier, node.value.trim()])) } });
-      aiKey.value = "";
-      Object.assign(aiNow, { provider: aiPick });
-      claude.replaceChildren(h("span", { className: "spinner" }), " Trocando… o serviço de IA confere em até 30 s.");
-      setTimeout(() => brainProblem(true).then((problem) => claude.replaceChildren(problem ? h("span", { className: "tag tag--down" }, problem) : h("span", { className: "tag tag--ok" }, icon("check"), `${AIS.find(([key]) => key === aiPick)[1]} pronto`))), 35_000);
-    } catch (error) {
-      toast(error.message);
-    } finally {
-      aiSave.disabled = false;
-    }
-  });
-
-  const claude = h("p", {}, "Checando…");
-  brainProblem(true).then((problem) => claude.replaceChildren(problem ? h("span", { className: "tag tag--down" }, problem) : h("span", { className: "tag tag--ok" }, icon("check"), `${AIS.find(([key]) => key === (aiNow.provider || "claude"))[1]} pronto`)));
+  const ai = aiPicker(integrations.ai);
 
   root.append(
     header("Config. da conta", "Vale pra todas as funções. Tudo fica só neste PC.", h("a", { className: "btn btn--soft", href: "#preferencias" }, icon("gear"), "Preferências da função")),
@@ -306,7 +260,7 @@ export default async function settings(root, { signal }) {
       h("div", { className: "import__row" }, apifyToken, apifySave, apifyState),
     ),
     feeds,
-    h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "IA"), h("small", {}, "Qual IA o uJob usa em tudo: notas, cartas, chat, leads")), aiCards, aiExtra, h("div", { className: "import__row" }, aiSave, claude)),
+    h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "IA"), h("small", {}, "Qual IA o uJob usa em tudo: notas, cartas, chat, leads")), ai.nodes),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Suas funções"), h("small", {}, "Renomeie em Preferências")), functions),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Exportar dados"), h("small", {}, "Tudo da função ativa num arquivo JSON")), h("div", { className: "import__row" }, exportGo)),
     h("section", { className: "panel settings" }, h("header", { className: "section__head" }, h("h2", {}, "Suporte"), h("a", { href: "#guia" }, "Como usar ", icon("arrow"))), support),
