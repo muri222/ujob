@@ -33,3 +33,16 @@ def test_html_text_drops_scripts_and_keeps_links():
 
     text, links = read.html_text('<html><head><title>t</title></head><body><script>var a=1</script><p>Artista 3D</p><a href="https://artstation.com/x">port</a></body></html>')
     assert "Artista 3D" in text and "var a" not in text and links == ["https://artstation.com/x"]
+
+
+def test_answers_fill_keeps_only_asked_questions_with_answers(monkeypatch):
+    seen = {}
+
+    def fake(task, prompt, schema, tier):
+        seen.update(prompt=prompt, tier=tier)
+        return schema(respostas=[{"q": "Link do portfólio ", "a": "https://artstation.com/x"}, {"q": "Como ficou sabendo da vaga?", "a": ""}, {"q": "Pergunta inventada", "a": "x"}]), [{"ok": True}]
+
+    monkeypatch.setattr(tasks.claude, "complete", fake)
+    result, _ = tasks.answers_fill({"payload": {"perguntas": ["Link do portfólio", "Como ficou sabendo da vaga?"], "cv": {"links": ["https://artstation.com/x"]}, "funcao": "Artista 3D"}})
+    assert result == {"respostas": [{"q": "Link do portfólio", "a": "https://artstation.com/x"}]}
+    assert seen["tier"] == "best" and "Artista 3D" in seen["prompt"] and "artstation" in seen["prompt"]

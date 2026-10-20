@@ -345,8 +345,34 @@ export default async function preferences(root, { query }) {
       changed();
       draw();
     });
+    // a IA preenche só as vazias, com o que está no currículo, na Mente e no PDF; o que ela não sabe fica vazio
+    const fill = h("button", { type: "button", className: "btn btn--soft" }, icon("sparkle"), "Preencher com IA");
+    fill.addEventListener("click", async () => {
+      const empty = answers.filter((item) => !item.a?.trim()).map((item) => item.q);
+      if (!empty.length) return toast("Todas já estão respondidas.");
+      const problem = await brainProblem(true);
+      if (problem) return toast(problem);
+      fill.disabled = true;
+      fill.replaceChildren(h("span", { className: "spinner" }), ` Lendo seu currículo… (${empty.length} perguntas)`);
+      try {
+        const { respostas } = await askClaude("answers_fill", { perguntas: empty }, { timeout: 240_000 });
+        let filled = 0;
+        for (const { q, a } of respostas ?? []) {
+          const item = answers.find((entry) => entry.q === q && !entry.a?.trim());
+          if (item && a) (item.a = a), filled++;
+        }
+        if (filled) changed();
+        draw();
+        toast(filled ? `${filled} de ${empty.length} preenchidas. Revise antes de usar; as vazias faltou informação no currículo.` : "A IA não achou informação pra essas perguntas. Complete o currículo e tente de novo.");
+      } catch (error) {
+        toast(error.message);
+      } finally {
+        fill.disabled = false;
+        fill.replaceChildren(icon("sparkle"), "Preencher com IA");
+      }
+    });
     draw();
-    return [h("div", { className: "import__row" }, filter, add), h("p", { className: "settings__help" }, "Responda as perguntas comuns uma vez. O Claude usa nas cartas e, na F2, pra preencher formulários de vaga sozinho."), wrap];
+    return [h("div", { className: "import__row" }, filter, fill, add), h("p", { className: "settings__help" }, "Responda as perguntas comuns uma vez, ou deixe a IA preencher as vazias com base no seu currículo, no PDF enviado e no que a Mente aprendeu. O Claude usa nas cartas e nos formulários de vaga."), wrap];
   }
 
   async function rejeicao() {

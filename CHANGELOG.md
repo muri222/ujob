@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4 (2026-10-20)
+
+- Biblioteca de respostas: botão "Preencher com IA". Preenche só as perguntas vazias com o currículo, as preferências, o PDF enviado e o que a Mente aprendeu. O que não está lá fica vazio pra você completar (nada inventado).
+
 ## 1.1.3 (2026-10-20)
 
 - Vários lugares de uma vez: no seletor de lugar, cada clique marca ou desmarca um país ou estado (ex.: Portugal, Espanha, São Paulo e Rio de Janeiro). "Qualquer lugar" limpa. Vale na lista de vagas, nos chips de país e nas buscas nos portais.

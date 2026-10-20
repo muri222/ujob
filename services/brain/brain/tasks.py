@@ -82,6 +82,42 @@ def cv_import(task: dict) -> tuple[dict, list[dict]]:
     return value.model_dump(), log
 
 
+class Answer(BaseModel):
+    q: str
+    a: str
+
+
+class Answers(BaseModel):
+    respostas: list[Answer] = Field(max_length=60)
+
+
+def answers_fill(task: dict) -> tuple[dict, list[dict]]:
+    """Biblioteca de respostas: só preenche o que dá pra tirar do currículo, da Mente e do PDF; o resto volta vazio."""
+    payload = task["payload"]
+    questions = [str(item)[:300] for item in payload.get("perguntas") or [] if str(item).strip()][:60]
+    if not questions:
+        raise claude.TaskFailed("Nenhuma pergunta sem resposta.", [])
+    pdf = ""
+    if payload.get("pdf"):
+        try:
+            pdf = read.pdf_text(payload["pdf"])[:8000]
+        except Exception:
+            pdf = ""
+    prompt = render(
+        "answers_fill",
+        funcao=str(payload.get("funcao") or "a função dela")[:80],
+        perguntas="\n".join(f"- {question}" for question in questions),
+        cv=json.dumps(payload.get("cv") or {}, ensure_ascii=False)[:20000],
+        mente=mind.context(payload.get("mente") or []),
+        pdf=pdf,
+    )
+    value, log = claude.complete("answers_fill", prompt, Answers, "best")
+    # só volta resposta pra pergunta que foi pedida (o modelo às vezes reescreve a pergunta)
+    wanted = {question.strip().lower(): question for question in questions}
+    answers = [{"q": wanted[item.q.strip().lower()], "a": item.a.strip()[:2000]} for item in value.respostas if item.q.strip().lower() in wanted and item.a.strip()]
+    return {"respostas": answers}, log
+
+
 class Fact(BaseModel):
     text: str
     kind: str
@@ -467,6 +503,7 @@ TASKS: dict[str, Callable[[dict], tuple[dict, list[dict]]]] = {
     "lead_dossier": lead_dossier,
     "outreach": outreach,
     "job_query": job_query,
+    "answers_fill": answers_fill,
     "lead_pack": lead_pack,
     "chat_title": chat_title,
     "transcribe": transcribe,

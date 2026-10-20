@@ -50,6 +50,20 @@ routerAdd(
           continue;
         }
       }
+      // biblioteca de respostas: currículo, preferências, Mente e o PDF guardado, montados aqui (a tela não manda)
+      if (out.type === "answers_fill") {
+        const { cvOf, menteOf } = require(`${__hooks}/payload.js`);
+        try {
+          const profile = $app.findRecordById("profile", out.profile);
+          const file = profile.getString("resume");
+          Object.assign(out.payload, { cv: cvOf(profile), mente: menteOf($app, profile.id), funcao: profile.getString("label") || profile.getString("headline") });
+          if (file) out.payload.pdf = `${$app.dataDir()}/storage/${profile.collection().id}/${profile.id}/${file}`;
+        } catch {
+          task.load({ status: "failed", error: "Crie sua função primeiro." });
+          $app.save(task);
+          continue;
+        }
+      }
       if (out.type === "leads_discover" && ["apify", "instagram", "tiktok"].includes(out.payload.source)) {
         try {
           const apify = $app.findFirstRecordByFilter("integrations", "kind = 'apify'", {});
