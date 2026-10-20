@@ -54,7 +54,9 @@ export default async function searchRun(root, { params, signal }) {
   // na frase os países fora ("-BR") viram "menos Brasil"; os de dentro seguem na busca nova se não escolher outro lugar
   const wanted = (search.countries ?? []).filter((code) => code[0] !== "-");
   const { countries: _, ...shown } = query;
-  shown.not = (search.countries ?? []).filter((code) => code[0] === "-").map((code) => code.slice(1)).join(",");
+  shown.not = (search.countries ?? []).filter((code) => /^-[A-Z]{2}$/.test(code)).map((code) => code.slice(1)).join(",");
+  if (wanted.length === 1 && !search.state) shown.country = wanted[0];
+  shown.notUf = (search.countries ?? []).filter((code) => code.startsWith("-BR-")).map((code) => code.slice(4)).join(",");
   const sentence = createSentence({ query: shown, size: "md", onChange: (next) => runSearch({ ...next, countries: next.country || next.state || !wanted.length ? undefined : wanted }).catch(() => toast("Não deu pra buscar.")) });
 
   root.classList.add("view--flush");

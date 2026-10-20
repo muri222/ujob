@@ -15,7 +15,8 @@ export async function runSearch(query, { saved = false } = {}) {
   // país escolhido na frase manda; senão, os países da função (Brasil se não tiver nenhum)
   const out = excluded(query.not);
   const base = (query.countries ?? (query.country ? [query.country] : query.state || query.city ? ["BR"] : profileCountries(ctx.profile))).filter((code) => !out.includes(code));
-  const countries = [...(base.length ? base : ["WW"]), ...out.map((code) => `-${code}`)];
+  const outUf = String(query.notUf ?? "").split(",").filter((code) => /^[A-Z]{2}$/.test(code));
+  const countries = [...(base.length ? base : ["WW"]), ...out.map((code) => `-${code}`), ...outUf.map((code) => `-BR-${code}`)];
   const { search, reused } = await api("ujob/search", { method: "POST", body: { ...query, countries, saved, profile: ctx.profile?.id } });
   if (reused && search.status === "done") toast("Essa busca é fresquinha. Mostrando o resultado na hora.");
   location.hash = `#buscar/${search.id}`;
@@ -26,7 +27,7 @@ export default async function search(root, { query, signal }) {
   const initial = Object.keys(fromParams(query)).length
     ? fromParams(query)
     : { category: profile.categories?.[0], state: profile.state, city: profile.city, workplace: profile.workplace };
-  for (const key of Object.keys(initial)) if (!initial[key] || !["term", "category", "state", "city", "workplace", "contract", "country", "not"].includes(key)) delete initial[key];
+  for (const key of Object.keys(initial)) if (!initial[key] || !["term", "category", "state", "city", "workplace", "contract", "country", "not", "notUf"].includes(key)) delete initial[key];
 
   const data = await stats().catch(() => null);
   const counts = { category: asMap(data?.category), state: asMap(data?.state), workplace: asMap(data?.workplace), contract: asMap(data?.contract) };

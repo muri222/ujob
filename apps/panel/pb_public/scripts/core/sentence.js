@@ -24,6 +24,8 @@ function options(entries, current, onPick, { counts = {}, iconFor } = {}) {
   );
 }
 
+const outStates = (value) => String(value ?? "").split(",").filter((code) => STATES[code]);
+
 export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
   const state = { ...query };
   const root = h("p", { className: `sentence sentence--${size}` });
@@ -106,34 +108,45 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
       pending = false;
       set({ state: city.state, city: city.name, country: "BR" });
     };
-    // países da função primeiro, depois o resto
-    const countryGrid = () => {
-      const mine = (ctx.profile?.countries ?? []).map((place) => place.code).filter((code) => COUNTRY[code]);
-      const ordered = [...mine, ...COUNTRIES.map(([code]) => code).filter((code) => !mine.includes(code))];
-      const out = excluded(state.not);
-      const pick = (country) => {
-        state.not = out.filter((code) => code !== country).join(",");
-        if (country === "BR") return Object.assign(state, { country }), draw();
-        set({ country, state: "", city: "" });
-      };
-      const grid = options([["", "Qualquer lugar"], ...ordered.map((code) => [code, countryLabel(code)])], state.country ?? "", pick);
+    // botão direito num país ou estado: fora da busca (fica vermelho); de novo, volta
+    const outOf = (key) => String(state[key] ?? "").split(",").filter(Boolean);
+    const markOut = (grid, entries, key, onOut) => {
       grid.querySelectorAll(".option").forEach((button, index) => {
-        const code = index ? ordered[index - 1] : "";
+        const code = entries[index][0];
         if (!code) return;
+        const out = outOf(key);
         button.classList.toggle("is-out", out.includes(code));
         if (out.includes(code)) button.title = "Fora da busca. Botão direito pra voltar.";
         button.addEventListener("contextmenu", (event) => {
           event.preventDefault();
-          const next = out.includes(code) ? out.filter((item) => item !== code) : [...out, code];
-          Object.assign(state, { not: next.join(",") });
-          if (state.country === code) Object.assign(state, { country: "", state: "", city: "" });
+          const now = outOf(key);
+          state[key] = (now.includes(code) ? now.filter((item) => item !== code) : [...now, code]).join(",");
+          if (!now.includes(code)) onOut(code);
           pending = true;
           draw();
         });
       });
       return grid;
     };
-    const stateGrid = (entries) => options(entries, state.state ?? "", pickState, { counts: counts.state ?? {}, iconFor: (value) => uf(value) });
+    // países da função primeiro, depois o resto
+    const countryGrid = () => {
+      const mine = (ctx.profile?.countries ?? []).map((place) => place.code).filter((code) => COUNTRY[code]);
+      const ordered = [...mine, ...COUNTRIES.map(([code]) => code).filter((code) => !mine.includes(code))];
+      const pick = (country) => {
+        state.not = excluded(state.not).filter((code) => code !== country).join(",");
+        if (country === "BR") return Object.assign(state, { country }), draw();
+        set({ country, state: "", city: "" });
+      };
+      const entries = [["", "Qualquer lugar"], ...ordered.map((code) => [code, countryLabel(code)])];
+      return markOut(options(entries, state.country ?? "", pick), entries, "not", (code) => state.country === code && Object.assign(state, { country: "", state: "", city: "" }));
+    };
+    const stateGrid = (entries) =>
+      markOut(
+        options(entries, state.state ?? "", (value) => ((state.notUf = outOf("notUf").filter((code) => code !== value).join(",")), pickState(value)), { counts: counts.state ?? {}, iconFor: (value) => uf(value) }),
+        entries,
+        "notUf",
+        (code) => state.state === code && Object.assign(state, { state: "", city: "" }),
+      );
 
     async function draw() {
       const term = input.value.trim();
@@ -163,7 +176,7 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
           !state.country || state.country === "BR"
             ? [
                 h("p", { className: "places__hint" }, icon("pin"), state.state ? `Digite acima pra achar qualquer cidade de ${STATES[state.state]} ou do Brasil.` : "No Brasil dá pra escolher estado e cidade."),
-                h("p", { className: "popover__title" }, "Estados do Brasil"),
+                h("p", { className: "popover__title" }, "Estados do Brasil ", h("small", { className: "places__tip" }, "botão direito: não buscar nesse estado")),
                 stateGrid([["", "Todo o Brasil"], ...Object.entries(STATES)]),
               ]
             : [],
@@ -190,7 +203,7 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
   }
 
   function render() {
-    const out = excluded(state.not).map((code) => COUNTRY[code].pt);
+    const out = [...excluded(state.not).map((code) => COUNTRY[code].pt), ...outStates(state.notUf).map((code) => STATES[code])];
     const place = (state.city ? `${state.city}${state.state ? `/${state.state}` : ""}` : STATES[state.state] ?? (state.country ? COUNTRY[state.country]?.pt : "qualquer lugar")) + (out.length ? `, menos ${out.join(", ")}` : "");
     root.replaceChildren(
       "Quero vagas de ",
@@ -198,7 +211,7 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
       " ",
       token(state.term ? `“${state.term}”` : "qualquer cargo", Boolean(state.term), termPicker, "Palavra-chave"),
       " em ",
-      token(place, Boolean(state.state || state.city || state.country || state.not), placePicker, "Lugar"),
+      token(place, Boolean(state.state || state.city || state.country || state.not || state.notUf), placePicker, "Lugar"),
       ", ",
       token(WORKPLACES[state.workplace]?.toLowerCase() ?? "qualquer modalidade", Boolean(state.workplace), (anchor) => listPicker(anchor, "Modalidade", [["", "Qualquer modalidade"], ...Object.entries(WORKPLACES)], "workplace"), "Modalidade"),
       " e ",

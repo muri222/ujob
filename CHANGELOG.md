@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2 (2026-10-20)
+
+- Tirar estado da busca: botão direito num estado do Brasil também deixa ele vermelho ("Brasil, menos São Paulo, Minas Gerais"), na lista de vagas e nas buscas nos portais.
+
 ## 1.1.1 (2026-10-20)
 
 - Tirar país da busca: no seletor de lugar, botão direito num país deixa ele vermelho e as vagas de lá somem ("qualquer lugar, menos Brasil"). Vale na lista de vagas e nas buscas nos portais. Tirar o Brasil também esconde as fontes só brasileiras que vêm sem local (Gupy, Trampos...).
