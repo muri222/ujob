@@ -40,7 +40,7 @@ def reply(task: dict, on_text: Callable[[str], bool]) -> tuple[dict, list[dict]]
     if providers.name() != "claude":
         return reply_other(payload, tier, name, files_dir, on_text)
     command = [
-        "claude", "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
+        claude.claude_bin() or "claude", "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
         "--model", claude.TIERS[tier], "--tools", TOOLS, "--allowedTools", "WebSearch,WebFetch",
         "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",
         "--system-prompt", system_prompt(payload, name),

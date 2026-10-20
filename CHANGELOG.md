@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.8 (2026-10-20)
+
+- Claude Code é encontrado em qualquer instalação do Windows: pelo npm (claude.cmd), pelo instalador oficial (~/.local/bin) ou fora do PATH do app. Antes, instalado pelo npm, dava "Claude Code não respondeu".
+- Mensagem clara quando só o app Claude de desktop está instalado: ele não serve, precisa do Claude Code.
+
 ## 1.1.7 (2026-10-20)
 
 - Microfone do chat funciona no app instalado (um cabeçalho de segurança do painel bloqueava o microfone).

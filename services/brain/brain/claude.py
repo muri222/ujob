@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import time
+from pathlib import Path
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -30,17 +31,34 @@ class TaskFailed(Exception):
         self.log = log
 
 
+def claude_bin() -> str | None:
+    """Caminho completo do Claude Code. No Windows o do npm é claude.cmd, que só roda pelo caminho inteiro;
+    e o app pode ter herdado um PATH de antes da instalação, então olha também onde os instaladores põem."""
+    found = shutil.which("claude")
+    if found:
+        return found
+    for path in (Path.home() / ".local/bin/claude.exe", Path(os.getenv("APPDATA", "")) / "npm/claude.cmd", Path(os.getenv("LOCALAPPDATA", "")) / "Programs/claude/claude.exe"):
+        if path.is_file():
+            return str(path)
+    return None
+
+
 def problem() -> str | None:
     """None se a IA escolhida está pronta, senão o motivo em PT-BR pra mostrar na tela."""
     if providers.name() != "claude":
         return providers.problem()
-    if not shutil.which("claude"):
-        return "Claude Code não está instalado neste PC"
+    binary = claude_bin()
+    if not binary:
+        return "Claude Code não encontrado. O app Claude de desktop não serve: instale o Claude Code (claude.ai/code) e rode claude auth login"
     try:
-        done = subprocess.run(["claude", "auth", "status"], capture_output=True, text=True, timeout=30, encoding="utf-8")
-        status = json.loads(done.stdout or "{}")
-    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        done = subprocess.run([binary, "auth", "status"], capture_output=True, text=True, timeout=30, encoding="utf-8")
+    except (OSError, subprocess.TimeoutExpired):
         return "Claude Code não respondeu"
+    try:
+        status = json.loads(done.stdout or "{}")
+    except json.JSONDecodeError:
+        # versão que responde em texto: vale o código de saída
+        return None if done.returncode == 0 and "not logged" not in done.stdout.lower() else "Claude Code não está logado (rode claude auth login)"
     return None if status.get("loggedIn") else "Claude Code não está logado (rode claude auth login)"
 
 
@@ -62,7 +80,7 @@ def ask(prompt: str, schema: dict, tier: str, tools: str = "") -> tuple[str, dic
         except providers.ProviderError as error:
             raise TaskFailed(providers.friendly(str(error)), [{"provider": providers.name(), "ok": False, "error": str(error)[:2000]}]) from error
     command = [
-        "claude", "-p", "--output-format", "json", "--model", TIERS[tier],
+        claude_bin() or "claude", "-p", "--output-format", "json", "--model", TIERS[tier],
         "--tools", tools, *(["--allowedTools", tools] if tools else []), "--strict-mcp-config", "--disable-slash-commands", "--setting-sources", "", "--no-session-persistence",
         "--system-prompt", SYSTEM, "--json-schema", json.dumps(schema),
     ]

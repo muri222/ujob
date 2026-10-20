@@ -45,3 +45,14 @@ def test_real_claude_returns_schema():
         pytest.skip(problem)
     value, log = claude.complete("teste", "Responda com score 42 e ok true.", Score, "cheap")
     assert value == Score(score=42, ok=True) and log[-1]["ok"] and log[-1]["model"].startswith("claude-")
+
+
+def test_claude_bin_finds_npm_cmd_when_not_on_path(monkeypatch, tmp_path):
+    from brain import claude
+
+    (tmp_path / "npm").mkdir()
+    (tmp_path / "npm" / "claude.cmd").write_text("@echo off")
+    monkeypatch.setattr(claude.shutil, "which", lambda name: None)
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setattr(claude.Path, "home", lambda: tmp_path / "nada")
+    assert claude.claude_bin() == str(tmp_path / "npm" / "claude.cmd")
