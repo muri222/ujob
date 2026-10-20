@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// dono local do Radar: superusuário criado sozinho, com senha aleatória que ninguém precisa saber
+// dono local do uJob: superusuário criado sozinho, com senha aleatória que ninguém precisa saber
 module.exports = function ensureOwner(app) {
   const EMAIL = "dono@radar.local";
   try {

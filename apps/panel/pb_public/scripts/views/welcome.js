@@ -1,3 +1,4 @@
+import { queueTour } from "../core/tour.js";
 import { api, create, remove, update } from "../core/api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES } from "../core/catalog.js";
 import { askClaude, brainProblem, ctx, useProfile } from "../core/context.js";
@@ -87,7 +88,7 @@ export function welcome({ force = false, fresh = false } = {}) {
       "section",
       { className: "welcome__step" },
       h("p", { className: "eyebrow" }, icon("sparkle"), "Passo 1 de 6"),
-      h("h2", {}, editing ? "Ajuste sua função" : base.id ? "Nova função" : "Vamos montar seu Radar"),
+      h("h2", {}, editing ? "Ajuste sua função" : base.id ? "Nova função" : "Vamos montar seu uJob"),
       h("p", { className: "lead" }, "Uma função é um tipo de vaga que você procura (ex.: Artista 3D, Editor de Vídeo). Cada uma tem currículo, países, buscas e painel próprios."),
       field("Nome da função", input(draft.label, (value) => (draft.label = value), { maxLength: 60, placeholder: "Ex.: 3D Generalist, Editor de Vídeo, Designer Gráfico", required: true })),
       h("div", { className: "welcome__row" }, field("Seu nome completo", input(draft.name, (value) => (draft.name = value), { maxLength: 80, autocomplete: "name" })), field("E-mail", input(draft.email, (value) => (draft.email = value), { type: "email", autocomplete: "email" }))),
@@ -255,7 +256,7 @@ export function welcome({ force = false, fresh = false } = {}) {
       { className: "welcome__step" },
       h("p", { className: "eyebrow" }, icon("globe"), "Passo 4 de 6"),
       h("h2", {}, "Onde você quer trabalhar?"),
-      h("p", { className: "lead" }, "O Radar busca no mundo todo. Escolha os países principais e diga se tem permissão de trabalho ou precisa de visto: isso filtra vaga que exige autorização que você não tem."),
+      h("p", { className: "lead" }, "O uJob busca no mundo todo. Escolha os países principais e diga se tem permissão de trabalho ou precisa de visto: isso filtra vaga que exige autorização que você não tem."),
       h("label", { className: "check welcome__world" }, h("input", { type: "checkbox", checked: draft.prefs.worldwide, onchange: (event) => (draft.prefs.worldwide = event.target.checked) }), h("span", {}, h("strong", {}, "🌍 Aceito vaga remota de qualquer lugar do mundo"), h("small", {}, " Empresas de fora que contratam remoto (PJ/contractor)."))),
       h("label", { className: "search welcome__search" }, icon("search"), filter),
       grid,
@@ -348,6 +349,7 @@ export function welcome({ force = false, fresh = false } = {}) {
     ctx.profile = record;
     useProfile(record.id);
     createdHere = false;
+    if (!ctx.profiles?.length) queueTour();
     dialog.close();
     const countries = [...draft.countries.map((place) => place.code), ...(draft.prefs.worldwide ? ["WW"] : [])];
     toast("Painel montado. Buscando as primeiras vagas nos seus países…");

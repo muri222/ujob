@@ -9,7 +9,7 @@ import requests
 
 from .read import html_text
 
-UA = "Mozilla/5.0 (compatible; Radar/0.1; app local de prospeccao)"
+UA = "Mozilla/5.0 (compatible; uJob/0.1; app local de prospeccao)"
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 PHONE = re.compile(r"(?:\+?55\s?)?\(?\b[1-9]{2}\)?\s?9?\d{4}[-\s.]?\d{4}\b")
 SOCIAL = {

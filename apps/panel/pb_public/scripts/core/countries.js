@@ -1,4 +1,4 @@
-// países que o Radar busca: código ISO, nome em PT (tela) e em EN (o que portais e coletores entendem)
+// países que o uJob busca: código ISO, nome em PT (tela) e em EN (o que portais e coletores entendem)
 // "WW" = mundo todo (vagas remotas de qualquer lugar)
 export const COUNTRIES = [
   ["WW", "Mundo todo (remoto)", "Worldwide", "🌍"],

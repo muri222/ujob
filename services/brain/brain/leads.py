@@ -8,7 +8,7 @@ import requests
 # servidor principal + espelho: o principal às vezes fica lento e estoura o tempo
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 APIFY_ACTOR = "compass~crawler-google-places"
-UA = {"User-Agent": "Radar/0.1 (app local de prospeccao)"}
+UA = {"User-Agent": "uJob/0.1 (app local de prospeccao)"}
 # só colchetes chave/valor: nada que feche a query e injete outra coisa no Overpass
 OSM_FILTER = re.compile(r'^(\["[a-z_:]+"(=|~|!=|!~)"[^"\\]{1,80}"(,i)?\])+$')
 

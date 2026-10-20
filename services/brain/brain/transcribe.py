@@ -13,7 +13,7 @@ def _load(device: str):
 
 def _run(model, path: str) -> str:
     # vocabulário do app ajuda o Whisper com termos em inglês misturados no português
-    hint = "Radar, leads, vagas, currículo, portfólio, prospecção, freela, job, remoto, CGI, 3D, Claude."
+    hint = "uJob, leads, vagas, currículo, portfólio, prospecção, freela, job, remoto, CGI, 3D, Claude."
     segments, _ = model.transcribe(path, vad_filter=True, beam_size=5, initial_prompt=hint)
     return " ".join(segment.text.strip() for segment in segments).strip()
 

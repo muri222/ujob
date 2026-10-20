@@ -138,7 +138,7 @@ def _api_model(tier: str, web: bool) -> str:
 
 
 def _api(messages: list[dict], tier: str, web: bool, json_mode: bool, stream_to: Callable[[str], bool] | None = None) -> tuple[str, dict, bool]:
-    headers = {"Authorization": f"Bearer {CONFIG.get('key', '')}", "Content-Type": "application/json", "HTTP-Referer": "https://radar.local", "X-Title": "Radar"}
+    headers = {"Authorization": f"Bearer {CONFIG.get('key', '')}", "Content-Type": "application/json", "HTTP-Referer": "https://radar.local", "X-Title": "uJob"}
     body = {"model": _api_model(tier, web), "messages": messages}
     if json_mode:
         body["response_format"] = {"type": "json_object"}

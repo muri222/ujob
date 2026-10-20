@@ -360,7 +360,7 @@ export default async function preferences(root, { query }) {
       }),
     );
     return [
-      h("p", { className: "settings__help" }, "O Radar aprende com as vagas que você recusa e com o que você marca aqui. Vagas parecidas ficam com nota menor e saem do Auto Apply."),
+      h("p", { className: "settings__help" }, "O uJob aprende com as vagas que você recusa e com o que você marca aqui. Vagas parecidas ficam com nota menor e saem do Auto Apply."),
       block("Cargos que não quero", tags(prefs.rejects.roles, savePrefs, { placeholder: "Ex.: Vagas de engenharia, Animação 2D" })),
       block("Habilidades que não tenho", tags(prefs.rejects.skills, savePrefs, { placeholder: "Ex.: Unreal Engine, After Effects" })),
       block("Aprendido com suas recusas", facts.items.length ? learned : h("small", {}, "Ainda nada. Recuse uma vaga com o botão Não quero (tecla N)."), h("a", { href: "#mente" }, "Ver tudo na Mente ", icon("arrow"))),

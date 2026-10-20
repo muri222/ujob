@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// chat estilo app do Claude: histórico + contexto do Radar montado na hora + anexos lidos do disco local
+// chat estilo app do Claude: histórico + contexto do uJob montado na hora + anexos lidos do disco local
 
 // pede a resposta pra última mensagem (ou regenera)
 routerAdd(

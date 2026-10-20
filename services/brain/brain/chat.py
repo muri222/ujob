@@ -1,4 +1,4 @@
-"""Chat do Radar: Claude Code do usuário em streaming, com o contexto atual do Radar e os anexos da conversa."""
+"""Chat do uJob: Claude Code do usuário em streaming, com o contexto atual do uJob e os anexos da conversa."""
 
 import json
 import os

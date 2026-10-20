@@ -63,7 +63,7 @@ addEventListener(
   { passive: true },
 );
 
-export function mascot(variant = "mark", { label = "ujob", className = "" } = {}) {
+export function mascot(variant = "mark", { label = "uJob", className = "" } = {}) {
   const { box, body } = VARIANTS[variant];
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("viewBox", box);
@@ -100,7 +100,7 @@ export function mountBrand() {
   for (const slot of document.querySelectorAll("[data-brand]")) {
     const variant = slot.dataset.brand;
     if (variant === "full") slot.replaceChildren(mascot("full"));
-    else slot.replaceChildren(mascot("mark", { label: "" }), mascot("word", { label: "ujob" }));
+    else slot.replaceChildren(mascot("mark", { label: "" }), mascot("word", { label: "uJob" }));
   }
 }
 

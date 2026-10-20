@@ -1,4 +1,4 @@
-"""Toda IA do Radar passa por aqui. Padrão: o Claude Code logado no PC do usuário (claude -p), na assinatura dele.
+"""Toda IA do uJob passa por aqui. Padrão: o Claude Code logado no PC do usuário (claude -p), na assinatura dele.
 Se a pessoa escolheu outra IA em Config. da conta (ChatGPT/Codex, OpenRouter, DeepSeek...), providers.py atende."""
 
 import json
@@ -21,7 +21,7 @@ TIERS = {
     "cheap": os.getenv("CLAUDE_MODEL_CHEAP", "haiku"),
 }
 
-SYSTEM = "Você é o motor de IA do Radar. Responda só com o JSON pedido, sem texto fora dele. Nunca invente fatos."
+SYSTEM = "Você é o motor de IA do uJob. Responda só com o JSON pedido, sem texto fora dele. Nunca invente fatos."
 
 
 class TaskFailed(Exception):

@@ -83,7 +83,7 @@ function detect(email) {
 // ponytail: senha cifrada com RADAR_SECRET do .env (fora do banco); trocar pelo cofre do Windows se precisar de mais
 function key() {
   const secret = $os.getenv("RADAR_SECRET");
-  if (!secret || secret.length !== 32) throw new Error("RADAR_SECRET ausente: feche e abra o Radar.");
+  if (!secret || secret.length !== 32) throw new Error("RADAR_SECRET ausente: feche e abra o uJob.");
   return secret;
 }
 

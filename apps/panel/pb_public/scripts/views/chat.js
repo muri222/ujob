@@ -5,7 +5,7 @@ import { ago } from "../core/format.js";
 import { markdown } from "../core/markdown.js";
 import { listen } from "../core/realtime.js";
 
-// conversa com o Claude do PC, com o contexto do Radar montado na hora de cada resposta
+// conversa com o Claude do PC, com o contexto do uJob montado na hora de cada resposta
 const MODELS = [
   ["best", "Sonnet", "Equilibrado"],
   ["top", "Opus", "Mais inteligente, mais lento"],
@@ -309,7 +309,7 @@ export default async function chat(root, { signal, query }) {
       recorder.start();
       micButton.classList.add("is-recording");
     } catch {
-      toast("Não deu pra usar o microfone. Libere a permissão do microfone pro Radar.");
+      toast("Não deu pra usar o microfone. Libere a permissão do microfone pro uJob.");
     }
   });
 

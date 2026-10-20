@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// fila uma resposta do chat: histórico + contexto do Radar montado agora (handlers do PB não veem funções de fora, por isso módulo)
+// fila uma resposta do chat: histórico + contexto do uJob montado agora (handlers do PB não veem funções de fora, por isso módulo)
 const CHAT_PRIORITY = 10;
 
 function queueReply(app, conversation, model) {

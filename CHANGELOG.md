@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 (2026-10-20)
+
+- Novo nome: **uJob** (janela, instalador, menu Iniciar e textos). Os dados continuam na mesma pasta, `%APPDATA%\com.murillo.radar`.
+- Tour da primeira vez: depois da configuração inicial, passa por Config. da conta (IA e e-mail), Currículo, Preferências, Buscar, Vagas, Candidatura automática, Candidaturas, Leads, Chat e Suas funções, dizendo o que configurar em cada uma. Pode rever pelo Ctrl K ou em Como usar.
+
 ## 1.0.0 (2026-10-20)
 
 Primeira versão oficial, com instalador para Windows.

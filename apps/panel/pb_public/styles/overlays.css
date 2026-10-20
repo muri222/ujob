@@ -335,3 +335,63 @@ dialog::backdrop {
     top: 10px;
   }
 }
+
+/* tour da primeira vez */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+}
+.tour__spot {
+  position: fixed;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 2px var(--brand), 0 0 0 9999px rgb(0 0 0 / 0.55);
+  pointer-events: none;
+  transition: all 0.3s var(--ease);
+}
+.tour__card {
+  position: fixed;
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  transition: top 0.3s var(--ease), left 0.3s var(--ease);
+}
+.tour__card strong {
+  font-size: 16px;
+}
+.tour__card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.tour__count {
+  color: var(--brand);
+  font-weight: 650;
+}
+.tour__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.tour__actions .btn--ghost {
+  margin-right: auto;
+}
+.tour.is-center {
+  background: rgb(0 0 0 / 0.55);
+}
+.tour.is-center .tour__spot {
+  display: none;
+}
+.tour.is-center .tour__card {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+}

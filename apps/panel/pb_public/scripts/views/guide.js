@@ -1,3 +1,4 @@
+import { startTour } from "../core/tour.js";
 import { h, header, icon } from "../core/dom.js";
 
 // fluxos do app em passos curtos, cada passo leva pra tela certa
@@ -54,7 +55,7 @@ const FLOWS = [
   },
   {
     title: "Ensinar a Mente",
-    lead: "O Radar aprende o que você quer e o que não aceita.",
+    lead: "O uJob aprende o que você quer e o que não aceita.",
     steps: [
       ["Recuse dizendo o porquê", "Na vaga, Não quero (tecla N): os chips viram regras na hora; o texto livre vira sugestão.", "#vagas"],
       ["Aprove ou corrija", "Na Mente você confirma, corrige ou apaga. Tudo que está lá entra na nota das vagas.", "#mente"],
@@ -84,7 +85,7 @@ const FLOWS = [
 
 export default async function guide(root) {
   root.append(
-    header("Como usar o Radar", "Os caminhos principais, em poucos passos. A IA usa o Claude Code logado neste PC, na sua assinatura."),
+    header("Como usar o uJob", "Os caminhos principais, em poucos passos. A IA usa o Claude Code logado neste PC, na sua assinatura.", h("button", { type: "button", className: "btn btn--primary", onclick: () => startTour() }, icon("bulb"), "Ver o tour")),
     h(
       "div",
       { className: "guide" },

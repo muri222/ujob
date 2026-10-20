@@ -137,7 +137,7 @@ let brainCache = null;
 export async function brainProblem(force = false) {
   if (force || !brainCache || Date.now() - brainCache.at > 60_000) brainCache = { at: Date.now(), data: await api("radar/brain").catch(() => null) };
   const data = brainCache.data;
-  if (!data?.at || Date.now() - Date.parse(data.at) > 3 * 60_000) return "O serviço de IA do Radar está desligado. Feche e abra o app.";
+  if (!data?.at || Date.now() - Date.parse(data.at) > 3 * 60_000) return "O serviço de IA do uJob está desligado. Feche e abra o app.";
   return data.problem;
 }
 

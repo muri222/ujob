@@ -25,7 +25,7 @@ export default async function inbox(root, { signal }) {
   if (!account?.verifiedAt || !account.imapHost) {
     root.append(
       header("Entrada", "As respostas das suas candidaturas, direto do seu e-mail."),
-      h("div", { className: "empty card" }, h("strong", {}, "Conecte seu e-mail primeiro"), "Em Config. da conta, coloque seu e-mail e a senha de app. O Radar lê só os e-mails de candidatura (empresas pra onde você aplicou e sistemas de vagas), aqui no seu PC.", h("a", { className: "btn btn--primary", href: "#config" }, icon("gear"), "Configurar e-mail")),
+      h("div", { className: "empty card" }, h("strong", {}, "Conecte seu e-mail primeiro"), "Em Config. da conta, coloque seu e-mail e a senha de app. O uJob lê só os e-mails de candidatura (empresas pra onde você aplicou e sistemas de vagas), aqui no seu PC.", h("a", { className: "btn btn--primary", href: "#config" }, icon("gear"), "Configurar e-mail")),
     );
     return;
   }

@@ -8,6 +8,7 @@ import { busy as collecting, mascot, mountBrand } from "./core/mascot.js";
 import { listen } from "./core/realtime.js";
 import { createRouter } from "./core/router.js";
 import { createSidebar } from "./core/sidebar.js";
+import { startTour, tourPending } from "./core/tour.js";
 import areas from "./views/areas.js";
 import chat from "./views/chat.js";
 import companies from "./views/companies.js";
@@ -173,6 +174,7 @@ function initChrome() {
     actions: [
       ["Ajustar meu perfil", () => welcome({ force: true }), "user"],
       ["Nova função", () => newFunction(), "user"],
+      ["Ver o tour do uJob", () => startTour(), "bulb"],
       ["Preferências da função", () => (location.hash = "#preferencias"), "gear"],
       ["Alternar claro / escuro", () => window.radarTheme.set({ mode: document.documentElement.dataset.mode === "dark" ? "light" : "dark" }), "sparkle"],
       ["Configurações e temas", () => (location.hash = "#config"), "gear"],
@@ -213,6 +215,7 @@ async function open() {
   await Promise.all([refreshCounts(), refreshPulse(), refreshClaude()]);
   watchLive();
   if (!profile) welcome();
+  else if (tourPending()) startTour();
 
   setInterval(() => {
     if (!document.hidden) Promise.all([refreshCounts(), refreshPulse(), refreshClaude()]).catch(() => {});
@@ -223,4 +226,4 @@ mountBrand();
 clickSpark();
 startSession()
   .then(open)
-  .catch(() => document.body.append(h("p", { className: "boot-error" }, "O painel do Radar não respondeu. Feche e abra o app de novo.")));
+  .catch(() => document.body.append(h("p", { className: "boot-error" }, "O painel do uJob não respondeu. Feche e abra o app de novo.")));

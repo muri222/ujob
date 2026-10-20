@@ -47,7 +47,7 @@ export const count = async (collection, filter) =>
 export const fileUrl = (record, name, thumb) =>
   new URL(`files/${record.collectionId}/${record.id}/${encodeURIComponent(name)}${thumb ? `?thumb=${thumb}` : ""}`, BASE).href;
 
-// sem tela de login: o Radar é local, a sessão vem do próprio painel
+// sem tela de login: o uJob é local, a sessão vem do próprio painel
 export async function startSession() {
   session.save(await api("radar/session", { auth: false }));
 }

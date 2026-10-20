@@ -184,7 +184,7 @@ fn show(app: &AppHandle) {
     }
     let url = format!("http://{PANEL}/").parse().unwrap();
     let _ = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url))
-        // link de vaga, site, mailto, WhatsApp: abre no navegador/app padrão do Windows, não dentro do Radar
+        // link de vaga, site, mailto, WhatsApp: abre no navegador/app padrão do Windows, não dentro do uJob
         .on_new_window(|url, _| {
             open_outside(url.as_str());
             NewWindowResponse::Deny
@@ -197,7 +197,7 @@ fn show(app: &AppHandle) {
             }
             true
         })
-        .title("Radar")
+        .title("uJob")
         .inner_size(1360.0, 860.0)
         .min_inner_size(720.0, 520.0)
         .build();
@@ -215,11 +215,11 @@ fn main() {
         .setup(|app| {
             *app.state::<Mutex<Vec<Child>>>().lock().unwrap() = start_services(app.handle());
 
-            let open = MenuItem::with_id(app, "open", "Abrir o Radar", true, None::<&str>)?;
+            let open = MenuItem::with_id(app, "open", "Abrir o uJob", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Sair", true, None::<&str>)?;
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("Radar")
+                .tooltip("uJob")
                 .menu(&Menu::with_items(app, &[&open, &quit])?)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -247,7 +247,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("não deu pra abrir o Radar");
+        .expect("não deu pra abrir o uJob");
 
     app.run(|app, event| {
         if let RunEvent::Exit = event {

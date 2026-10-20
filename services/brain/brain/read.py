@@ -46,7 +46,7 @@ def html_text(html: str) -> tuple[str, list[str]]:
 
 
 def page_text(url: str) -> str:
-    response = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (Radar)"})
+    response = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (uJob)"})
     response.raise_for_status()
     text, links = html_text(response.text)
     return f"{text}\n\nLINKS: {' '.join(links)}"

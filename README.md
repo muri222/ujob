@@ -1,4 +1,4 @@
-# Radar
+# uJob
 
 App desktop de carreira e prospecção com IA, que roda inteiro no seu PC. Acha vagas no mundo todo, avalia cada uma com IA, prepara candidaturas (carta, CV adaptado, follow-up), lê as respostas dos recrutadores e encontra clientes (leads) no mapa, no Google Maps, no Instagram e no TikTok.
 
@@ -6,9 +6,9 @@ Sem servidor, sem login, sem conta na nuvem: banco, coleta e IA rodam aqui. A IA
 
 ## Instalar
 
-1. Baixe o `Radar_1.0.0_x64-setup.exe` na página de [Releases](../../releases) e instale (não precisa de administrador).
+1. Baixe o `uJob_1.1.0_x64-setup.exe` na página de [Releases](../../releases) e instale (não precisa de administrador).
 2. Tenha uma IA logada no PC. Recomendado: [Claude Code](https://docs.claude.com/claude-code) (`claude auth login`). Também dá pra usar o ChatGPT pelo Codex CLI (`codex login`) ou uma chave de API (OpenRouter, DeepSeek ou compatível com OpenAI), escolhendo em Config. da conta.
-3. Abra o Radar pelo menu Iniciar. Na primeira vez ele baixa o Python e as dependências sozinho (alguns minutos) e abre a configuração inicial: função, currículo, cargos, países e visto, salário e modo de candidatura.
+3. Abra o uJob pelo menu Iniciar. Na primeira vez ele baixa o Python e as dependências sozinho (alguns minutos) e abre a configuração inicial: função, currículo, cargos, países e visto, salário e modo de candidatura.
 
 Os dados ficam em `%APPDATA%\com.murillo.radar` (banco, senhas cifradas, logs). Atualizar ou desinstalar o app não apaga esses dados.
 

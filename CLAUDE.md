@@ -1,6 +1,6 @@
-# CLAUDE.md · Radar
+# CLAUDE.md · uJob (pasta Radar)
 
-Radar é um app desktop pessoal de prospecção e carreira com IA. Ele nasce do **ujob** (agregador de vagas do Dudu) e soma:
+uJob (antes Radar) é um app desktop pessoal de prospecção e carreira com IA. Ele nasce do **ujob** (agregador de vagas do Dudu) e soma:
 candidatura automática, inbox, prospecção de clientes multi-segmento, CRM, "Mente" (memória do usuário),
 simulador de reunião com professor de inglês e conselheiro sincero.
 
@@ -45,7 +45,7 @@ desktop/               NOVO. Shell Tauri: janela do painel + sobe PocketBase, sc
 
 Porta **8096** (a 8095 fica com o ujob antigo em Downloads).
 
-- Duplo clique em `Radar.lnk` (app Tauri em `desktop/`): na primeira vez cria o `.env` com senhas aleatórias; sobe painel, scout e brain, abre a janela; fechar encerra tudo.
+- Duplo clique em `uJob.lnk` (app Tauri em `desktop/`): na primeira vez cria o `.env` com senhas aleatórias; sobe painel, scout e brain, abre a janela; fechar encerra tudo.
 - Ou `INICIAR.bat` (abre no navegador; precisa do `.env` já criado).
 - Build do app: `cd desktop/src-tauri && cargo build --release`.
 - Sem login: a interface pega a sessão em `GET /api/radar/session`, que só responde pra própria página em 127.0.0.1/localhost. O superusuário `dono@radar.local` nasce sozinho com senha aleatória.
