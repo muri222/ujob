@@ -33,9 +33,19 @@ class ProviderError(Exception):
     pass
 
 
+def _codex_path() -> str | None:
+    # no Windows o codex do npm é codex.cmd: o subprocess só acha com o caminho completo; e o app pode ter um PATH de antes da instalação
+    found = shutil.which("codex")
+    if found:
+        return found
+    for path in (Path(os.getenv("APPDATA", "")) / "npm/codex.cmd", Path.home() / ".local/bin/codex.exe"):
+        if path.is_file():
+            return str(path)
+    return None
+
+
 def _codex_bin() -> str:
-    # no Windows o codex do npm é codex.cmd: o subprocess só acha com o caminho completo
-    return shutil.which("codex") or "codex"
+    return _codex_path() or "codex"
 
 
 def configure(config: dict | None) -> None:
@@ -55,8 +65,8 @@ def model(tier: str) -> str:
 def problem() -> str | None:
     provider = name()
     if provider == "codex":
-        if not shutil.which("codex"):
-            return "Codex (ChatGPT) não está instalado neste PC (npm i -g @openai/codex)"
+        if not _codex_path():
+            return "Codex CLI não encontrado. O app ChatGPT de desktop não serve: instale o Codex (npm i -g @openai/codex) e rode codex login"
         try:
             done = subprocess.run([_codex_bin(), "login", "status"], capture_output=True, text=True, timeout=30, encoding="utf-8")
         except (OSError, subprocess.TimeoutExpired):
