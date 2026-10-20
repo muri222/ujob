@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 (2026-10-20)
+
+- Tirar país da busca: no seletor de lugar, botão direito num país deixa ele vermelho e as vagas de lá somem ("qualquer lugar, menos Brasil"). Vale na lista de vagas e nas buscas nos portais. Tirar o Brasil também esconde as fontes só brasileiras que vêm sem local (Gupy, Trampos...).
+
 ## 1.1.0 (2026-10-20)
 
 - Novo nome: **uJob** (janela, instalador, menu Iniciar e textos). Os dados continuam na mesma pasta, `%APPDATA%\com.murillo.radar`.

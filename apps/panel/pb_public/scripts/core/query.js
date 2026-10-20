@@ -1,9 +1,9 @@
 import { quote } from "./api.js";
 import { CATEGORIES, CONTRACTS, SENIORITY, STATES, WORKPLACES } from "./catalog.js";
 import { since } from "./format.js";
-import { COUNTRY, countryFilter } from "./countries.js";
+import { COUNTRY, countryFilter, excluded, notCountryFilter } from "./countries.js";
 
-export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad", "terms", "q", "country"];
+export const FIELDS = ["term", "category", "state", "city", "workplace", "contract", "seniority", "company", "period", "salary", "contact", "group", "status", "abroad", "terms", "q", "country", "not"];
 
 export function fromParams(params) {
   const query = {};
@@ -44,16 +44,22 @@ export function toFilter(query) {
   // vaga gringa: sem estado brasileiro e com país que não é o Brasil (inclui remoto "worldwide")
   if (COUNTRY[query.country] && !query.state) parts.push(countryFilter(query.country, quote));
   else if (Array.isArray(query.countries) && query.countries.length && !query.state) parts.push(countriesFilter(query.countries));
+  if (!query.state) for (const code of excluded(query.not)) parts.push(notCountryFilter(code, quote));
   if (query.abroad) parts.push("state = '' && country != '' && country !~ 'brasil' && country !~ 'brazil'");
   if (query.group) parts.push(`source.group = ${quote(query.group)}`);
   return parts.join(" && ");
 }
 
-// vários países (busca da função): qualquer um deles
-export const countriesFilter = (codes) => `(${codes.filter((code) => COUNTRY[code]).map((code) => countryFilter(code, quote)).join(" || ")})`;
+// vários países (busca da função): qualquer um deles, menos os marcados com "-" (ex.: "-BR")
+export function countriesFilter(codes) {
+  const wanted = codes.filter((code) => COUNTRY[code]).map((code) => countryFilter(code, quote));
+  const out = codes.filter((code) => COUNTRY[code.slice(1)] && code[0] === "-").map((code) => notCountryFilter(code.slice(1), quote));
+  return `(${[wanted.length ? `(${wanted.join(" || ")})` : "", ...out].filter(Boolean).join(" && ") || "id != ''"})`;
+}
 
 export function describe(query) {
   const area = CATEGORIES[query.category] ?? "qualquer área";
-  const place = query.city ? `${query.city}${query.state ? `/${query.state}` : ""}` : STATES[query.state] ?? COUNTRY[query.country]?.pt ?? "qualquer lugar";
+  const out = excluded(query.not).map((code) => COUNTRY[code].pt);
+  const place = (query.city ? `${query.city}${query.state ? `/${query.state}` : ""}` : STATES[query.state] ?? COUNTRY[query.country]?.pt ?? "qualquer lugar") + (out.length ? `, menos ${out.join(", ")}` : "");
   return [query.term ? `“${query.term}”` : area, place, WORKPLACES[query.workplace]?.toLowerCase(), CONTRACTS[query.contract]].filter(Boolean).join(" · ");
 }

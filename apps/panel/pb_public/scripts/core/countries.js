@@ -77,3 +77,18 @@ export function countryFilter(code, quote) {
   const { pt, en } = COUNTRY[code] ?? { pt: code, en: code };
   return `(state = '' && (country ~ ${quote(en)} || country ~ ${quote(pt)}))`;
 }
+
+// espelho do BR_ONLY de pb_hooks/search.js, mais o Gupy das empresas
+const BR_SOURCES = ["gupy", "gupy_search", "jsonld", "card_listing", "trampos", "programathor", "github"];
+
+// o contrário do countryFilter (o filtro do PocketBase não tem "não" pra grupo)
+export function notCountryFilter(code, quote) {
+  // fontes só do Brasil (Gupy, Trampos...) muitas vezes vêm sem local nenhum
+  if (code === "BR") return `(state = '' && country !~ 'brasil' && country !~ 'brazil' && ${BR_SOURCES.map((kind) => `source.kind != '${kind}'`).join(" && ")})`;
+  if (code === "WW") return "(workplace != 'remoto' || state != '')";
+  const { pt, en } = COUNTRY[code] ?? { pt: code, en: code };
+  return `(state != '' || (country !~ ${quote(en)} && country !~ ${quote(pt)}))`;
+}
+
+// "BR,US" (frase) -> ["BR", "US"]
+export const excluded = (value) => String(value ?? "").split(",").filter((code) => COUNTRY[code]);

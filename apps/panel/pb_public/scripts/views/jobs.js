@@ -9,7 +9,7 @@ import { segmented } from "../core/ui.js";
 import { runSearch } from "./search.js";
 import { countryLabel, profileCountries } from "../core/countries.js";
 
-const SENTENCE = ["term", "category", "state", "city", "workplace", "contract", "country"];
+const SENTENCE = ["term", "category", "state", "city", "workplace", "contract", "country", "not"];
 const QUICK = [
   ["period", "24h", "sparkle", "Novas de hoje"],
   ["salary", "1", "money", "Com salário"],

@@ -194,6 +194,20 @@ dialog::backdrop {
   color: var(--brand-ink);
 }
 
+.option.is-out {
+  background: var(--down-soft);
+  color: var(--down);
+  text-decoration: line-through;
+}
+
+.places__tip {
+  margin-left: 6px;
+  color: var(--faint);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .option small {
   margin-left: auto;
   color: var(--faint);

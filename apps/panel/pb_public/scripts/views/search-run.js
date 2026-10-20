@@ -18,8 +18,7 @@ export default async function searchRun(root, { params, signal }) {
   let search = await get("searches", params.id);
   const query = Object.fromEntries(QUERY_KEYS.filter((key) => search[key]).map((key) => [key, search[key]]));
   if (search.terms?.length) query.terms = search.terms;
-  if (search.countries?.length === 1 && !search.state) query.country = search.countries[0];
-  else if (search.countries?.length && !search.state) query.countries = search.countries;
+  if (search.countries?.length && !search.state) query.countries = search.countries;
   const opened = stamp(new Date(Date.now() - 5000));
   // busca descrita: o que os portais devolverem também precisa bater com algum termo (portal devolve muita coisa solta)
   const termMatch = search.terms?.length ? ` && (${search.terms.map((term) => `title ~ ${quote(term)}`).join(" || ")})` : "";
@@ -52,7 +51,11 @@ export default async function searchRun(root, { params, signal }) {
     }
   });
 
-  const sentence = createSentence({ query, size: "md", onChange: (next) => runSearch(next).catch(() => toast("Não deu pra buscar.")) });
+  // na frase os países fora ("-BR") viram "menos Brasil"; os de dentro seguem na busca nova se não escolher outro lugar
+  const wanted = (search.countries ?? []).filter((code) => code[0] !== "-");
+  const { countries: _, ...shown } = query;
+  shown.not = (search.countries ?? []).filter((code) => code[0] === "-").map((code) => code.slice(1)).join(",");
+  const sentence = createSentence({ query: shown, size: "md", onChange: (next) => runSearch({ ...next, countries: next.country || next.state || !wanted.length ? undefined : wanted }).catch(() => toast("Não deu pra buscar.")) });
 
   root.classList.add("view--flush");
   root.append(

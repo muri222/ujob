@@ -3,7 +3,7 @@ import { cat, h, icon } from "./dom.js";
 import { number } from "./format.js";
 import { busyCities, findPlaces, isCity } from "./places.js";
 import { closePopover, popover } from "./popover.js";
-import { COUNTRIES, COUNTRY, countryLabel } from "./countries.js";
+import { COUNTRIES, COUNTRY, countryLabel, excluded } from "./countries.js";
 import { ctx } from "./context.js";
 
 const SUGGESTED = ["vendedor", "atendente", "auxiliar administrativo", "motorista", "enfermeiro", "professor", "desenvolvedor", "estágio", "jovem aprendiz"];
@@ -110,7 +110,28 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
     const countryGrid = () => {
       const mine = (ctx.profile?.countries ?? []).map((place) => place.code).filter((code) => COUNTRY[code]);
       const ordered = [...mine, ...COUNTRIES.map(([code]) => code).filter((code) => !mine.includes(code))];
-      return options([["", "Qualquer lugar"], ...ordered.map((code) => [code, countryLabel(code)])], state.country ?? "", (country) => (country === "BR" ? (Object.assign(state, { country }), draw()) : set({ country, state: "", city: "" })));
+      const out = excluded(state.not);
+      const pick = (country) => {
+        state.not = out.filter((code) => code !== country).join(",");
+        if (country === "BR") return Object.assign(state, { country }), draw();
+        set({ country, state: "", city: "" });
+      };
+      const grid = options([["", "Qualquer lugar"], ...ordered.map((code) => [code, countryLabel(code)])], state.country ?? "", pick);
+      grid.querySelectorAll(".option").forEach((button, index) => {
+        const code = index ? ordered[index - 1] : "";
+        if (!code) return;
+        button.classList.toggle("is-out", out.includes(code));
+        if (out.includes(code)) button.title = "Fora da busca. Botão direito pra voltar.";
+        button.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          const next = out.includes(code) ? out.filter((item) => item !== code) : [...out, code];
+          Object.assign(state, { not: next.join(",") });
+          if (state.country === code) Object.assign(state, { country: "", state: "", city: "" });
+          pending = true;
+          draw();
+        });
+      });
+      return grid;
     };
     const stateGrid = (entries) => options(entries, state.state ?? "", pickState, { counts: counts.state ?? {}, iconFor: (value) => uf(value) });
 
@@ -137,7 +158,7 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
         ...[
           state.city ? h("button", { type: "button", className: "btn btn--ghost btn--block", onclick: () => set({ city: "" }) }, icon("close"), `Ver ${STATES[state.state] ?? "o estado"} inteiro`) : [],
           real.length ? [h("p", { className: "popover__title" }, `Cidades com mais vagas em ${STATES[state.state]}`), cityList(real, true)] : [],
-          h("p", { className: "popover__title" }, "País"),
+          h("p", { className: "popover__title" }, "País ", h("small", { className: "places__tip" }, "botão direito: não buscar nesse país")),
           countryGrid(),
           !state.country || state.country === "BR"
             ? [
@@ -169,14 +190,15 @@ export function createSentence({ query, counts = {}, onChange, size = "lg" }) {
   }
 
   function render() {
-    const place = state.city ? `${state.city}${state.state ? `/${state.state}` : ""}` : STATES[state.state] ?? (state.country ? COUNTRY[state.country]?.pt : "qualquer lugar");
+    const out = excluded(state.not).map((code) => COUNTRY[code].pt);
+    const place = (state.city ? `${state.city}${state.state ? `/${state.state}` : ""}` : STATES[state.state] ?? (state.country ? COUNTRY[state.country]?.pt : "qualquer lugar")) + (out.length ? `, menos ${out.join(", ")}` : "");
     root.replaceChildren(
       "Quero vagas de ",
       token(CATEGORIES[state.category] ?? "qualquer área", Boolean(state.category), areaPicker, "Área"),
       " ",
       token(state.term ? `“${state.term}”` : "qualquer cargo", Boolean(state.term), termPicker, "Palavra-chave"),
       " em ",
-      token(place, Boolean(state.state || state.city || state.country), placePicker, "Lugar"),
+      token(place, Boolean(state.state || state.city || state.country || state.not), placePicker, "Lugar"),
       ", ",
       token(WORKPLACES[state.workplace]?.toLowerCase() ?? "qualquer modalidade", Boolean(state.workplace), (anchor) => listPicker(anchor, "Modalidade", [["", "Qualquer modalidade"], ...Object.entries(WORKPLACES)], "workplace"), "Modalidade"),
       " e ",
